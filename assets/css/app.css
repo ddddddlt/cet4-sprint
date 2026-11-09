@@ -51,8 +51,8 @@ html[data-theme="dark"] {
   --blue-soft: #1b2a36;
   --plum: #c3a4cd;
   --plum-soft: #2c2331;
-  --red: #e19084;
-  --red-soft: #3a231f;
+  --red: #c98f80;
+  --red-soft: #2e1f1c;
   --green: #75cba3;
   --green-soft: #163127;
   --shadow: 0 1px 2px rgba(0, 0, 0, .5), 0 18px 40px -28px rgba(0, 0, 0, .85);
@@ -2101,11 +2101,80 @@ html[data-theme="dark"] .input:focus,
 html[data-theme="dark"] .answer-area:focus { background: #1d2621; }
 html[data-theme="dark"] .empty .ic { color: #4b564f; }
 html[data-theme="dark"] .banner.tip span { color: #e2b878; }
-html[data-theme="dark"] .banner.warn span { color: #e8a49b; }
+html[data-theme="dark"] .banner.warn span { color: #d6a496; }
 html[data-theme="dark"] .modal-mask { background: rgba(5, 9, 7, .62); }
 html[data-theme="dark"] .popover { background: #1d2621; }
 html[data-theme="dark"] .stmt.ok .stmt-select { color: #9fe0c8; }
 html[data-theme="dark"] .stmt.bad .stmt-select { color: #f0b0a5; }
+html[data-theme="dark"] .qcard.wrong {
+  border-color: rgba(201, 143, 128, .3);
+  background: rgba(160, 80, 68, .07);
+  box-shadow: 0 0 0 1px rgba(201, 143, 128, .07), var(--shadow);
+}
+html[data-theme="dark"] .banner.warn,
+html[data-theme="dark"] .storage-state.bad {
+  background: rgba(160, 80, 68, .12);
+  color: #d6a496;
+}
+html[data-theme="dark"] .option.wrong,
+html[data-theme="dark"] .opt.wrong,
+html[data-theme="dark"] .cloze-blank.wrong,
+html[data-theme="dark"] .stmt.bad .stmt-select {
+  border-color: rgba(201, 143, 128, .35);
+  background: rgba(160, 80, 68, .14);
+  color: #d9ada0;
+}
+html[data-theme="dark"] .option.wrong .opt-key,
+html[data-theme="dark"] .opt.wrong .opt-key {
+  background: rgba(160, 80, 68, .22);
+  color: #e2b6a9;
+}
+html[data-theme="dark"] .option.correct,
+html[data-theme="dark"] .opt.correct {
+  border-color: rgba(111, 199, 159, .38);
+  background: rgba(47, 125, 95, .16);
+  color: #c3e9d7;
+}
+html[data-theme="dark"] .option.correct .opt-key,
+html[data-theme="dark"] .opt.correct .opt-key {
+  background: rgba(47, 125, 95, .28);
+  color: #cdf1e3;
+}
+html[data-theme="dark"] .q-no.bad,
+html[data-theme="dark"] .q-mark.bad,
+html[data-theme="dark"] .mg-nums span,
+html[data-theme="dark"] .cloze-res.bad .cr-no {
+  background: rgba(160, 80, 68, .18);
+  color: #d6a496;
+}
+html[data-theme="dark"] .rate-btn.bad:hover {
+  border-color: rgba(201, 143, 128, .35);
+  background: rgba(160, 80, 68, .14);
+}
+html[data-theme="dark"] mark.ev {
+  background: rgba(226, 168, 84, .16);
+  box-shadow: inset 0 -1px 0 rgba(226, 168, 84, .35);
+}
+html[data-theme="dark"] mark.ev.pulse {
+  animation: none;
+  outline: 2px solid rgba(226, 168, 84, .45);
+}
+html[data-theme="dark"] .result-banner.ok {
+  background: linear-gradient(120deg, #173026, #1a352a);
+  border-color: #2b4a3c;
+}
+html[data-theme="dark"] .result-banner.mid {
+  background: linear-gradient(120deg, #2f2718, #332b1b);
+  border-color: #4a3b22;
+}
+html[data-theme="dark"] .result-banner.bad {
+  background: linear-gradient(120deg, #2f1e1a, #35231f);
+  border-color: #4a2c26;
+}
+html[data-theme="dark"] .ex-evidence {
+  background: rgba(226, 168, 84, .13);
+  color: #d6b48a;
+}
 html[data-theme="dark"] .start-card { background: linear-gradient(170deg, #1d2621 0%, #18201c 100%); }
 html[data-theme="dark"] .start-card::after { background: radial-gradient(circle, rgba(95, 201, 173, .10), transparent 70%); }
 html[data-theme="dark"] .btn-primary { color: #08231c; box-shadow: 0 10px 20px -14px rgba(0, 0, 0, .6); }
@@ -2113,7 +2182,9 @@ html[data-theme="dark"] .btn-primary:hover { color: #08231c; }
 html[data-theme="dark"] .btn-light { background: #e9f1ec; color: #12241e; }
 html[data-theme="dark"] .btn-light:hover { background: #f5faf6; }
 html[data-theme="dark"] .btn-danger { color: #1b0f0c; }
-html[data-theme="dark"] .btn-danger-ghost { color: #f2b0a5; }
+html[data-theme="dark"] .btn-danger-ghost { background: rgba(160, 80, 68, .12); color: #d6a496; }
+html[data-theme="dark"] .btn-danger-ghost:hover { background: rgba(160, 80, 68, .2); }
+html[data-theme="dark"] .btn-danger { background: #9c5548; color: #f7ede9; }
 
 /* ==========================================================================
    响应式
