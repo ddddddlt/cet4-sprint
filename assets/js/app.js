@@ -1,0 +1,184 @@
+/*
+ * 应用外壳与路由：#/ 首页、#/vocab、#/reading/:id、#/listening/:id、#/mistakes、#/settings
+ */
+window.App = window.App || {};
+(function (A) {
+  'use strict';
+
+  var ui = A.ui;
+  var icon = ui.icon;
+
+  var NAV = [
+    { key: 'dashboard', href: '#/', label: '首页', ic: 'home' },
+    { key: 'vocab', href: '#/vocab', label: '抽查', ic: 'book' },
+    { key: 'reading', href: '#/reading', label: '阅读', ic: 'file' },
+    { key: 'listening', href: '#/listening', label: '听力', ic: 'headphones' },
+    { key: 'translation', href: '#/translation', label: '翻译', ic: 'languages' },
+    { key: 'mistakes', href: '#/mistakes', label: '错题本', ic: 'alert' },
+    { key: 'settings', href: '#/settings', label: '设置', ic: 'settings' }
+  ];
+
+  var TITLES = {
+    dashboard: '首页', vocab: '抽查单词', reading: '阅读', listening: '听力', translation: '翻译',
+    readingRunner: '仔细阅读', listeningRunner: '听力练习', translationRunner: '翻译练习',
+    clozeRunner: '选词填空', matchingRunner: '长篇匹配',
+    mistakes: '错题本', settings: '设置', notFound: '页面不存在'
+  };
+
+  function shellHtml() {
+    var nav = NAV.map(function (n) {
+      return '<a class="nav-item" data-nav="' + n.key + '" href="' + n.href + '">' +
+        icon(n.ic) + '<span>' + n.label + '</span>' +
+        (n.key === 'vocab' ? '<em class="nav-badge" id="nav-due" hidden>0</em>' : '') +
+        '</a>';
+    }).join('');
+
+    var tabs = NAV.filter(function (n) { return n.key !== 'settings'; }).map(function (n) {
+      return '<a class="tab-item" data-nav="' + n.key + '" href="' + n.href + '">' + icon(n.ic) + '<span>' + n.label + '</span></a>';
+    }).join('');
+
+    return '<div class="shell">' +
+      '<aside class="sidebar">' +
+      '<a class="brand" href="#/">' +
+      '<span class="brand-mark">四</span>' +
+      '<span class="brand-text"><strong>四级冲刺</strong><span>CET-4 SPRINT</span></span>' +
+      '</a>' +
+      '<nav class="nav">' + nav + '</nav>' +
+      '<div class="side-foot">' +
+      '<div class="side-count"><strong id="side-days">—</strong><span>天后考试</span></div>' +
+      '<div class="side-streak">' + icon('flame') + '连续打卡 <strong id="side-streak">0</strong> 天</div>' +
+      '<div class="side-tip">每天 20 分钟，胜过考前熬夜。</div>' +
+      '</div>' +
+      '</aside>' +
+      '<main class="main">' +
+      '<header class="topbar">' +
+      '<a class="brand mini" href="#/"><span class="brand-mark">四</span><span class="brand-text"><strong>四级冲刺</strong></span></a>' +
+      '<div class="topbar-right"><a class="icon-btn" href="#/settings" aria-label="设置">' + icon('settings') + '</a></div>' +
+      '</header>' +
+      '<div class="view" id="view"></div>' +
+      '</main>' +
+      '<nav class="tabbar">' + tabs + '</nav>' +
+      '</div>';
+  }
+
+  function parseHash() {
+    var raw = (location.hash || '').replace(/^#\/?/, '');
+    var qi = raw.indexOf('?');
+    var path = qi >= 0 ? raw.slice(0, qi) : raw;
+    var query = {};
+    if (qi >= 0) {
+      raw.slice(qi + 1).split('&').forEach(function (pair) {
+        if (!pair) return;
+        var kv = pair.split('=');
+        query[decodeURIComponent(kv[0])] = decodeURIComponent(kv[1] || '');
+      });
+    }
+    var parts = path.split('/').filter(Boolean);
+    return { parts: parts, query: query, path: path };
+  }
+
+  function resolve(p) {
+    var parts = p.parts;
+    if (!parts.length) return { view: 'dashboard', params: {} };
+    var head = parts[0];
+    if (head === 'vocab' || head === 'mistakes' || head === 'settings') return { view: head, params: {} };
+    if (head === 'reading') {
+      if (parts[1]) return { view: 'readingRunner', params: { id: parts[1] } };
+      return { view: 'reading', params: {} };
+    }
+    if (head === 'cloze') {
+      if (parts[1]) return { view: 'clozeRunner', params: { id: parts[1] } };
+      return { view: 'reading', params: {} };
+    }
+    if (head === 'matching') {
+      if (parts[1]) return { view: 'matchingRunner', params: { id: parts[1] } };
+      return { view: 'reading', params: {} };
+    }
+    if (head === 'listening') {
+      if (parts[1]) return { view: 'listeningRunner', params: { id: parts[1] } };
+      return { view: 'listening', params: {} };
+    }
+    if (head === 'translation') {
+      if (parts[1]) return { view: 'translationRunner', params: { id: parts[1] } };
+      return { view: 'translation', params: {} };
+    }
+    return { view: 'notFound', params: {} };
+  }
+
+  function navKeyOf(view) {
+    if (view === 'readingRunner' || view === 'clozeRunner' || view === 'matchingRunner') return 'reading';
+    if (view === 'listeningRunner') return 'listening';
+    if (view === 'translationRunner') return 'translation';
+    return view;
+  }
+
+  function setActive(view) {
+    var key = navKeyOf(view);
+    document.querySelectorAll('[data-nav]').forEach(function (a) {
+      a.classList.toggle('on', a.getAttribute('data-nav') === key);
+    });
+  }
+
+  function refreshNav() {
+    if (!A.core || !A.core.getState) return;
+    var s = A.core.getState();
+    var due = A.core.dueList().length;
+    var badge = document.getElementById('nav-due');
+    if (badge) {
+      badge.textContent = due;
+      badge.hidden = due === 0;
+    }
+    var daysEl = document.getElementById('side-days');
+    if (daysEl) {
+      var info = A.core.examInfo();
+      daysEl.textContent = info.days == null ? '—' : Math.max(0, info.days);
+    }
+    var streakEl = document.getElementById('side-streak');
+    if (streakEl) streakEl.textContent = A.core.streak();
+  }
+
+  var viewEl = null;
+  var current = null;
+
+  function render() {
+    var p = parseHash();
+    var route = resolve(p);
+    var fn = (A.views && A.views[route.view]) || A.views.notFound;
+    var ctx = { params: route.params || {}, query: p.query, path: p.path };
+
+    if (current && typeof current.destroy === 'function') {
+      try { current.destroy(); } catch (e) { /* ignore */ }
+    }
+
+    var out = fn(ctx) || { html: '' };
+    if (out.html) viewEl.innerHTML = out.html;
+    current = out;
+    if (typeof out.mount === 'function') out.mount(viewEl, ctx);
+
+    setActive(route.view);
+    refreshNav();
+    document.title = (TITLES[route.view] || '四级冲刺') + ' · 四级冲刺';
+    window.scrollTo(0, 0);
+  }
+
+  A.app = { refreshNav: refreshNav };
+
+  function boot() {
+    A.core.load();
+    var app = document.getElementById('app');
+    app.innerHTML = shellHtml();
+    viewEl = document.getElementById('view');
+    ui.tts.init();
+    window.addEventListener('hashchange', render);
+    if (!location.hash) location.replace('#/');
+    render();
+    // 后台预读语音列表
+    setTimeout(function () { if (ui.tts.init) ui.tts.init(); }, 400);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', boot);
+  } else {
+    boot();
+  }
+})(window.App);
