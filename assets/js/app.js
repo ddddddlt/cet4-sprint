@@ -159,6 +159,8 @@ window.App = window.App || {};
     refreshNav();
     document.title = (TITLES[route.view] || '四级冲刺') + ' · 四级冲刺';
     window.scrollTo(0, 0);
+    var mainEl = document.querySelector('.main');
+    if (mainEl) mainEl.scrollTop = 0;
   }
 
   A.app = { refreshNav: refreshNav };
