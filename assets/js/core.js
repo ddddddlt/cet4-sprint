@@ -39,7 +39,8 @@ window.App = window.App || {};
         newPerDay: 15,
         reviewCap: 120,
         checkTarget: 50,
-        name: ''
+        name: '',
+        theme: 'auto'
       },
       cards: {},
       daily: {},
@@ -70,6 +71,37 @@ window.App = window.App || {};
     return s;
   }
 
+  /* ---------------- 主题 ---------------- */
+  function themeMode() {
+    return (state.settings && state.settings.theme) || 'auto';
+  }
+
+  function applyTheme() {
+    var mode = themeMode();
+    var dark = mode === 'dark' || (mode === 'auto' && window.matchMedia &&
+      window.matchMedia('(prefers-color-scheme: dark)').matches);
+    document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+    var meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.setAttribute('content', dark ? '#111614' : '#12655a');
+    return dark;
+  }
+
+  function setThemeMode(mode) {
+    state.settings.theme = (mode === 'light' || mode === 'dark') ? mode : 'auto';
+    save();
+    applyTheme();
+    return state.settings.theme;
+  }
+
+  if (window.matchMedia) {
+    var themeQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    if (themeQuery.addEventListener) {
+      themeQuery.addEventListener('change', function () {
+        if (themeMode() === 'auto') applyTheme();
+      });
+    }
+  }
+
   /* ---------------- 存储 ---------------- */
   var storageOK = true;
   var state = defaults();
@@ -81,12 +113,13 @@ window.App = window.App || {};
     } catch (e) {
       storageOK = false;
     }
-    if (!raw) { state = defaults(); return state; }
+    if (!raw) { state = defaults(); applyTheme(); return state; }
     try {
       state = migrate(JSON.parse(raw));
     } catch (e) {
       state = defaults();
     }
+    applyTheme();
     return state;
   }
 
@@ -469,13 +502,26 @@ window.App = window.App || {};
     var done = todayRecord().checkDone || 0;
     var remaining = Math.max(0, target - done);
     if (!remaining) return [];
-    var ids = dueList().slice(0, remaining);
+    var ids = shuffle(dueList()).slice(0, remaining);
     if (ids.length < remaining) {
-      for (var i = 0; i < words.length && ids.length < remaining; i++) {
-        if (!state.cards[words[i].id]) ids.push(words[i].id);
+      var fresh = [];
+      for (var i = 0; i < words.length; i++) {
+        if (!state.cards[words[i].id]) fresh.push(words[i].id);
       }
+      ids = ids.concat(shuffle(fresh).slice(0, remaining - ids.length));
     }
-    return ids;
+    return shuffle(ids);
+  }
+
+  function shuffle(list) {
+    var a = list.slice();
+    for (var i = a.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var t = a[i];
+      a[i] = a[j];
+      a[j] = t;
+    }
+    return a;
   }
 
   function reviewWord(id, grade) {
@@ -731,6 +777,9 @@ window.App = window.App || {};
     getState: function () { return state; },
     load: load,
     save: save,
+    themeMode: themeMode,
+    setThemeMode: setThemeMode,
+    applyTheme: applyTheme,
     reset: reset,
     exportJSON: exportJSON,
     importJSON: importJSON,
