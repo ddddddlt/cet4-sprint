@@ -1999,7 +1999,7 @@ window.App = window.App || {};
       '<p>内置 1000 个四级核心词、3 类阅读题、4 段听力与 4 段翻译，可在 <code>assets/js/data/</code> 中继续扩充；默认只保存在本机，开启云同步后会上传到你的 GitHub 仓库。</p>' +
       '</div>' +
       '</section>' +
-      '<section class="card">' +
+      '<section class="card sync-card">' +
       sectionHead('云同步', '两台设备共用一个仓库进度文件', '') +
       '<div class="form">' +
       field('GitHub Token',
