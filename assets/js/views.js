@@ -2093,7 +2093,7 @@ window.App = window.App || {};
         '<div class="section-head"><div><h2>自评档位</h2><p>满分 15 分，选择后计入今日记录</p></div></div>' +
         '<div class="grade-row">' + gradeBtns + '</div>' +
         '<p class="grade-note" id="grade-note">' + (wasGraded ? '已记录：' + gradedBand + ' 分档，可重新选择。' : '选择后会计入今日学习记录。') + '</p>' +
-        '<div class="ts-nav"><button class="btn btn-ghost" data-add-srs>' + icon('bookmark') + '未命中得分点加入复习</button>' +
+        '<div class="ts-nav">' + (points.length ? '<button class="btn btn-ghost" data-add-srs>' + icon('bookmark') + '未命中得分点加入复习</button>' : '') +
         '<button class="btn btn-ghost" data-retry>' + icon('rotate') + '重做</button>' +
         '<a class="btn btn-primary" href="#/translation">返回列表</a></div>' +
         '</section>' +
@@ -2112,7 +2112,7 @@ window.App = window.App || {};
       var refWords = set.sentences.reduce(function (n, s) { return n + wc(s.en); }, 0);
       var words = wc(text);
       var ratio = refWords ? words / refWords : 0;
-      var content = Math.round(coverage * 100);
+      var content = total ? Math.round(coverage * 100) : null;
       var language = Math.max(15, 100 - errs * 9 - warns * 3 - (ratio < 0.6 ? 15 : 0));
       var fluency = 55 + (ratio >= 0.8 && ratio <= 1.3 ? 35 : ratio >= 0.6 && ratio <= 1.5 ? 22 : 8);
       if (words / Math.max(1, set.sentences.length) >= 8) fluency += 10;
@@ -2120,29 +2120,38 @@ window.App = window.App || {};
       var markers = (text.match(/\b(which|that|who|whose|because|although|though|when|while|whereas|if|since|as)\b/gi) || []).length;
       var nonFinite = (text.match(/\b(to\s+\w+|by\s+\w+ing|instead\s+of\s+\w+ing)\b/gi) || []).length;
       var variety = Math.min(100, 55 + markers * 5 + nonFinite * 6);
-      var totalScore = Math.round(content * 0.45 + language * 0.2 + fluency * 0.18 + variety * 0.17);
+      var totalScore = content === null
+        ? Math.round((language * 0.2 + fluency * 0.18 + variety * 0.17) / 0.55)
+        : Math.round(content * 0.45 + language * 0.2 + fluency * 0.18 + variety * 0.17);
       var band = SE ? SE.bandOf(totalScore) : (totalScore >= 86 ? 14 : totalScore >= 72 ? 11 : totalScore >= 52 ? 8 : totalScore >= 38 ? 5 : 2);
       var score = SE ? SE.score106(band) : Math.round(band / 15 * 106.5);
       return {
         content: content, language: language, fluency: fluency, variety: variety,
-        band: band, score: score, hit: hit, total: total
+        band: band, score: score, hit: hit, total: total, hasPoints: total > 0
       };
     }
 
     function ruleCard() {
       var r = ruleStats();
       var dims = [
-        ['信息完整', r.content], ['语言准确', r.language], ['表达流畅', r.fluency], ['句式多样', r.variety]
+        ['信息完整', r.hasPoints ? r.content : null],
+        ['语言准确', r.language],
+        ['表达流畅', r.fluency],
+        ['句式多样', r.variety]
       ];
       return '<div class="section-head"><div><h2>规则评分</h2><p>按信息点、语法规则和长度自动估算，用来对照自评</p></div></div>' +
         '<div class="rs-head"><strong>' + r.band + '</strong><span>/ 15 分档</span>' +
-        '<em>折合 ' + r.score + ' 分 · 信息点 ' + r.hit + '/' + r.total + '</em></div>' +
+        '<em>折合 ' + r.score + ' 分 · ' + (r.hasPoints ? '信息点 ' + r.hit + '/' + r.total : '这套题未标注得分点') + '</em></div>' +
         '<div class="rs-dims">' + dims.map(function (d) {
+          var v = d[1];
           return '<div class="rs-dim"><span>' + d[0] + '</span>' +
-            '<div class="rs-bar"><i style="width:' + d[1] + '%"></i></div>' +
-            '<strong>' + d[1] + '</strong></div>';
+            '<div class="rs-bar"><i style="width:' + (v == null ? 0 : v) + '%"></i></div>' +
+            '<strong>' + (v == null ? '—' : v) + '</strong></div>';
         }).join('') + '</div>' +
-        '<p class="muted small">规则引擎估算，用于定位问题，不等同于阅卷分数。</p>';
+        '<p class="muted small">' +
+        (r.hasPoints ? '规则引擎估算，用于定位问题，不等同于阅卷分数。'
+          : '这套题没有标注得分点，信息完整不参与评分；分数由语言、流畅度和句式三项估算。') +
+        '</p>';
     }
 
     function aiBackBlock() {
@@ -2215,6 +2224,7 @@ window.App = window.App || {};
     }
 
     function addSrs() {
+      if (!points.length) { ui.toast('这套题没有标注得分点，暂时无法生成复习卡'); return; }
       var list = trSrsList();
       var seen = {};
       list.forEach(function (c) { seen[c.id] = true; });
