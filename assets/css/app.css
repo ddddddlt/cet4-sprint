@@ -1049,6 +1049,7 @@ mark.ev.pulse { animation: flash 1.2s ease; }
   cursor: pointer;
 }
 .q-mark.bad { background: var(--red-soft); color: var(--red); }
+.q-mark.hit { outline: 2px solid var(--brand); outline-offset: 2px; }
 .q-head { display: flex; gap: 12px; align-items: flex-start; cursor: pointer; }
 .q-no {
   width: 26px;
@@ -1062,6 +1063,7 @@ mark.ev.pulse { animation: flash 1.2s ease; }
   font-weight: 700;
   flex: none;
   margin-top: 1px;
+  cursor: pointer;
 }
 .q-stem { font-size: 14.8px; line-height: 1.6; font-weight: 550; }
 .opts { display: grid; gap: 8px; margin-top: 14px; }
@@ -1945,6 +1947,7 @@ textarea.input { resize: vertical; line-height: 1.6; font-family: inherit; }
 .mg-top { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .mg-top strong { font-size: 15px; }
 .mg-nums { display: flex; flex-wrap: wrap; gap: 6px; }
+.mg-num,
 .mg-nums span {
   min-width: 20px;
   height: 20px;
@@ -1957,7 +1960,10 @@ textarea.input { resize: vertical; line-height: 1.6; font-family: inherit; }
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  text-decoration: none;
+  transition: transform .15s, background .15s;
 }
+.mg-num:hover { transform: translateY(-1px); background: rgba(180, 71, 58, .2); }
 
 /* ==========================================================================
    设置
