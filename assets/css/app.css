@@ -153,6 +153,14 @@ h1, h2, h3, h4, p { margin: 0; }
 }
 
 .nav-item:hover { background: rgba(255, 255, 255, .07); color: #fff; }
+.nav-theme {
+  background: transparent;
+  border: 0;
+  width: 100%;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
 .nav-item.on {
   background: rgba(255, 255, 255, .13);
   color: #fff;
@@ -2006,6 +2014,8 @@ html[data-theme="dark"] .modal-mask { background: rgba(5, 9, 7, .62); }
 html[data-theme="dark"] .popover { background: #1d2621; }
 html[data-theme="dark"] .stmt.ok .stmt-select { color: #9fe0c8; }
 html[data-theme="dark"] .stmt.bad .stmt-select { color: #f0b0a5; }
+html[data-theme="dark"] .start-card { background: linear-gradient(170deg, #1d2621 0%, #18201c 100%); }
+html[data-theme="dark"] .start-card::after { background: radial-gradient(circle, rgba(95, 201, 173, .10), transparent 70%); }
 html[data-theme="dark"] .btn-primary { color: #08231c; box-shadow: 0 10px 20px -14px rgba(0, 0, 0, .6); }
 html[data-theme="dark"] .btn-primary:hover { color: #08231c; }
 html[data-theme="dark"] .btn-light { background: #e9f1ec; color: #12241e; }
