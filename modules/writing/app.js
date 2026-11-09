@@ -9,8 +9,16 @@
 
   var E = window.SubjectiveEngine;
   var DATA = window.WRITING_DATA || [];
-  var K_HISTORY = 'wc:history';
-  var K_DRAFT = 'wc:draft:';
+
+  // 按学习档案隔离作文数据
+  function profileTag() {
+    try {
+      if (window.App && window.App.core && window.App.core.profileId) return window.App.core.profileId();
+    } catch (e) { /* ignore */ }
+    return 'local';
+  }
+  function historyKey() { return 'wc:' + profileTag() + ':history'; }
+  function draftKey(id) { return 'wc:' + profileTag() + ':draft:' + id; }
 
   var host = null;
   var state = { view: 'home', promptId: null, tab: 11, report: null, compare: null };
@@ -27,8 +35,16 @@
     for (var i = 0; i < DATA.length; i++) if (DATA[i].id === id) return DATA[i];
     return null;
   }
-  function history() { return E.read(K_HISTORY, []); }
-  function saveHistory(list) { E.write(K_HISTORY, list.slice(0, 40)); }
+  function history() {
+    var key = historyKey();
+    var list = E.read(key, null);
+    if (list === null) {
+      var legacy = E.read('wc:history', null);
+      if (legacy) { E.write(key, legacy); list = legacy; } else { list = []; }
+    }
+    return list;
+  }
+  function saveHistory(list) { E.write(historyKey(), list.slice(0, 40)); }
 
   function toast(msg, tone) {
     var el = document.createElement('div');
@@ -136,7 +152,7 @@
     if (clearBtn) clearBtn.addEventListener('click', function () {
       modal({
         title: '清空练习记录？', body: '<p>本机保存的所有作文记录会被删除，题库不受影响。</p>', ok: '清空', onOk: function () {
-          E.remove(K_HISTORY);
+          E.remove(historyKey());
           showHome();
         }
       });
@@ -169,7 +185,7 @@
     state.view = 'edit';
     state.promptId = id;
     state.report = null;
-    var draft = E.read(K_DRAFT + id, '');
+    var draft = E.read(draftKey(id), '');
 
     host.innerHTML =
       '<header class="wc-bar">' +
@@ -203,7 +219,7 @@
 
     var saveTimer = null;
     function saveDraft() {
-      E.write(K_DRAFT + p.id, ta.value);
+      E.write(draftKey(p.id), ta.value);
     }
     ta.addEventListener('input', function () {
       updateCount(p);
@@ -212,7 +228,7 @@
     });
 
     qs('[data-back]').addEventListener('click', function () {
-      if (ta.value.trim() && !E.read(K_DRAFT + p.id, '')) saveDraft();
+      if (ta.value.trim() && !E.read(draftKey(p.id), '')) saveDraft();
       showHome();
     });
 
@@ -258,7 +274,7 @@
     stopTimer();
     var result = E.gradeWriting(text, p);
     saveHistory([{ promptId: p.id, at: Date.now(), text: text, band: result.band, score: result.score, words: result.stats.words }].concat(history()));
-    E.remove(K_DRAFT + p.id);
+    E.remove(draftKey(p.id));
     state.report = { prompt: p, result: result, text: text };
     state.tab = result.band >= 14 ? 14 : result.band >= 11 ? 11 : 8;
     showReport();

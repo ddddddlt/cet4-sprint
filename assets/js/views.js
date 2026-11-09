@@ -2663,9 +2663,55 @@ window.App = window.App || {};
     var canStore = A.core.storageOK();
     var syncCfg = A.core.syncConfig();
     var syncFmt = function (t) { return t ? new Date(t).toLocaleString() : '—'; };
+    var profiles = A.core.listProfiles();
+    var activeId = A.core.profileId();
+    var aiCfg = window.DeepSeekLLM ? window.DeepSeekLLM.getConfig() : { apiKey: '', model: 'deepseek-chat' };
+    var aiModels = window.DeepSeekLLM ? window.DeepSeekLLM.models : [{ id: 'deepseek-chat', label: 'deepseek-chat' }];
+
+    var profileCard =
+      '<section class="card profile-card">' +
+      sectionHead('学习档案', '两个人各用各的进度，互不影响', '') +
+      '<div class="profile-list">' + profiles.map(function (p) {
+        var on = p.id === activeId;
+        return '<div class="profile-row' + (on ? ' on' : '') + '">' +
+          '<div class="profile-name"><strong>' + esc(p.name) + '</strong>' +
+          (on ? '<span class="chip status-ok">当前</span>' : '') + '</div>' +
+          '<div class="profile-acts">' +
+          (on ? '' : '<button class="btn btn-ghost small" data-profile-switch="' + p.id + '">切换</button>') +
+          '<button class="btn btn-ghost small" data-profile-rename="' + p.id + '">重命名</button>' +
+          (profiles.length > 1 ? '<button class="btn btn-danger-ghost small" data-profile-del="' + p.id + '">删除</button>' : '') +
+          '</div></div>';
+      }).join('') + '</div>' +
+      '<div class="profile-new"><input class="input" id="profile-name" maxlength="12" placeholder="新档案名称，如：小明">' +
+      '<button class="btn btn-primary" id="profile-create">新建并切换</button></div>' +
+      '<p class="field-hint">档案之间完全独立：单词进度、错题、翻译记录、作文记录、AI Key 都分开；切换后页面会刷新。云同步也会按档案写成不同文件。</p>' +
+      '</section>';
+
+    var aiCard =
+      '<section class="card ai-settings-card">' +
+      sectionHead('AI 批改', 'DeepSeek · 可选', '') +
+      '<div class="form">' +
+      field('API Key',
+        '<input class="input" type="password" id="ai-key" autocomplete="off" placeholder="' +
+        (aiCfg.apiKey ? '已保存，重新填写可替换' : 'sk-...') + '">',
+        '只保存在当前档案的本机浏览器里，直连 api.deepseek.com；公共电脑用完请清除') +
+      field('模型',
+        '<select class="input" id="ai-model">' + aiModels.map(function (m) {
+          return '<option value="' + m.id + '"' + (aiCfg.model === m.id ? ' selected' : '') + '>' + esc(m.label) + '</option>';
+        }).join('') + '</select>', '') +
+      '<div class="form-actions">' +
+      '<button class="btn btn-primary" id="ai-save">' + icon('check') + '保存 Key</button>' +
+      '<button class="btn btn-ghost" id="ai-test">测试连接</button>' +
+      (aiCfg.apiKey ? '<button class="btn btn-danger-ghost" id="ai-clear">清除</button>' : '') +
+      '</div>' +
+      '<div class="storage-state ' + (aiCfg.apiKey ? 'ok' : 'bad') + '" id="ai-state">' +
+      icon(aiCfg.apiKey ? 'checkCircle' : 'alert') +
+      '<span>' + (aiCfg.apiKey ? '已配置 · ' + esc(aiCfg.model) : '未配置，AI 批改和机器回译不可用') + '</span></div>' +
+      '</div></section>';
 
     var html = pageHead('设置', '学习计划与数据管理') +
       storageBanner() +
+      profileCard +
       '<div class="grid-2 settings-grid">' +
       '<section class="card">' +
       sectionHead('学习计划', '影响每日任务和倒计时', '') +
@@ -2680,6 +2726,7 @@ window.App = window.App || {};
       '<div class="form-actions"><button class="btn btn-primary" id="save-settings">' + icon('check') + '保存设置</button></div>' +
       '</div>' +
       '</section>' +
+      aiCard +
       '<section class="card">' +
       sectionHead('数据', '数据保存在本机浏览器', '') +
       '<div class="data-actions">' +
@@ -2696,7 +2743,7 @@ window.App = window.App || {};
       '</div>' +
       '</section>' +
       '<section class="card sync-card">' +
-      sectionHead('云同步', '两台设备共用一个仓库进度文件', '') +
+      sectionHead('云同步', '每个学习档案一个进度文件，互不覆盖', '') +
       '<div class="form">' +
       field('GitHub Token',
         '<input class="input" type="password" id="sync-token" autocomplete="off" placeholder="' +
@@ -2771,6 +2818,86 @@ window.App = window.App || {};
             }
           };
           reader.readAsText(f);
+        });
+
+        /* 学习档案 */
+        root.querySelectorAll('[data-profile-switch]').forEach(function (b) {
+          b.addEventListener('click', function () { A.core.switchProfile(b.getAttribute('data-profile-switch')); });
+        });
+        root.querySelectorAll('[data-profile-del]').forEach(function (b) {
+          b.addEventListener('click', function () {
+            var id = b.getAttribute('data-profile-del');
+            ui.modal({
+              title: '删除这个档案？',
+              body: '<p>该档案的单词、错题、翻译、作文记录都会删除，无法恢复。</p>',
+              okText: '删除',
+              danger: true,
+              onOk: function () { A.core.deleteProfile(id); location.reload(); }
+            });
+          });
+        });
+        root.querySelectorAll('[data-profile-rename]').forEach(function (b) {
+          b.addEventListener('click', function () {
+            var id = b.getAttribute('data-profile-rename');
+            ui.modal({
+              title: '重命名档案',
+              body: '<input class="input" id="rename-input" maxlength="12" value="' + esc(A.core.profileName(id)) + '">',
+              okText: '保存',
+              onOk: function (r) {
+                var v = (r.querySelector('#rename-input').value || '').trim();
+                if (!v) { ui.toast('名称不能为空'); return false; }
+                A.core.renameProfile(id, v);
+                location.reload();
+              }
+            });
+          });
+        });
+        var createBtn = root.querySelector('#profile-create');
+        if (createBtn) createBtn.addEventListener('click', function () {
+          var v = (root.querySelector('#profile-name').value || '').trim();
+          if (!v) { ui.toast('先输入档案名称'); return; }
+          A.core.switchProfile(A.core.createProfile(v));
+        });
+
+        /* AI Key */
+        var saveAi = root.querySelector('#ai-save');
+        if (saveAi) saveAi.addEventListener('click', function () {
+          var LLM = window.DeepSeekLLM;
+          if (!LLM) { ui.toast('AI 模块未加载'); return; }
+          var key = (root.querySelector('#ai-key').value || '').trim();
+          var model = root.querySelector('#ai-model').value;
+          var cur = LLM.getConfig();
+          LLM.saveConfig({ apiKey: key || cur.apiKey, model: model, baseURL: cur.baseURL });
+          ui.toast(key ? 'API Key 已保存' : '已保留原来的 Key', 'success');
+          setTimeout(function () { location.reload(); }, 400);
+        });
+        var testAi = root.querySelector('#ai-test');
+        if (testAi) testAi.addEventListener('click', function () {
+          var LLM = window.DeepSeekLLM;
+          if (!LLM) { ui.toast('AI 模块未加载'); return; }
+          var key = (root.querySelector('#ai-key').value || '').trim() || LLM.getConfig().apiKey;
+          if (!key) { ui.toast('先填 API Key'); return; }
+          var stateEl = root.querySelector('#ai-state');
+          testAi.disabled = true;
+          if (stateEl) { stateEl.className = 'storage-state'; stateEl.innerHTML = '<span>正在连接 DeepSeek…</span>'; }
+          LLM.probe({ apiKey: key, model: root.querySelector('#ai-model').value, baseURL: LLM.getConfig().baseURL })
+            .then(function (r) {
+              testAi.disabled = false;
+              if (stateEl) {
+                stateEl.className = 'storage-state ' + (r.ok ? 'ok' : 'bad');
+                stateEl.innerHTML = icon(r.ok ? 'checkCircle' : 'alert') +
+                  '<span>' + esc(r.ok ? '连接成功' : r.error) + '</span>';
+              }
+            });
+        });
+        var clearAi = root.querySelector('#ai-clear');
+        if (clearAi) clearAi.addEventListener('click', function () {
+          var LLM = window.DeepSeekLLM;
+          if (!LLM) return;
+          var cur = LLM.getConfig();
+          LLM.saveConfig({ apiKey: '', model: cur.model, baseURL: cur.baseURL });
+          ui.toast('已清除当前档案的 Key');
+          setTimeout(function () { location.reload(); }, 400);
         });
 
         var autoBox = root.querySelector('#sync-auto');

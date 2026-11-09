@@ -13,9 +13,37 @@ window.DeepSeekLLM = (function () {
     { id: 'deepseek-reasoner', label: 'deepseek-reasoner（推理更强，较慢）' }
   ];
 
+  // 每个学习档案一份 Key；没有档案系统时回退到全局
+  function configKey() {
+    try {
+      if (window.App && window.App.core && window.App.core.profileId) {
+        return KEY + ':' + window.App.core.profileId();
+      }
+    } catch (e) { /* ignore */ }
+    return KEY;
+  }
+
+  function readRaw() {
+    var k = configKey();
+    var raw = null;
+    try { raw = window.localStorage.getItem(k); } catch (e) { raw = null; }
+    // 只有默认档案才继承旧版的全局 Key，避免新建档案“继承”别人的 Key
+    var isDefault = true;
+    try {
+      if (window.App && window.App.core && window.App.core.defaultProfileId) {
+        isDefault = window.App.core.profileId() === window.App.core.defaultProfileId();
+      }
+    } catch (e) { isDefault = true; }
+    if (!raw && k !== KEY && isDefault) {
+      try { raw = window.localStorage.getItem(KEY); } catch (e) { raw = null; }
+      if (raw) { try { window.localStorage.setItem(k, raw); } catch (e) { /* ignore */ } }
+    }
+    return raw;
+  }
+
   function getConfig() {
     var raw = {};
-    try { raw = JSON.parse(window.localStorage.getItem(KEY) || '{}'); } catch (e) { raw = {}; }
+    try { raw = JSON.parse(readRaw() || '{}'); } catch (e) { raw = {}; }
     return {
       baseURL: (raw.baseURL || DEFAULTS.baseURL).replace(/\/+$/, ''),
       apiKey: raw.apiKey || '',
@@ -29,7 +57,7 @@ window.DeepSeekLLM = (function () {
       apiKey: (cfg.apiKey || '').trim(),
       model: cfg.model || DEFAULTS.model
     };
-    try { window.localStorage.setItem(KEY, JSON.stringify(next)); } catch (e) { /* ignore */ }
+    try { window.localStorage.setItem(configKey(), JSON.stringify(next)); } catch (e) { /* ignore */ }
     return next;
   }
 

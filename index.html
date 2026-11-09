@@ -10,7 +10,10 @@
   <script>
     (function () {
       try {
-        var s = JSON.parse(localStorage.getItem('cet4-sprint/v1') || '{}');
+        var pid = null;
+        try { pid = localStorage.getItem('cet4-sprint/active'); } catch (e) { pid = null; }
+        var key = pid ? ('cet4-sprint/v1/' + pid) : 'cet4-sprint/v1';
+        var s = JSON.parse(localStorage.getItem(key) || '{}');
         var m = (s.settings || {}).theme || 'auto';
         var d = m === 'dark' || (m === 'auto' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
         document.documentElement.setAttribute('data-theme', d ? 'dark' : 'light');
@@ -19,6 +22,7 @@
   </script>
   <link rel="stylesheet" href="assets/css/app.css">
   <link rel="stylesheet" href="assets/css/translation-enhance.css">
+  <link rel="stylesheet" href="assets/css/settings-extra.css">
   <link rel="stylesheet" href="modules/writing/app.css">
   <link rel="stylesheet" href="modules/writing/site.css">
 </head>

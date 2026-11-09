@@ -51,6 +51,7 @@ window.App = window.App || {};
       '</a>' +
       '<nav class="nav">' + nav + themeItem + '</nav>' +
       '<div class="side-foot">' +
+      '<div class="side-profile">档案：<strong id="side-profile">—</strong></div>' +
       '<div class="side-count"><strong id="side-days">—</strong><span>天后考试</span></div>' +
       '<div class="side-streak">' + icon('flame') + '连续打卡 <strong id="side-streak">0</strong> 天</div>' +
       '<div class="side-tip">每天 20 分钟，胜过考前熬夜。</div>' +
@@ -147,6 +148,8 @@ window.App = window.App || {};
     }
     var streakEl = document.getElementById('side-streak');
     if (streakEl) streakEl.textContent = A.core.streak();
+    var pfEl = document.getElementById('side-profile');
+    if (pfEl && A.core.profileName) pfEl.textContent = A.core.profileName();
   }
 
   var viewEl = null;

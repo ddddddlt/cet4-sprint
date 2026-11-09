@@ -8,6 +8,8 @@ window.App = window.App || {};
 
   var DAY = 86400000;
   var KEY = 'cet4-sprint/v1';
+  var PROFILES_KEY = 'cet4-sprint/profiles';
+  var ACTIVE_KEY = 'cet4-sprint/active';
 
   /* ---------------- 工具 ---------------- */
   function pad(n) { return n < 10 ? '0' + n : '' + n; }
@@ -108,6 +110,101 @@ window.App = window.App || {};
     }
   }
 
+  /* ---------------- 学习档案（本机多用户） ---------------- */
+  function readLS(key, fallback) {
+    try {
+      var raw = window.localStorage.getItem(key);
+      return raw ? JSON.parse(raw) : fallback;
+    } catch (e) { return fallback; }
+  }
+
+  function writeLS(key, val) {
+    try { window.localStorage.setItem(key, JSON.stringify(val)); return true; } catch (e) { return false; }
+  }
+
+  function stateKeyFor(id) { return KEY + '/' + id; }
+
+  function profileList() {
+    var list = readLS(PROFILES_KEY, null);
+    if (!Array.isArray(list) || !list.length) {
+      var id = 'p' + Date.now().toString(36);
+      list = [{ id: id, name: '我的档案', createdAt: Date.now() }];
+      writeLS(PROFILES_KEY, list);
+      // 老版本只有一个全局进度，迁移到第一个档案
+      try {
+        var legacy = window.localStorage.getItem(KEY);
+        if (legacy) {
+          window.localStorage.setItem(stateKeyFor(id), legacy);
+          window.localStorage.removeItem(KEY);
+        }
+      } catch (e) { /* ignore */ }
+      try { window.localStorage.setItem(ACTIVE_KEY, id); } catch (e) { /* ignore */ }
+    }
+    return list;
+  }
+
+  function profileId() {
+    var list = profileList();
+    var id = null;
+    try { id = window.localStorage.getItem(ACTIVE_KEY); } catch (e) { id = null; }
+    var found = null;
+    list.forEach(function (p) { if (p.id === id) found = p; });
+    if (!found) {
+      id = list[0].id;
+      try { window.localStorage.setItem(ACTIVE_KEY, id); } catch (e) { /* ignore */ }
+    }
+    return id;
+  }
+
+  function profileName(id) {
+    var list = profileList();
+    var target = id || profileId();
+    for (var i = 0; i < list.length; i++) if (list[i].id === target) return list[i].name;
+    return '';
+  }
+
+  function stateKey() { return stateKeyFor(profileId()); }
+
+  function defaultProfileId() { return profileList()[0].id; }
+
+  function createProfile(name) {
+    var list = profileList();
+    var id = 'p' + Date.now().toString(36) + Math.floor(Math.random() * 100);
+    list.push({
+      id: id,
+      name: String(name || '新档案').slice(0, 12) || '新档案',
+      createdAt: Date.now()
+    });
+    writeLS(PROFILES_KEY, list);
+    return id;
+  }
+
+  function renameProfile(id, name) {
+    var list = profileList();
+    var clean = String(name || '').trim().slice(0, 12);
+    if (!clean) return list;
+    list.forEach(function (p) { if (p.id === id) p.name = clean; });
+    writeLS(PROFILES_KEY, list);
+    return list;
+  }
+
+  function switchProfile(id) {
+    try { window.localStorage.setItem(ACTIVE_KEY, id); } catch (e) { /* ignore */ }
+    window.location.reload();
+  }
+
+  function deleteProfile(id) {
+    var list = profileList();
+    if (list.length <= 1) return false;
+    try { window.localStorage.removeItem(stateKeyFor(id)); } catch (e) { /* ignore */ }
+    list = list.filter(function (p) { return p.id !== id; });
+    writeLS(PROFILES_KEY, list);
+    if (id === profileId()) {
+      try { window.localStorage.setItem(ACTIVE_KEY, list[0].id); } catch (e) { /* ignore */ }
+    }
+    return true;
+  }
+
   /* ---------------- 存储 ---------------- */
   var storageOK = true;
   var state = defaults();
@@ -115,7 +212,7 @@ window.App = window.App || {};
   function load() {
     var raw = null;
     try {
-      raw = window.localStorage.getItem(KEY);
+      raw = window.localStorage.getItem(stateKey());
     } catch (e) {
       storageOK = false;
     }
@@ -133,7 +230,7 @@ window.App = window.App || {};
   function save() {
     if (!storageOK) return false;
     try {
-      window.localStorage.setItem(KEY, JSON.stringify(state));
+      window.localStorage.setItem(stateKey(), JSON.stringify(state));
       if (typeof syncMarkDirty === 'function') syncMarkDirty();
       return true;
     } catch (e) {
@@ -144,7 +241,7 @@ window.App = window.App || {};
 
   function reset() {
     state = defaults();
-    try { window.localStorage.removeItem(KEY); } catch (e) { /* ignore */ }
+    try { window.localStorage.removeItem(stateKey()); } catch (e) { /* ignore */ }
     save();
   }
 
@@ -164,6 +261,11 @@ window.App = window.App || {};
   var SYNC_KEY = 'cet4-sprint/sync/v1';
   var SYNC_REPO = 'ddddddlt/cet4-sprint';
   var SYNC_PATH = 'sync/progress.json';
+
+  function syncPath() {
+    var id = profileId();
+    return id === defaultProfileId() ? SYNC_PATH : 'sync/progress-' + id + '.json';
+  }
 
   function b64encode(str) {
     var bytes = new TextEncoder().encode(str);
@@ -215,7 +317,7 @@ window.App = window.App || {};
   }
 
   function syncRemote() {
-    return syncRequest('/repos/' + SYNC_REPO + '/contents/' + SYNC_PATH + '?ref=main&t=' + Date.now()).then(function (data) {
+    return syncRequest('/repos/' + SYNC_REPO + '/contents/' + syncPath() + '?ref=main&t=' + Date.now()).then(function (data) {
       if (!data || !data.content) return null;
       var payload = JSON.parse(b64decode(data.content));
       payload.sha = data.sha;
@@ -241,7 +343,7 @@ window.App = window.App || {};
         branch: 'main'
       };
       if (remote && remote.sha) body.sha = remote.sha;
-      return syncRequest('/repos/' + SYNC_REPO + '/contents/' + SYNC_PATH,
+      return syncRequest('/repos/' + SYNC_REPO + '/contents/' + syncPath(),
         { method: 'PUT', body: body, keepalive: !!opts.keepalive })
         .then(function (res) {
           if (!res) throw new Error('上传失败');
@@ -864,6 +966,15 @@ window.App = window.App || {};
     syncFlush: syncFlush,
     syncMarkDirty: syncMarkDirty,
     storageOK: function () { return storageOK; },
+    // 学习档案
+    profileId: profileId,
+    profileName: profileName,
+    listProfiles: profileList,
+    createProfile: createProfile,
+    switchProfile: switchProfile,
+    renameProfile: renameProfile,
+    deleteProfile: deleteProfile,
+    defaultProfileId: defaultProfileId,
     // 词库
     allWords: allWords,
     getWord: getWord,
