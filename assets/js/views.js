@@ -995,7 +995,7 @@ window.App = window.App || {};
           '<div class="ex-evidence">' + icon('target') + '<span>定位句已在左侧高亮</span></div></div>'
           : '';
         return '<div class="qcard' + (isWrong ? ' wrong' : '') + '" data-qid="' + q.id + '">' +
-          '<div class="q-head"><span class="q-no' + (isWrong ? ' bad' : '') + '">' + (idx + 1) + '</span><p class="q-stem">' + esc(q.stem) + '</p></div>' +
+          '<div class="q-head"><span class="q-no' + (isWrong ? ' bad' : '') + '" title="跳到原文对应句">' + (idx + 1) + '</span><p class="q-stem">' + esc(q.stem) + '</p></div>' +
           '<div class="opts">' + q.options.map(function (o, i) { return optionHtml(q, i); }).join('') + '</div>' +
           explain + '</div>';
       }).join('');
@@ -1153,6 +1153,17 @@ window.App = window.App || {};
         render(root);
         if (!review) startTimer(root);
         bindWordPopover(root);
+        if (ctx.query && ctx.query.q) {
+          var target = ctx.query.q;
+          setTimeout(function () {
+            var mark = root.querySelector('mark[data-q="' + target + '"]') ||
+              root.querySelector('.q-mark[data-q="' + target + '"]');
+            if (!mark) return;
+            mark.scrollIntoView({ block: 'center' });
+            mark.classList.add('hit');
+            setTimeout(function () { mark.classList.remove('hit'); }, 1800);
+          }, 250);
+        }
       },
       destroy: function () { if (interval) { clearInterval(interval); interval = null; } }
     };
@@ -2193,9 +2204,9 @@ window.App = window.App || {};
         var g = groups[key];
         var set = findSet(g.kind, g.setId);
         if (set) { g.title = set.title; g.type = set.type; }
-        var nums = g.items.map(function (e) { return questionNo(g.kind, set, e.qid); })
-          .filter(function (n) { return n; })
-          .sort(function (a, b) { return a - b; });
+        var pairs = g.items.map(function (e) {
+          return { no: questionNo(g.kind, set, e.qid), qid: e.qid };
+        }).filter(function (x) { return x.no; }).sort(function (a, b) { return a.no - b.no; });
         var route = g.kind === 'cloze' ? 'cloze'
           : g.kind === 'matching' ? 'matching'
             : g.kind === 'listening' ? 'listening' : 'reading';
@@ -2204,7 +2215,12 @@ window.App = window.App || {};
           '<div class="mg-main">' +
           '<div class="mg-top"><span class="chip chip-type">' + esc(g.type || '题目') + '</span>' +
           '<strong>' + esc(g.title || '未命名题目') + '</strong></div>' +
-          '<div class="mg-nums">' + nums.map(function (n) { return '<span>' + n + '</span>'; }).join('') + '</div>' +
+          '<div class="mg-nums">' + pairs.map(function (x) {
+            if (g.kind === 'reading') {
+              return '<a class="mg-num" href="#/reading/' + g.setId + '?review=1&q=' + encodeURIComponent(x.qid) + '" title="跳到原文对应句">' + x.no + '</a>';
+            }
+            return '<a class="mg-num" href="' + href + '">' + x.no + '</a>';
+          }).join('') + '</div>' +
           '<span class="mr-note">共 ' + g.items.length + ' 道错题 · 最近 ' + ui.relDay(g.last) + '</span>' +
           '</div>' +
           '<a class="btn btn-ghost small" href="' + href + '">' + icon('arrowRight') + '查看整题</a>' +
