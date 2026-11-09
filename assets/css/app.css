@@ -1755,6 +1755,9 @@ mark.ev.pulse { animation: flash 1.2s ease; }
 .wc-ctx span { display: block; font-size: 11px; color: var(--muted); margin-top: 4px; }
 .wc-ctx-empty { margin-top: 14px; font-size: 12px; color: var(--muted); }
 
+.checkline { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--ink); }
+.checkline input { width: 16px; height: 16px; accent-color: var(--brand); margin: 0; }
+
 .pop-dict { margin-top: 8px; }
 .pop-ipa { font-family: var(--font-display); font-size: 11.5px; color: var(--muted); margin-bottom: 4px; }
 .pop-meta { margin-top: 6px; font-size: 10.5px; color: #a39d8d; }
