@@ -753,6 +753,8 @@ h1, h2, h3, h4, p { margin: 0; }
   gap: 14px;
   padding: 11px 4px;
   border-bottom: 1px dashed var(--line-2);
+  content-visibility: auto;
+  contain-intrinsic-size: 42px;
 }
 .wrow:last-child { border-bottom: none; }
 .w-main { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
@@ -984,7 +986,20 @@ h1, h2, h3, h4, p { margin: 0; }
 .set-card .btn { margin-top: auto; align-self: flex-start; }
 
 .runner { max-width: 1180px; }
-.runner-top { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; flex-wrap: wrap; }
+.runner-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  position: sticky;
+  top: 0;
+  z-index: 25;
+  padding: 10px 0;
+  margin-bottom: 12px;
+  background: rgba(244, 242, 236, .92);
+  backdrop-filter: blur(12px);
+}
+html[data-theme="dark"] .runner-top { background: rgba(17, 22, 20, .92); }
 .back-link { display: inline-flex; align-items: center; gap: 5px; font-size: 13px; color: var(--muted); padding: 6px 2px; }
 .back-link:hover { color: var(--brand); }
 .back-link .ic { width: 15px; height: 15px; }
@@ -1010,6 +1025,7 @@ h1, h2, h3, h4, p { margin: 0; }
 }
 .passage p { margin-bottom: 18px; }
 .passage p:last-child { margin-bottom: 0; }
+mark.ev, .q-mark, .qcard { scroll-margin-top: 78px; }
 mark.ev {
   background: linear-gradient(180deg, rgba(255, 224, 150, .9), rgba(255, 233, 184, .95));
   border-radius: 4px;
@@ -2326,6 +2342,11 @@ html[data-theme="dark"] .btn-danger { background: #9c5548; color: #f7ede9; }
   .runner-top .chip-type { display: none; }
   .passage { padding: 22px; font-size: 15.5px; }
   .toast { max-width: calc(100vw - 40px); }
+  .main { padding: 14px 16px calc(22px + env(safe-area-inset-bottom)); }
+  .page-head { margin-bottom: 16px; }
+  .qcard { padding: 16px; border-radius: 16px; }
+  .runner-top { padding: 8px 0; margin-bottom: 10px; }
+  .reading-grid { gap: 16px; }
   .grade-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .mistake-group { flex-direction: column; align-items: flex-start; gap: 10px; }
   .tr-nums { gap: 22px; }
