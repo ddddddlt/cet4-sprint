@@ -666,9 +666,16 @@ h1, h2, h3, h4, p { margin: 0; }
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 12px 0;
+  padding: 12px 8px;
+  margin: 0 -8px;
   border-bottom: 1px dashed var(--line-2);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background .15s;
 }
+.wb-row:hover { background: var(--surface-2); }
+.wb-row:hover .wb-main strong { color: var(--brand); }
+[data-wb-detail] { cursor: pointer; }
 .wb-row:last-child { border-bottom: none; }
 .wb-main { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; flex: 1; min-width: 0; }
 .wb-main strong { font-family: var(--font-display); font-size: 17px; }
