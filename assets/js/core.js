@@ -47,7 +47,8 @@ window.App = window.App || {};
       attempts: { reading: {}, listening: {}, translation: {} },
       wrong: { words: {}, questions: {} },
       drafts: { translation: {} },
-      custom: []
+      custom: [],
+      wordbook: {}
     };
   }
 
@@ -68,6 +69,7 @@ window.App = window.App || {};
     s.drafts = s.drafts || { translation: {} };
     s.drafts.translation = s.drafts.translation || {};
     s.custom = s.custom || [];
+    s.wordbook = s.wordbook || {};
     return s;
   }
 
@@ -119,6 +121,7 @@ window.App = window.App || {};
     } catch (e) {
       state = defaults();
     }
+    syncWordbookFromWrong();
     applyTheme();
     return state;
   }
@@ -524,7 +527,8 @@ window.App = window.App || {};
     return a;
   }
 
-  function reviewWord(id, grade) {
+  function reviewWord(id, grade, opts) {
+    opts = opts || {};
     var t = Date.now();
     var card = state.cards[id];
     var wasNew = !card;
@@ -532,9 +536,9 @@ window.App = window.App || {};
     var days = gradeCard(card, grade, t);
     var rec = dayRecord();
     rec.reviews += 1;
-    rec.checkDone = (rec.checkDone || 0) + 1;
+    if (opts.daily !== false) rec.checkDone = (rec.checkDone || 0) + 1;
     if (grade >= 2) rec.correct += 1;
-    if (wasNew) rec.newWords += 1;
+    if (wasNew && opts.daily !== false) rec.newWords += 1;
     rec.seconds += 12;
     if (grade === 1) {
       card.wrong = (card.wrong || 0) + 1;
@@ -542,9 +546,64 @@ window.App = window.App || {};
       entry.count += 1;
       entry.last = t;
       state.wrong.words[id] = entry;
+      if (wordMap[id] && !state.wordbook[id]) {
+        state.wordbook[id] = { at: t, source: 'wrong' };
+      }
     }
     save();
     return { days: days, wasNew: wasNew, left: Math.max(0, checkTarget() - rec.checkDone) };
+  }
+
+  /* ---------------- 单词本 ---------------- */
+  function wordbookHas(id) {
+    return !!state.wordbook[id];
+  }
+
+  function wordbookAdd(id, source) {
+    if (!wordMap[id]) return false;
+    if (!state.wordbook[id]) {
+      state.wordbook[id] = { at: Date.now(), source: source || 'manual' };
+    }
+    save();
+    return true;
+  }
+
+  function wordbookRemove(id) {
+    delete state.wordbook[id];
+    save();
+  }
+
+  function wordbookList() {
+    return Object.keys(state.wordbook)
+      .filter(function (id) { return !!wordMap[id]; })
+      .map(function (id) { return { id: id, w: wordMap[id], meta: state.wordbook[id] }; });
+  }
+
+  function wordbookCount() {
+    return wordbookList().length;
+  }
+
+  function wordbookQueue() {
+    var t = todayStart();
+    var due = [], fresh = [], later = [];
+    wordbookList().forEach(function (item) {
+      var c = state.cards[item.id];
+      if (!c) fresh.push(item.id);
+      else if (c.due <= t) due.push(item.id);
+      else later.push(item.id);
+    });
+    return shuffle(due).concat(shuffle(fresh)).concat(shuffle(later));
+  }
+
+  function syncWordbookFromWrong() {
+    var changed = false;
+    Object.keys(state.wrong.words || {}).forEach(function (id) {
+      if (wordMap[id] && !state.wordbook[id]) {
+        state.wordbook[id] = { at: state.wrong.words[id].last || Date.now(), source: 'wrong' };
+        changed = true;
+      }
+    });
+    if (changed) save();
   }
 
   function sensesOf(w) {
@@ -819,6 +878,12 @@ window.App = window.App || {};
     addCheckGroup: addCheckGroup,
     buildCheckQueue: buildCheckQueue,
     reviewWord: reviewWord,
+    wordbookHas: wordbookHas,
+    wordbookAdd: wordbookAdd,
+    wordbookRemove: wordbookRemove,
+    wordbookList: wordbookList,
+    wordbookCount: wordbookCount,
+    wordbookQueue: wordbookQueue,
     sensesOf: sensesOf,
     // 练习
     recordSet: recordSet,
