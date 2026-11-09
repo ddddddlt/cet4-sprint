@@ -11,6 +11,7 @@ window.App = window.App || {};
   var NAV = [
     { key: 'dashboard', href: '#/', label: '首页', ic: 'home' },
     { key: 'vocab', href: '#/vocab', label: '抽查', ic: 'book' },
+    { key: 'wordbook', href: '#/wordbook', label: '单词本', ic: 'bookmark', tab: false },
     { key: 'reading', href: '#/reading', label: '阅读', ic: 'file' },
     { key: 'listening', href: '#/listening', label: '听力', ic: 'headphones' },
     { key: 'translation', href: '#/translation', label: '翻译', ic: 'languages' },
@@ -19,7 +20,7 @@ window.App = window.App || {};
   ];
 
   var TITLES = {
-    dashboard: '首页', vocab: '抽查单词', reading: '阅读', listening: '听力', translation: '翻译',
+    dashboard: '首页', vocab: '抽查单词', wordbook: '单词本', reading: '阅读', listening: '听力', translation: '翻译',
     readingRunner: '仔细阅读', listeningRunner: '听力练习', translationRunner: '翻译练习',
     clozeRunner: '选词填空', matchingRunner: '长篇匹配',
     mistakes: '错题本', settings: '设置', notFound: '页面不存在'
@@ -33,7 +34,7 @@ window.App = window.App || {};
         '</a>';
     }).join('');
 
-    var tabs = NAV.filter(function (n) { return n.key !== 'settings'; }).map(function (n) {
+    var tabs = NAV.filter(function (n) { return n.tab !== false && n.key !== 'settings'; }).map(function (n) {
       return '<a class="tab-item" data-nav="' + n.key + '" href="' + n.href + '">' + icon(n.ic) + '<span>' + n.label + '</span></a>';
     }).join('');
 
@@ -56,6 +57,7 @@ window.App = window.App || {};
       '<header class="topbar">' +
       '<a class="brand mini" href="#/"><span class="brand-mark">四</span><span class="brand-text"><strong>四级冲刺</strong></span></a>' +
       '<div class="topbar-right">' +
+      '<a class="icon-btn" href="#/wordbook" aria-label="单词本">' + icon('bookmark') + '</a>' +
       '<button class="icon-btn" data-theme-toggle aria-label="切换深色模式">' + icon('moon') + '</button>' +
       '<a class="icon-btn" href="#/settings" aria-label="设置">' + icon('settings') + '</a>' +
       '</div>' +
@@ -86,7 +88,7 @@ window.App = window.App || {};
     var parts = p.parts;
     if (!parts.length) return { view: 'dashboard', params: {} };
     var head = parts[0];
-    if (head === 'vocab' || head === 'mistakes' || head === 'settings') return { view: head, params: {} };
+    if (head === 'vocab' || head === 'wordbook' || head === 'mistakes' || head === 'settings') return { view: head, params: {} };
     if (head === 'reading') {
       if (parts[1]) return { view: 'readingRunner', params: { id: parts[1] } };
       return { view: 'reading', params: {} };
