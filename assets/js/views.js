@@ -325,6 +325,12 @@ window.App = window.App || {};
       var total = A.core.allWords().length;
 
       return pageHead('抽查单词', '费曼式回忆 · 每天 ' + target + ' 个 · 10 个一组') +
+        '<a class="card wb-entry" href="#/wordbook">' +
+        '<span class="wb-entry-ic">' + icon('bookmark') + '</span>' +
+        '<span class="wb-entry-main"><strong>单词本</strong><span>收藏不熟的词，按费曼法单独复习</span></span>' +
+        '<span class="wb-entry-count">' + A.core.wordbookCount() + ' 词</span>' +
+        icon('chevron') +
+        '</a>' +
         '<div class="vocab-top">' +
         '<section class="card start-card">' +
         '<div class="start-top">' +
@@ -351,7 +357,8 @@ window.App = window.App || {};
         '<div class="today-row"><span>已掌握</span><strong>' + mastered + ' 个</strong></div>' +
         '<p class="muted small">词库共 ' + total + ' 词；每天抽查量可在设置里调整。</p>' +
         '</section>' +
-        '</div>' + wordCard();
+        '</div>' +
+        wordCard();
     }
 
     function wordCard() {
@@ -466,6 +473,8 @@ window.App = window.App || {};
         '<h2 class="word">' + esc(w.w) + '</h2>' +
         '<div class="word-row center"><span class="ipa">' + esc(w.ph) + '</span>' +
         '<button class="audio-btn small" data-play>' + icon('volume') + '</button></div>' +
+        '<button class="btn btn-ghost small book-btn" data-book>' + icon('bookmark') +
+        (A.core.wordbookHas(w.id) ? '已在单词本' : '加入单词本') + '</button>' +
         '<p class="hint">在心里造句、讲给自己听，再翻面核对</p>' +
         '<button class="btn btn-primary btn-lg" data-flip>' + icon('eye') + '显示释义（空格）</button>' +
         '</div>';
@@ -500,6 +509,17 @@ window.App = window.App || {};
       });
       r.querySelectorAll('[data-play]').forEach(function (b) {
         b.addEventListener('click', function () { ui.tts.speak(w.w, { rate: 0.95 }); });
+      });
+      var bookBtn = r.querySelector('[data-book]');
+      if (bookBtn) bookBtn.addEventListener('click', function () {
+        if (A.core.wordbookHas(w.id)) {
+          A.core.wordbookRemove(w.id);
+          ui.toast('已从单词本移出');
+        } else {
+          A.core.wordbookAdd(w.id, 'manual');
+          ui.toast('已加入单词本', 'success');
+        }
+        renderCard(r);
       });
       var flip = r.querySelector('[data-flip]');
       if (flip) flip.addEventListener('click', function () { s.flipped = true; renderCard(r); });
@@ -604,6 +624,193 @@ window.App = window.App || {};
         checkSession = null;
         ui.tts.cancel();
         if (checkKeys) { document.removeEventListener('keydown', checkKeys); checkKeys = null; }
+      }
+    };
+  };
+
+  /* ================= 单词本 ================= */
+  views.wordbook = function () {
+    var root = null;
+    var session = null;
+
+    function render() {
+      if (!root) return;
+      if (session) renderRunner();
+      else renderList();
+    }
+
+    function renderList() {
+      var list = A.core.wordbookList().sort(function (a, b) {
+        return (b.meta.at || 0) - (a.meta.at || 0);
+      });
+      var rows = list.map(function (item) {
+        return '<div class="wb-row">' +
+          '<div class="wb-main"><strong>' + esc(item.w.w) + '</strong>' +
+          '<span class="w-ipa">' + esc(item.w.ph) + '</span>' +
+          '<span class="w-zh">' + esc(item.w.zh) + '</span></div>' +
+          '<span class="chip">' + (item.meta.source === 'wrong' ? '错词' : '手动') + '</span>' +
+          '<button class="icon-btn" data-wb-del="' + esc(item.id) + '" aria-label="移出">' + icon('trash') + '</button>' +
+          '</div>';
+      }).join('');
+
+      root.innerHTML = pageHead('单词本', '收藏不熟的词 · 费曼式单独复习') +
+        '<div class="wb-toolbar">' +
+        '<button class="btn btn-primary" data-wb-start' + (list.length ? '' : ' disabled') + '>' + icon('play') + '开始复习</button>' +
+        '<a class="btn btn-ghost" href="#/vocab">去抽查</a>' +
+        (list.length ? '<button class="btn btn-danger-ghost" data-wb-clear>' + icon('trash') + '清空</button>' : '') +
+        '</div>' +
+        (list.length
+          ? '<section class="card wb-list">' + rows + '</section>'
+          : '<div class="card">' + emptyState('bookmark', '单词本还是空的',
+            '抽查时遇到不熟的词点「加入单词本」；答错的词会自动收进来',
+            '<a class="btn btn-primary" href="#/vocab">去抽查</a>') + '</div>');
+
+      var start = root.querySelector('[data-wb-start]');
+      if (start) start.addEventListener('click', function () {
+        var ids = A.core.wordbookQueue();
+        if (!ids.length) { ui.toast('单词本里还没有词'); return; }
+        session = { ids: ids, idx: 0, flipped: false, stats: { 1: 0, 2: 0, 3: 0 }, startTs: Date.now() };
+        render();
+      });
+
+      var clear = root.querySelector('[data-wb-clear]');
+      if (clear) clear.addEventListener('click', function () {
+        ui.modal({
+          title: '清空单词本？',
+          body: '<p>只清空单词本，不影响抽查进度和错题记录。</p>',
+          okText: '清空', danger: true,
+          onOk: function () {
+            A.core.wordbookList().forEach(function (item) { A.core.wordbookRemove(item.id); });
+            render();
+            ui.toast('单词本已清空');
+          }
+        });
+      });
+
+      root.querySelectorAll('[data-wb-del]').forEach(function (b) {
+        b.addEventListener('click', function () {
+          A.core.wordbookRemove(b.getAttribute('data-wb-del'));
+          render();
+          ui.toast('已移出单词本');
+        });
+      });
+    }
+
+    function renderRunner() {
+      var s = session;
+      if (s.idx >= s.ids.length) { renderSummary(); return; }
+      var w = A.core.getWord(s.ids[s.idx]);
+      if (!w) { s.idx += 1; renderRunner(); return; }
+      var senses = A.core.sensesOf(w).map(function (x, i) {
+        return '<div class="sense"><span class="sense-no">' + (i + 1) + '</span><span>' + esc(x) + '</span></div>';
+      }).join('');
+
+      root.innerHTML = '<div class="study wb-study">' +
+        '<div class="study-bar">' +
+        '<button class="icon-btn" data-wb-back aria-label="返回">' + icon('arrowLeft') + '</button>' +
+        '<div class="study-mid">' + bar((s.idx + 1) / s.ids.length) +
+        '<span class="study-count">' + (s.idx + 1) + ' / ' + s.ids.length + '</span></div>' +
+        '<span class="chip">单词本</span>' +
+        '</div>' +
+        '<div class="check-card' + (s.flipped ? ' flipped' : '') + '">' +
+        (s.flipped
+          ? '<div class="check-back">' +
+            '<div class="check-back-head"><h2 class="word">' + esc(w.w) + '</h2>' +
+            '<button class="audio-btn small" data-play>' + icon('volume') + '</button>' +
+            '<span class="ipa">' + esc(w.ph) + '</span><span class="pos">' + esc(w.pos) + '</span></div>' +
+            '<div class="senses">' + senses + '</div>' +
+            (w.ex ? '<div class="wd-ex">' + esc(w.ex) + '</div><div class="wd-exzh">' + esc(w.exZh || '') + '</div>' : '') +
+            '<div class="rate-row">' +
+            '<button class="rate-btn bad" data-wb-grade="1"><strong>忘了</strong><span>明天再来</span></button>' +
+            '<button class="rate-btn mid" data-wb-grade="2"><strong>模糊</strong><span>几天后</span></button>' +
+            '<button class="rate-btn good" data-wb-grade="3"><strong>记得</strong><span>拉长间隔</span></button>' +
+            '</div><p class="hint">按 1 / 2 / 3 也可以</p></div>'
+          : '<div class="check-front">' +
+            '<div class="q-type">先自己说一遍意思</div>' +
+            '<h2 class="word">' + esc(w.w) + '</h2>' +
+            '<div class="word-row center"><span class="ipa">' + esc(w.ph) + '</span>' +
+            '<button class="audio-btn small" data-play>' + icon('volume') + '</button></div>' +
+            '<p class="hint">在心里造句、讲给自己听，再翻面核对</p>' +
+            '<button class="btn btn-primary btn-lg" data-wb-flip>' + icon('eye') + '显示释义（空格）</button>' +
+            '</div>') +
+        '</div></div>';
+
+      root.querySelector('[data-wb-back]').addEventListener('click', function () {
+        session = null;
+        render();
+      });
+      root.querySelectorAll('[data-play]').forEach(function (b) {
+        b.addEventListener('click', function () { ui.tts.speak(w.w, { rate: 0.95 }); });
+      });
+      var flip = root.querySelector('[data-wb-flip]');
+      if (flip) flip.addEventListener('click', function () { s.flipped = true; renderRunner(); });
+      root.querySelectorAll('[data-wb-grade]').forEach(function (b) {
+        b.addEventListener('click', function () { gradeWord(+b.getAttribute('data-wb-grade')); });
+      });
+    }
+
+    function gradeWord(g) {
+      var s = session;
+      A.core.reviewWord(s.ids[s.idx], g, { daily: false });
+      s.stats[g] += 1;
+      s.idx += 1;
+      s.flipped = false;
+      if (s.idx >= s.ids.length) renderSummary();
+      else renderRunner();
+    }
+
+    function renderSummary() {
+      var s = session;
+      root.innerHTML = pageHead('单词本复习完成', '这一轮 ' + s.ids.length + ' 个词') +
+        '<section class="card wb-summary">' +
+        '<div class="tr-nums">' +
+        '<div><strong>' + s.stats[3] + '</strong><span>记得</span></div>' +
+        '<div><strong>' + s.stats[2] + '</strong><span>模糊</span></div>' +
+        '<div><strong>' + s.stats[1] + '</strong><span>忘了</span></div>' +
+        '</div>' +
+        '<p class="muted small">忘了的词会留在错词本和单词本里，明天回到复习队列。</p>' +
+        '<div class="wb-summary-actions">' +
+        '<button class="btn btn-primary" data-wb-again>' + icon('rotate') + '再来一轮</button>' +
+        '<button class="btn btn-ghost" data-wb-done>返回单词本</button>' +
+        '</div></section>';
+      root.querySelector('[data-wb-again]').addEventListener('click', function () {
+        session = { ids: A.core.wordbookQueue(), idx: 0, flipped: false, stats: { 1: 0, 2: 0, 3: 0 }, startTs: Date.now() };
+        if (!session.ids.length) { session = null; render(); return; }
+        render();
+      });
+      root.querySelector('[data-wb-done]').addEventListener('click', function () {
+        session = null;
+        render();
+      });
+    }
+
+    var wbKeys = null;
+    function bindKeys() {
+      wbKeys = function (e) {
+        if (!session) return;
+        if (e.key === ' ' || e.key === 'Enter') {
+          if (!session.flipped) {
+            e.preventDefault();
+            session.flipped = true;
+            renderRunner();
+          }
+          return;
+        }
+        if (session.flipped && /^[123]$/.test(e.key)) {
+          e.preventDefault();
+          gradeWord(+e.key);
+        }
+      };
+      document.addEventListener('keydown', wbKeys);
+    }
+
+    return {
+      html: '',
+      mount: function (r) { root = r; render(); bindKeys(); },
+      destroy: function () {
+        session = null;
+        ui.tts.cancel();
+        if (wbKeys) { document.removeEventListener('keydown', wbKeys); wbKeys = null; }
       }
     };
   };
