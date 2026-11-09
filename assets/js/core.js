@@ -24,8 +24,8 @@ window.App = window.App || {};
   function defaultExamDate() {
     var now = new Date();
     var year = now.getFullYear();
-    var dec = new Date(year, 11, 19);
-    if (dec.getTime() < startOfDay(now.getTime())) dec = new Date(year + 1, 11, 19);
+    var dec = new Date(year, 11, 13);
+    if (dec.getTime() < startOfDay(now.getTime())) dec = new Date(year + 1, 11, 13);
     return dateKey(dec.getTime());
   }
 
@@ -59,6 +59,10 @@ window.App = window.App || {};
     s.version = 1;
     s.createdAt = s.createdAt || Date.now();
     s.settings = Object.assign({}, d.settings, s.settings || {});
+    // 考试日期改为 12 月 13 日：旧默认值自动迁移，用户手动改过的其它日期保留
+    if (!s.settings.examDate || /^\d{4}-12-19$/.test(s.settings.examDate)) {
+      s.settings.examDate = defaultExamDate();
+    }
     s.cards = s.cards || {};
     s.daily = s.daily || {};
     s.attempts = s.attempts || { reading: {}, listening: {}, translation: {} };
