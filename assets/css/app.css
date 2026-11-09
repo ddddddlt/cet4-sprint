@@ -9,7 +9,7 @@
   --surface-2: #faf7ef;
   --ink: #1b2a27;
   --ink-2: #3d4c48;
-  --muted: #7d8883;
+  --muted: #69746e;
   --line: #e6e1d4;
   --line-2: #efeade;
   --brand: #12655a;
@@ -431,6 +431,7 @@ h1, h2, h3, h4, p { margin: 0; }
   background: rgba(255, 255, 255, .1);
   padding: 6px 12px;
   border-radius: 999px;
+  white-space: nowrap;
 }
 .hero-note .ic { width: 14px; height: 14px; color: #f0b45c; }
 .hero-note strong { color: #fff; }
@@ -468,7 +469,7 @@ h1, h2, h3, h4, p { margin: 0; }
 }
 .stat-body { display: flex; flex-direction: column; min-width: 0; }
 .stat-label { font-size: 11.5px; color: var(--muted); }
-.stat-value { font-family: var(--font-display); font-size: 23px; line-height: 1.2; margin-top: 1px; }
+.stat-value { font-family: var(--font-display); font-size: 23px; line-height: 1.2; margin-top: 1px; white-space: nowrap; }
 .stat-sub { font-size: 11px; color: #a09a89; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 .tone-amber .stat-ic { background: var(--amber-soft); color: var(--amber); }
@@ -1836,6 +1837,8 @@ textarea.input { resize: vertical; line-height: 1.6; font-family: inherit; }
    设置
    ========================================================================== */
 .settings-grid { align-items: start; }
+.settings-grid .sync-card { grid-column: 1 / -1; }
+.sync-card .form { max-width: 620px; }
 .form { display: flex; flex-direction: column; gap: 18px; }
 .field { display: flex; flex-direction: column; gap: 7px; }
 .field-label { font-size: 13px; font-weight: 600; color: var(--ink-2); }
@@ -1977,6 +1980,7 @@ textarea.input { resize: vertical; line-height: 1.6; font-family: inherit; }
     flex: 1 1 auto;
     min-height: 0;
     overflow-y: auto;
+    overscroll-behavior: contain;
     -webkit-overflow-scrolling: touch;
     padding: 12px 18px calc(24px + env(safe-area-inset-bottom));
   }
@@ -2001,12 +2005,20 @@ textarea.input { resize: vertical; line-height: 1.6; font-family: inherit; }
     align-items: center;
     gap: 3px;
     padding: 5px 0;
+    margin: 0 2px;
+    min-width: 0;
+    white-space: nowrap;
     font-size: 10.5px;
     color: var(--muted);
     border-radius: 10px;
   }
   .tab-item .ic { width: 20px; height: 20px; }
-  .tab-item.on { color: var(--brand); }
+  .tab-item.on { color: var(--brand); background: var(--brand-soft); }
+
+  .topbar .icon-btn { width: 40px; height: 40px; }
+  .btn { min-height: 44px; }
+  .btn.small { min-height: 36px; }
+  .input, textarea.input, select.input { font-size: 16px; }
 
   .grid-2, .vocab-top, .reading-grid, .listening-layout, .translation-grid { grid-template-columns: 1fr; }
   .cloze-grid, .matching-grid { grid-template-columns: 1fr; }
@@ -2066,6 +2078,21 @@ textarea.input { resize: vertical; line-height: 1.6; font-family: inherit; }
   .cloze-passage { font-size: 15px; line-height: 2.05; padding: 20px; }
   .matching-passage { padding: 20px; }
   .stmt-select { width: 84px; font-size: 12px; }
+}
+
+@media (max-width: 380px) {
+  .hero { padding: 20px 18px; gap: 16px; }
+  .hero h1 { font-size: 20px; }
+  .hero h1 em { font-size: 34px; }
+  .hero-side { gap: 8px; }
+  .hero-ring { transform: scale(.72); transform-origin: left center; }
+  .hero-note { font-size: 11px; padding: 5px 10px; }
+  .stat { padding: 11px 12px; gap: 8px; }
+  .stat-ic { width: 32px; height: 32px; }
+  .stat-value { font-size: 19px; }
+  .tab-item { font-size: 9.5px; margin: 0 1px; }
+  .page-head h1 { font-size: 22px; }
+  .brand-text strong { font-size: 14px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
