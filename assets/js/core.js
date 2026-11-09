@@ -119,6 +119,101 @@ window.App = window.App || {};
     return state;
   }
 
+  /* ---------------- 云同步（GitHub 仓库文件） ---------------- */
+  var SYNC_KEY = 'cet4-sprint/sync/v1';
+  var SYNC_REPO = 'ddddddlt/cet4-sprint';
+  var SYNC_PATH = 'sync/progress.json';
+
+  function b64encode(str) {
+    var bytes = new TextEncoder().encode(str);
+    var bin = '';
+    for (var i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+    return window.btoa(bin);
+  }
+
+  function b64decode(b64) {
+    var bin = window.atob(String(b64).replace(/\s/g, ''));
+    var bytes = new Uint8Array(bin.length);
+    for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    return new TextDecoder('utf-8').decode(bytes);
+  }
+
+  function syncConfig() {
+    try {
+      return JSON.parse(window.localStorage.getItem(SYNC_KEY) || '{}') || {};
+    } catch (e) {
+      return {};
+    }
+  }
+
+  function syncSaveConfig(patch) {
+    var cfg = syncConfig();
+    Object.keys(patch || {}).forEach(function (k) { cfg[k] = patch[k]; });
+    try { window.localStorage.setItem(SYNC_KEY, JSON.stringify(cfg)); } catch (e) { /* ignore */ }
+    return cfg;
+  }
+
+  function syncRequest(path, opts) {
+    opts = opts || {};
+    var cfg = syncConfig();
+    var headers = { 'Accept': 'application/vnd.github+json' };
+    if (cfg.token) headers.Authorization = 'Bearer ' + cfg.token;
+    if (opts.body) headers['Content-Type'] = 'application/json';
+    return window.fetch('https://api.github.com' + path, {
+      method: opts.method || 'GET',
+      headers: headers,
+      body: opts.body ? JSON.stringify(opts.body) : undefined,
+      cache: 'no-store'
+    }).then(function (r) {
+      if (r.status === 404) return null;
+      if (r.status === 401 || r.status === 403) throw new Error('Token 无效或没有仓库权限');
+      if (!r.ok) throw new Error('GitHub ' + r.status);
+      return r.json();
+    });
+  }
+
+  function syncRemote() {
+    return syncRequest('/repos/' + SYNC_REPO + '/contents/' + SYNC_PATH + '?ref=main&t=' + Date.now()).then(function (data) {
+      if (!data || !data.content) return null;
+      var payload = JSON.parse(b64decode(data.content));
+      payload.sha = data.sha;
+      return payload;
+    });
+  }
+
+  function syncPush() {
+    var cfg = syncConfig();
+    if (!cfg.token) return Promise.reject(new Error('还没有填 GitHub Token'));
+    var snapshot = JSON.parse(JSON.stringify(state));
+    var payload = {
+      v: 1,
+      savedAt: Date.now(),
+      device: String(navigator.userAgent || '').slice(0, 60),
+      state: snapshot
+    };
+    return syncRemote().then(function (remote) {
+      var body = {
+        message: 'sync progress ' + new Date().toISOString(),
+        content: b64encode(JSON.stringify(payload)),
+        branch: 'main'
+      };
+      if (remote && remote.sha) body.sha = remote.sha;
+      return syncRequest('/repos/' + SYNC_REPO + '/contents/' + SYNC_PATH, { method: 'PUT', body: body })
+        .then(function (res) {
+          if (!res) throw new Error('上传失败');
+          syncSaveConfig({ lastPush: payload.savedAt });
+          return payload;
+        });
+    });
+  }
+
+  function syncPull() {
+    return syncRemote().then(function (p) {
+      if (p) syncSaveConfig({ lastPull: p.savedAt });
+      return p;
+    });
+  }
+
   /* ---------------- 词库 ---------------- */
   var words = (window.CET4_WORDS || []).slice();
   words.sort(function (a, b) {
@@ -585,6 +680,10 @@ window.App = window.App || {};
     reset: reset,
     exportJSON: exportJSON,
     importJSON: importJSON,
+    syncConfig: syncConfig,
+    syncSaveConfig: syncSaveConfig,
+    syncPush: syncPush,
+    syncPull: syncPull,
     storageOK: function () { return storageOK; },
     // 词库
     allWords: allWords,
