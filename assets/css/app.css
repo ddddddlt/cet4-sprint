@@ -32,6 +32,32 @@
   --font-display: Georgia, "Times New Roman", "Songti SC", "SimSun", serif;
 }
 
+html[data-theme="dark"] {
+  --bg: #111614;
+  --surface: #1a211d;
+  --surface-2: #151b18;
+  --ink: #e8efea;
+  --ink-2: #c2cdc6;
+  --muted: #93a099;
+  --line: #2a342e;
+  --line-2: #222b26;
+  --brand: #5fc9ad;
+  --brand-2: #74d6bb;
+  --brand-ink: #bcebdd;
+  --brand-soft: #17322b;
+  --amber: #e2a854;
+  --amber-soft: #33291a;
+  --blue: #8db6d9;
+  --blue-soft: #1b2a36;
+  --plum: #c3a4cd;
+  --plum-soft: #2c2331;
+  --red: #e19084;
+  --red-soft: #3a231f;
+  --green: #75cba3;
+  --green-soft: #163127;
+  --shadow: 0 1px 2px rgba(0, 0, 0, .5), 0 18px 40px -28px rgba(0, 0, 0, .85);
+}
+
 * { box-sizing: border-box; }
 
 html, body { margin: 0; padding: 0; }
@@ -1937,6 +1963,55 @@ textarea.input { resize: vertical; line-height: 1.6; font-family: inherit; }
 .modal-head .icon-btn { width: 32px; height: 32px; border: none; background: transparent; }
 .modal-body { padding: 14px 20px 4px; font-size: 13.5px; color: var(--ink-2); line-height: 1.65; }
 .modal-foot { display: flex; justify-content: flex-end; gap: 10px; padding: 18px 20px; }
+
+/* ==========================================================================
+   深色模式组件覆盖
+   ========================================================================== */
+html[data-theme="dark"] ::selection { background: #2b4a3f; }
+html[data-theme="dark"] .passage { color: #d8e3dc; }
+html[data-theme="dark"] .hero {
+  background: radial-gradient(120% 150% at 88% -10%, #24725f 0%, #175247 42%, #0d3a33 100%);
+}
+html[data-theme="dark"] .tabbar { background: rgba(17, 22, 20, .94); }
+html[data-theme="dark"] .toast { background: #26332e; border: 1px solid #35443c; color: #e9f0eb; }
+html[data-theme="dark"] .toast .ic { color: #7fd6b9; }
+html[data-theme="dark"] .study-card { box-shadow: 0 24px 50px -40px rgba(0, 0, 0, .95); }
+html[data-theme="dark"] .heat-cell { background: #232c27; }
+html[data-theme="dark"] .heat-cell.lv1 { background: #1b3a2e; }
+html[data-theme="dark"] .heat-cell.lv2 { background: #245843; }
+html[data-theme="dark"] .heat-cell.lv3 { background: #3b8a6a; }
+html[data-theme="dark"] .heat-cell.lv4 { background: #63c5a3; }
+html[data-theme="dark"] .heat-legend i { background: #232c27; }
+html[data-theme="dark"] .heat-legend i.lv1 { background: #1b3a2e; }
+html[data-theme="dark"] .heat-legend i.lv2 { background: #245843; }
+html[data-theme="dark"] .heat-legend i.lv3 { background: #3b8a6a; }
+html[data-theme="dark"] .heat-legend i.lv4 { background: #63c5a3; }
+html[data-theme="dark"] .bar { background: #242d28; }
+html[data-theme="dark"] .status-new { background: #232c27; border-color: transparent; color: #93a099; }
+html[data-theme="dark"] .opt-key { background: #232c27; color: #b9c5be; }
+html[data-theme="dark"] .option:hover:not(:disabled),
+html[data-theme="dark"] .bank-word:hover { background: #202a25; border-color: #3a4a42; }
+html[data-theme="dark"] .option.correct .opt-key { background: #1d4335; color: #9fe0c8; }
+html[data-theme="dark"] .option.wrong .opt-key { background: #45251f; color: #f0b0a5; }
+html[data-theme="dark"] .btn-ghost:hover { background: #202a25; border-color: #34443c; }
+html[data-theme="dark"] .btn-soft:hover { background: #1d3a32; }
+html[data-theme="dark"] .btn-light:hover { background: #222b26; }
+html[data-theme="dark"] .btn-danger-ghost:hover { background: #3a221e; }
+html[data-theme="dark"] .input:focus,
+html[data-theme="dark"] .answer-area:focus { background: #1d2621; }
+html[data-theme="dark"] .empty .ic { color: #4b564f; }
+html[data-theme="dark"] .banner.tip span { color: #e2b878; }
+html[data-theme="dark"] .banner.warn span { color: #e8a49b; }
+html[data-theme="dark"] .modal-mask { background: rgba(5, 9, 7, .62); }
+html[data-theme="dark"] .popover { background: #1d2621; }
+html[data-theme="dark"] .stmt.ok .stmt-select { color: #9fe0c8; }
+html[data-theme="dark"] .stmt.bad .stmt-select { color: #f0b0a5; }
+html[data-theme="dark"] .btn-primary { color: #08231c; box-shadow: 0 10px 20px -14px rgba(0, 0, 0, .6); }
+html[data-theme="dark"] .btn-primary:hover { color: #08231c; }
+html[data-theme="dark"] .btn-light { background: #e9f1ec; color: #12241e; }
+html[data-theme="dark"] .btn-light:hover { background: #f5faf6; }
+html[data-theme="dark"] .btn-danger { color: #1b0f0c; }
+html[data-theme="dark"] .btn-danger-ghost { color: #f2b0a5; }
 
 /* ==========================================================================
    响应式
