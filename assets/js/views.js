@@ -399,9 +399,12 @@ window.App = window.App || {};
           '<span class="chip status-' + status.cls + '">' + esc(status.text) + '</span>' +
           '<span class="wrow-go">' + icon('chevron') + '</span>' +
           '</div>');
-        if (rows.length >= 300) break;
+        if (rows.length >= 120) break;
       }
-      if (rows.length) return rows.join('');
+      if (rows.length) {
+        return rows.join('') + (keyword ? '' :
+          '<p class="muted small pad">仅显示前 120 个，输入关键词可搜索全部 ' + A.core.allWords().length + ' 词</p>');
+      }
       var q = String(keyword || '').trim();
       return q
         ? '<div class="pad"><p class="muted small">词库里没有「' + esc(q) + '」</p>' +
@@ -421,7 +424,15 @@ window.App = window.App || {};
       });
       var input = r.querySelector('#word-search');
       var list = r.querySelector('#word-list');
-      if (input && list) input.addEventListener('input', function () { list.innerHTML = wordRows(input.value); });
+      if (input && list) {
+        var searchTimer = null;
+        input.addEventListener('input', function () {
+          if (searchTimer) clearTimeout(searchTimer);
+          searchTimer = setTimeout(function () {
+            list.innerHTML = wordRows(input.value);
+          }, 120);
+        });
+      }
       if (list) {
         list.addEventListener('click', function (e) {
           var db = e.target && e.target.closest ? e.target.closest('[data-dict-lookup]') : null;
@@ -905,6 +916,33 @@ window.App = window.App || {};
 
     function showAnswer() { return submitted || review; }
 
+    function scrollToTarget(el, smooth) {
+      if (!el) return;
+      var main = document.querySelector('.main');
+      var rect = el.getBoundingClientRect();
+      var behavior = 'auto';
+      if (main && main.scrollHeight > main.clientHeight + 4 && getComputedStyle(main).overflowY !== 'visible') {
+        var mrect = main.getBoundingClientRect();
+        var top = main.scrollTop + rect.top - mrect.top - Math.min(140, main.clientHeight * 0.3);
+        main.scrollTo({ top: Math.max(0, top), behavior: behavior });
+      } else {
+        window.scrollTo({ top: Math.max(0, window.scrollY + rect.top - 120), behavior: behavior });
+      }
+    }
+
+    function jumpToQ(rootEl, qid, instant) {
+      var mark = rootEl.querySelector('mark[data-q="' + qid + '"]') ||
+        rootEl.querySelector('.q-mark[data-q="' + qid + '"]');
+      if (!mark) return;
+      scrollToTarget(mark, !instant);
+      mark.classList.add('pulse');
+      if (mark.classList.contains('q-mark')) mark.classList.add('hit');
+      setTimeout(function () {
+        mark.classList.remove('pulse');
+        mark.classList.remove('hit');
+      }, 1800);
+    }
+
     function sentenceStart(p, idx) {
       var cut = Math.max(p.lastIndexOf('. ', idx), p.lastIndexOf('? ', idx), p.lastIndexOf('! ', idx));
       return cut >= 0 ? cut + 2 : 0;
@@ -995,7 +1033,7 @@ window.App = window.App || {};
           '<div class="ex-evidence">' + icon('target') + '<span>定位句已在左侧高亮</span></div></div>'
           : '';
         return '<div class="qcard' + (isWrong ? ' wrong' : '') + '" data-qid="' + q.id + '">' +
-          '<div class="q-head"><span class="q-no' + (isWrong ? ' bad' : '') + '" title="跳到原文对应句">' + (idx + 1) + '</span><p class="q-stem">' + esc(q.stem) + '</p></div>' +
+          '<div class="q-head"><span class="q-no' + (isWrong ? ' bad' : '') + '" data-jump="' + q.id + '" title="跳到原文对应句">' + (idx + 1) + '</span><p class="q-stem">' + esc(q.stem) + '</p></div>' +
           '<div class="opts">' + q.options.map(function (o, i) { return optionHtml(q, i); }).join('') + '</div>' +
           explain + '</div>';
       }).join('');
@@ -1042,7 +1080,7 @@ window.App = window.App || {};
     }
 
     function bind(root) {
-      if (!submitted) {
+      if (!showAnswer()) {
         root.querySelectorAll('.opt').forEach(function (b) {
           b.addEventListener('click', function () {
             answers[b.getAttribute('data-q')] = +b.getAttribute('data-i');
@@ -1054,14 +1092,13 @@ window.App = window.App || {};
       } else {
         root.querySelectorAll('.q-head').forEach(function (h) {
           h.addEventListener('click', function () {
-            var qid = h.parentNode.getAttribute('data-qid');
-            var mark = root.querySelector('mark[data-q="' + qid + '"]');
-            if (mark) {
-              mark.scrollIntoView({ behavior: 'smooth', block: 'center' });
-              mark.classList.remove('pulse');
-              void mark.offsetWidth;
-              mark.classList.add('pulse');
-            }
+            jumpToQ(root, h.parentNode.getAttribute('data-qid'), false);
+          });
+        });
+        root.querySelectorAll('[data-jump]').forEach(function (b) {
+          b.addEventListener('click', function (e) {
+            e.stopPropagation();
+            jumpToQ(root, b.getAttribute('data-jump'), false);
           });
         });
       }
@@ -1069,7 +1106,7 @@ window.App = window.App || {};
         m.addEventListener('click', function () {
           var card = root.querySelector('.qcard[data-qid="' + m.getAttribute('data-q') + '"]');
           if (card) {
-            card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            scrollToTarget(card, true);
             card.classList.remove('pulse');
             void card.offsetWidth;
             card.classList.add('pulse');
@@ -1155,14 +1192,7 @@ window.App = window.App || {};
         bindWordPopover(root);
         if (ctx.query && ctx.query.q) {
           var target = ctx.query.q;
-          setTimeout(function () {
-            var mark = root.querySelector('mark[data-q="' + target + '"]') ||
-              root.querySelector('.q-mark[data-q="' + target + '"]');
-            if (!mark) return;
-            mark.scrollIntoView({ block: 'center' });
-            mark.classList.add('hit');
-            setTimeout(function () { mark.classList.remove('hit'); }, 1800);
-          }, 250);
+          setTimeout(function () { jumpToQ(root, target, true); }, 250);
         }
       },
       destroy: function () { if (interval) { clearInterval(interval); interval = null; } }
