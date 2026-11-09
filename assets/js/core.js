@@ -654,8 +654,7 @@ window.App = window.App || {};
     save();
   }
 
-  function wrongQuestion(qid, kind, setId, meta) {
-    var entry = state.wrong.questions[qid] || { count: 0, last: 0, kind: kind, setId: setId };
+  function wrongQuestion(qid, kind, setId, meta) {    var entry = state.wrong.questions[qid] || { count: 0, last: 0, kind: kind, setId: setId };
     entry.count += 1;
     entry.last = Date.now();
     entry.kind = kind;
@@ -673,6 +672,18 @@ window.App = window.App || {};
 
   function attempt(kind, setId) {
     return (state.attempts[kind] || {})[setId] || null;
+  }
+
+  function wrongQuestions() {
+    return Object.keys(state.wrong.questions).map(function (qid) {
+      var e = state.wrong.questions[qid];
+      return {
+        qid: qid, kind: e.kind || 'reading', setId: e.setId,
+        count: e.count || 1, last: e.last || 0,
+        title: e.title || '', type: e.type || '',
+        stem: e.stem || '', answer: e.answer || '', explain: e.explain || ''
+      };
+    });
   }
 
   /* ---------------- 统计 ---------------- */
@@ -888,6 +899,7 @@ window.App = window.App || {};
     // 练习
     recordSet: recordSet,
     wrongQuestion: wrongQuestion,
+    wrongQuestions: wrongQuestions,
     attempt: attempt,
     // 自定义
     customList: customList,
