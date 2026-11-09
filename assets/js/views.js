@@ -874,35 +874,79 @@ window.App = window.App || {};
     }
     var answers = {};
     var submitted = false;
+    var review = !!(ctx.query && ctx.query.review === '1');
+    var wrongIds = review ? A.core.wrongQuestions().filter(function (e) {
+      return e.kind === 'reading' && e.setId === set.id;
+    }).map(function (e) { return e.qid; }) : [];
     var startedAt = Date.now();
     var elapsed = 0;
     var result = null;
 
-    function passageHtml() {
-      if (!submitted) {
-        return set.passage.split(/\n{2,}/).map(function (p) { return '<p>' + ui.linkWords(p) + '</p>'; }).join('');
-      }
-      var marks = set.questions.filter(function (q) { return answers[q.id] !== q.answer; }).map(function (q) {
-        return { qid: q.id, text: q.evidence };
-      });
-      return set.passage.split(/\n{2,}/).map(function (p) { return '<p>' + markParagraph(p, marks) + '</p>'; }).join('');
+    function showAnswer() { return submitted || review; }
+
+    function sentenceStart(p, idx) {
+      var cut = Math.max(p.lastIndexOf('. ', idx), p.lastIndexOf('? ', idx), p.lastIndexOf('! ', idx));
+      return cut >= 0 ? cut + 2 : 0;
     }
 
-    function markParagraph(p, marks) {
-      var ranges = [];
+    function passageHtml() {
+      var marks;
+      if (review) {
+        marks = set.questions.map(function (q, idx) {
+          return { qid: q.id, text: q.evidence || '', no: idx + 1, wrong: wrongIds.indexOf(q.id) >= 0 };
+        });
+        return set.passage.split(/\n{2,}/).map(function (p) {
+          return '<p>' + markParagraph(p, marks, true) + '</p>';
+        }).join('');
+      }
+      if (!showAnswer()) {
+        return set.passage.split(/\n{2,}/).map(function (p) { return '<p>' + ui.linkWords(p) + '</p>'; }).join('');
+      }
+      marks = set.questions.map(function (q, idx) {
+        return { qid: q.id, text: q.evidence || '', no: idx + 1, wrong: answers[q.id] !== q.answer };
+      }).filter(function (m) { return m.wrong; });
+      return set.passage.split(/\n{2,}/).map(function (p) { return '<p>' + markParagraph(p, marks, false) + '</p>'; }).join('');
+    }
+
+    function markParagraph(p, marks, withMarkers) {
+      var items = [];
       marks.forEach(function (m) {
+        if (!m.text) return;
         var i = p.indexOf(m.text);
-        if (i >= 0) ranges.push({ start: i, end: i + m.text.length, qid: m.qid });
+        if (i < 0) return;
+        items.push({
+          start: i, end: i + m.text.length, qid: m.qid, no: m.no, wrong: m.wrong,
+          marker: withMarkers ? sentenceStart(p, i) : -1
+        });
       });
-      if (!ranges.length) return ui.linkWords(p);
-      ranges.sort(function (a, b) { return a.start - b.start; });
+      if (!items.length) return ui.linkWords(p);
+      items.sort(function (a, b) { return a.start - b.start; });
       var kept = [], last = -1;
-      ranges.forEach(function (r) { if (r.start >= last) { kept.push(r); last = r.end; } });
-      var out = '', cur = 0;
+      items.forEach(function (r) { if (r.start >= last) { kept.push(r); last = r.end; } });
+
+      var events = [];
       kept.forEach(function (r) {
-        out += ui.linkWords(p.slice(cur, r.start));
-        out += '<mark class="ev" data-q="' + r.qid + '">' + ui.linkWords(p.slice(r.start, r.end)) + '</mark>';
-        cur = r.end;
+        if (r.marker >= 0) {
+          events.push({
+            pos: r.marker,
+            html: '<span class="q-mark' + (r.wrong ? ' bad' : '') + '" data-q="' + r.qid + '">' + r.no + '</span>'
+          });
+        }
+        events.push({ pos: r.start, end: r.end, mark: true, qid: r.qid });
+      });
+      events.sort(function (a, b) { return a.pos - b.pos; });
+
+      var out = '', cur = 0;
+      events.forEach(function (ev) {
+        if (ev.pos < cur) return;
+        out += ui.linkWords(p.slice(cur, ev.pos));
+        if (ev.mark) {
+          out += '<mark class="ev" data-q="' + ev.qid + '">' + ui.linkWords(p.slice(ev.pos, ev.end)) + '</mark>';
+          cur = ev.end;
+        } else {
+          out += ev.html;
+          cur = ev.pos;
+        }
       });
       out += ui.linkWords(p.slice(cur));
       return out;
@@ -911,25 +955,26 @@ window.App = window.App || {};
     function optionHtml(q, i) {
       var letter = ['A', 'B', 'C', 'D'][i];
       var cls = 'opt';
-      if (submitted) {
+      if (showAnswer()) {
         if (i === q.answer) cls += ' correct';
         if (answers[q.id] === i && i !== q.answer) cls += ' wrong';
       } else if (answers[q.id] === i) {
         cls += ' sel';
       }
-      return '<button class="' + cls + '" data-q="' + q.id + '" data-i="' + i + '"' + (submitted ? ' disabled' : '') + '>' +
+      return '<button class="' + cls + '" data-q="' + q.id + '" data-i="' + i + '"' + (showAnswer() ? ' disabled' : '') + '>' +
         '<span class="opt-key">' + letter + '</span><span>' + esc(q.options[i]) + '</span></button>';
     }
 
     function questionHtml() {
       return set.questions.map(function (q, idx) {
-        var explain = submitted
+        var isWrong = review && wrongIds.indexOf(q.id) >= 0;
+        var explain = showAnswer()
           ? '<div class="explain"><div class="ex-row"><span class="ex-label">答案</span><strong>' + ['A', 'B', 'C', 'D'][q.answer] + '</strong></div>' +
           '<p>' + esc(q.explain) + '</p>' +
           '<div class="ex-evidence">' + icon('target') + '<span>定位句已在左侧高亮</span></div></div>'
           : '';
-        return '<div class="qcard" data-qid="' + q.id + '">' +
-          '<div class="q-head"><span class="q-no">' + (idx + 1) + '</span><p class="q-stem">' + esc(q.stem) + '</p></div>' +
+        return '<div class="qcard' + (isWrong ? ' wrong' : '') + '" data-qid="' + q.id + '">' +
+          '<div class="q-head"><span class="q-no' + (isWrong ? ' bad' : '') + '">' + (idx + 1) + '</span><p class="q-stem">' + esc(q.stem) + '</p></div>' +
           '<div class="opts">' + q.options.map(function (o, i) { return optionHtml(q, i); }).join('') + '</div>' +
           explain + '</div>';
       }).join('');
@@ -947,16 +992,27 @@ window.App = window.App || {};
         '</div>';
     }
 
+    function reviewBanner() {
+      if (!review) return '';
+      return '<div class="result-banner mid">' +
+        '<div class="rb-text"><h3>错题回顾 · ' + wrongIds.length + ' 道</h3>' +
+        '<p>红色题号是之前做错的题；左侧文章里带数字的句子是对应题的定位句。</p></div>' +
+        '<div class="rb-actions"><a class="btn btn-primary" href="#/reading/' + set.id + '">' + icon('rotate') + '重做本篇</a>' +
+        '<a class="btn btn-ghost" href="#/mistakes">返回错题本</a></div>' +
+        '</div>';
+    }
+
     function shell() {
       return '<div class="runner">' +
         '<div class="runner-top">' +
-        '<a class="back-link" href="#/reading">' + icon('arrowLeft') + '阅读</a>' +
+        '<a class="back-link" href="' + (review ? '#/mistakes' : '#/reading') + '">' + icon('arrowLeft') + (review ? '错题本' : '阅读') + '</a>' +
         '<h1 class="runner-title">' + esc(set.title) + '</h1>' +
-        '<span class="chip chip-type">' + esc(set.type) + '</span>' +
+        '<span class="chip chip-type">' + esc(review ? '错题回顾' : set.type) + '</span>' +
         '<div class="runner-right">' +
-        '<span class="timer" id="timer">' + icon('clock') + ui.mmss(elapsed) + '</span>' +
-        (submitted ? '' : '<button class="btn btn-primary" data-submit>交卷</button>') +
+        (review ? '' : '<span class="timer" id="timer">' + icon('clock') + ui.mmss(elapsed) + '</span>') +
+        (submitted || review ? '' : '<button class="btn btn-primary" data-submit>交卷</button>') +
         '</div></div>' +
+        reviewBanner() +
         resultBanner() +
         '<div class="reading-grid">' +
         '<article class="passage card" id="passage">' + passageHtml() + '</article>' +
@@ -988,6 +1044,17 @@ window.App = window.App || {};
           });
         });
       }
+      root.querySelectorAll('.q-mark').forEach(function (m) {
+        m.addEventListener('click', function () {
+          var card = root.querySelector('.qcard[data-qid="' + m.getAttribute('data-q') + '"]');
+          if (card) {
+            card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            card.classList.remove('pulse');
+            void card.offsetWidth;
+            card.classList.add('pulse');
+          }
+        });
+      });
       var submitBtn = root.querySelector('[data-submit]');
       if (submitBtn) submitBtn.addEventListener('click', function () { trySubmit(root); });
       var retry = root.querySelector('[data-retry]');
@@ -1063,7 +1130,7 @@ window.App = window.App || {};
       html: '',
       mount: function (root) {
         render(root);
-        startTimer(root);
+        if (!review) startTimer(root);
         bindWordPopover(root);
       },
       destroy: function () { if (interval) { clearInterval(interval); interval = null; } }
@@ -2053,29 +2120,77 @@ window.App = window.App || {};
           '</div>';
       }).join('') : emptyState('checkCircle', '还没有错词', '背单词时答错的词会自动收进这里');
 
-      var qRows = qIds.map(function (qid) {
-        var entry = s.wrong.questions[qid];
-        var found = entry.stem ? null : findQuestion(entry.kind, qid);
-        var stem = entry.stem || (found && found.q.stem);
-        if (!stem) return '';
-        var answer = entry.answer || (found ? ['A', 'B', 'C', 'D'][found.q.answer] : '');
-        var explain = entry.explain || (found && found.q.explain) || '';
-        var title = entry.title || (found && found.set.title) || '';
-        var type = entry.type || (found && found.set.type) || '题目';
-        var route = entry.kind === 'cloze' ? 'cloze'
-          : entry.kind === 'matching' ? 'matching'
-            : entry.kind === 'listening' ? 'listening' : 'reading';
-        return '<div class="mistake-row q">' +
-          '<div class="mr-main"><span class="chip chip-type">' + esc(type) + '</span>' +
-          '<strong class="mr-stem">' + esc(stem) + '</strong>' +
-          '<span class="mr-note">' + esc(title) + ' · 错 ' + entry.count + ' 次 · 答案 ' + esc(answer) + '</span>' +
-          (explain ? '<p class="mr-explain">' + esc(explain) + '</p>' : '') +
+      function findSet(kind, setId) {
+        var list = kind === 'cloze' ? (window.CET4_CLOZE || [])
+          : kind === 'matching' ? (window.CET4_MATCHING || [])
+            : kind === 'listening' ? (window.CET4_LISTENING || [])
+              : (window.CET4_READING || []);
+        for (var i = 0; i < list.length; i++) {
+          if (list[i].id === setId) return list[i];
+        }
+        return null;
+      }
+
+      function questionNo(kind, set, qid) {
+        if (!set) return null;
+        var i;
+        if (kind === 'reading' || kind === 'listening') {
+          for (i = 0; i < (set.questions || []).length; i++) {
+            if (set.questions[i].id === qid) return i + 1;
+          }
+        } else if (kind === 'matching') {
+          for (i = 0; i < (set.statements || []).length; i++) {
+            if (set.statements[i].id === qid) return i + 1;
+          }
+        } else if (kind === 'cloze') {
+          var m = /-b(\d+)$/.exec(qid);
+          if (m) return +m[1];
+        }
+        return null;
+      }
+
+      var qEntries = A.core.wrongQuestions();
+      var groups = {};
+      qEntries.forEach(function (e) {
+        var key = (e.kind || 'reading') + '|' + (e.setId || '');
+        var g = groups[key];
+        if (!g) {
+          g = groups[key] = {
+            kind: e.kind || 'reading', setId: e.setId,
+            title: e.title, type: e.type, last: e.last, items: []
+          };
+        }
+        g.items.push(e);
+        if (e.title) g.title = e.title;
+        if (e.type) g.type = e.type;
+        if (e.last > g.last) g.last = e.last;
+      });
+
+      var groupRows = Object.keys(groups).sort(function (a, b) {
+        return (groups[b].last || 0) - (groups[a].last || 0);
+      }).map(function (key) {
+        var g = groups[key];
+        var set = findSet(g.kind, g.setId);
+        if (set) { g.title = set.title; g.type = set.type; }
+        var nums = g.items.map(function (e) { return questionNo(g.kind, set, e.qid); })
+          .filter(function (n) { return n; })
+          .sort(function (a, b) { return a - b; });
+        var route = g.kind === 'cloze' ? 'cloze'
+          : g.kind === 'matching' ? 'matching'
+            : g.kind === 'listening' ? 'listening' : 'reading';
+        var href = '#/' + route + '/' + g.setId + (g.kind === 'reading' ? '?review=1' : '');
+        return '<div class="mistake-group">' +
+          '<div class="mg-main">' +
+          '<div class="mg-top"><span class="chip chip-type">' + esc(g.type || '题目') + '</span>' +
+          '<strong>' + esc(g.title || '未命名题目') + '</strong></div>' +
+          '<div class="mg-nums">' + nums.map(function (n) { return '<span>' + n + '</span>'; }).join('') + '</div>' +
+          '<span class="mr-note">共 ' + g.items.length + ' 道错题 · 最近 ' + ui.relDay(g.last) + '</span>' +
           '</div>' +
-          '<a class="btn btn-ghost small" href="#/' + route + '/' + entry.setId + '">重做</a>' +
+          '<a class="btn btn-ghost small" href="' + href + '">' + icon('arrowRight') + '查看整题</a>' +
           '</div>';
       }).join('');
 
-      var questionsPane = qRows || emptyState('award', '还没有错题', '做完阅读、听力或匹配题，答错的题会自动收进这里');
+      var questionsPane = groupRows || emptyState('award', '还没有错题', '做完阅读、听力或匹配题，答错的题会自动收进这里');
 
       var custom = A.core.customList();
       var customPane = '<div class="mistake-actions"><button class="btn btn-primary" data-add-custom>' + icon('pen') + '添加自定义</button></div>' +
