@@ -2006,6 +2006,9 @@ window.App = window.App || {};
         '<input class="input" type="password" id="sync-token" autocomplete="off" placeholder="' +
         (syncCfg.token ? '已保存，重新粘贴可替换' : 'ghp_...') + '">',
         '只保存在本机浏览器；需要 public_repo 权限，在 github.com/settings/tokens 创建') +
+      field('自动上传',
+        '<label class="checkline"><input type="checkbox" id="sync-auto"' + (syncCfg.auto !== false ? ' checked' : '') + '> 学习记录变化后自动上传（约 6 秒）</label>',
+        '关掉后只能手动点「上传本机进度」') +
       '<div class="form-actions"><button class="btn btn-ghost" id="sync-save-token">' + icon('check') + '保存 Token</button></div>' +
       '</div>' +
       '<div class="data-actions">' +
@@ -2015,7 +2018,8 @@ window.App = window.App || {};
       '<div class="storage-state ' + (syncCfg.token ? 'ok' : 'bad') + '" id="sync-state">' +
       icon(syncCfg.token ? 'checkCircle' : 'alert') +
       '<span>' + (syncCfg.token
-        ? '已配置 · 上次上传 ' + esc(syncFmt(syncCfg.lastPush)) + ' · 上次下载 ' + esc(syncFmt(syncCfg.lastPull))
+        ? '已配置 · 自动上传 ' + (syncCfg.auto !== false ? '开' : '关') +
+          ' · 上次上传 ' + esc(syncFmt(syncCfg.lastPush)) + ' · 上次下载 ' + esc(syncFmt(syncCfg.lastPull))
         : '未配置 Token，云同步不可用') + '</span></div>' +
       '</section>' +
       '</div>';
@@ -2064,6 +2068,12 @@ window.App = window.App || {};
             }
           };
           reader.readAsText(f);
+        });
+
+        var autoBox = root.querySelector('#sync-auto');
+        if (autoBox) autoBox.addEventListener('change', function () {
+          A.core.syncSaveConfig({ auto: autoBox.checked });
+          ui.toast(autoBox.checked ? '已开启自动上传' : '已关闭自动上传');
         });
 
         var syncSave = root.querySelector('#sync-save-token');
