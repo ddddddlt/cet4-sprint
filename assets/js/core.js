@@ -94,6 +94,7 @@ window.App = window.App || {};
     if (!storageOK) return false;
     try {
       window.localStorage.setItem(KEY, JSON.stringify(state));
+      if (typeof syncMarkDirty === 'function') syncMarkDirty();
       return true;
     } catch (e) {
       storageOK = false;
@@ -163,7 +164,8 @@ window.App = window.App || {};
       method: opts.method || 'GET',
       headers: headers,
       body: opts.body ? JSON.stringify(opts.body) : undefined,
-      cache: 'no-store'
+      cache: 'no-store',
+      keepalive: !!opts.keepalive
     }).then(function (r) {
       if (r.status === 404) return null;
       if (r.status === 401 || r.status === 403) throw new Error('Token 无效或没有仓库权限');
@@ -181,7 +183,8 @@ window.App = window.App || {};
     });
   }
 
-  function syncPush() {
+  function syncPush(opts) {
+    opts = opts || {};
     var cfg = syncConfig();
     if (!cfg.token) return Promise.reject(new Error('还没有填 GitHub Token'));
     var snapshot = JSON.parse(JSON.stringify(state));
@@ -198,10 +201,11 @@ window.App = window.App || {};
         branch: 'main'
       };
       if (remote && remote.sha) body.sha = remote.sha;
-      return syncRequest('/repos/' + SYNC_REPO + '/contents/' + SYNC_PATH, { method: 'PUT', body: body })
+      return syncRequest('/repos/' + SYNC_REPO + '/contents/' + SYNC_PATH,
+        { method: 'PUT', body: body, keepalive: !!opts.keepalive })
         .then(function (res) {
           if (!res) throw new Error('上传失败');
-          syncSaveConfig({ lastPush: payload.savedAt });
+          syncSaveConfig({ lastPush: payload.savedAt, lastError: '' });
           return payload;
         });
     });
@@ -212,6 +216,56 @@ window.App = window.App || {};
       if (p) syncSaveConfig({ lastPull: p.savedAt });
       return p;
     });
+  }
+
+  var syncDirty = false;
+  var syncDirtySince = 0;
+  var syncTimer = null;
+  var syncBusy = false;
+
+  function syncAutoOn() {
+    var cfg = syncConfig();
+    return !!cfg.token && cfg.auto !== false;
+  }
+
+  function syncSchedule(delay) {
+    if (syncTimer) window.clearTimeout(syncTimer);
+    syncTimer = window.setTimeout(function () {
+      syncTimer = null;
+      syncFlush(false);
+    }, delay);
+  }
+
+  function syncMarkDirty() {
+    if (!syncAutoOn()) return;
+    if (!syncDirty) {
+      syncDirty = true;
+      syncDirtySince = Date.now();
+    }
+    var age = Date.now() - syncDirtySince;
+    syncSchedule(age > 30000 ? 0 : 6000);
+  }
+
+  function syncFlush(keepalive) {
+    if (syncBusy || !syncDirty) return;
+    if (!syncConfig().token) return;
+    syncBusy = true;
+    syncDirty = false;
+    syncPush({ keepalive: !!keepalive }).then(function () {
+      syncBusy = false;
+    }).catch(function (e) {
+      syncBusy = false;
+      syncDirty = true;
+      syncSaveConfig({ lastError: (e && e.message) || '上传失败', lastErrorAt: Date.now() });
+      syncSchedule(60000);
+    });
+  }
+
+  if (typeof document !== 'undefined') {
+    document.addEventListener('visibilitychange', function () {
+      if (document.visibilityState === 'hidden') syncFlush(true);
+    });
+    window.addEventListener('pagehide', function () { syncFlush(true); });
   }
 
   /* ---------------- 词库 ---------------- */
@@ -684,6 +738,8 @@ window.App = window.App || {};
     syncSaveConfig: syncSaveConfig,
     syncPush: syncPush,
     syncPull: syncPull,
+    syncFlush: syncFlush,
+    syncMarkDirty: syncMarkDirty,
     storageOK: function () { return storageOK; },
     // 词库
     allWords: allWords,
