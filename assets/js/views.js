@@ -2050,6 +2050,7 @@ window.App = window.App || {};
         var themeSel = root.querySelector('#theme-mode');
         if (themeSel) themeSel.addEventListener('change', function () {
           A.core.setThemeMode(themeSel.value);
+          if (A.app && A.app.refreshTheme) A.app.refreshTheme();
           ui.toast('外观已切换', 'success');
         });
 
