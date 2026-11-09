@@ -2321,7 +2321,7 @@ window.App = window.App || {};
       '<section class="card">' +
       sectionHead('学习计划', '影响每日任务和倒计时', '') +
       '<div class="form">' +
-      field('考试日期', '<input class="input" type="date" id="exam-date" value="' + esc(s.settings.examDate) + '">', '2026 年下半年四级考试日期以官方通知为准') +
+      field('考试日期', '<input class="input" type="date" id="exam-date" value="' + esc(s.settings.examDate) + '">', '2026 年 12 月 13 日（以准考证为准）') +
       field('每日抽查量', '<input class="input" type="number" id="check-target" min="10" max="200" step="10" value="' + (s.settings.checkTarget || 50) + '">', '默认 50 个，10 个一组；抽查中可以点「+10 个」临时加量') +
       field('外观', '<select class="input" id="theme-mode">' +
         [['auto', '跟随系统'], ['light', '浅色'], ['dark', '深色']].map(function (o) {
