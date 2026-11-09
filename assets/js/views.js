@@ -93,7 +93,8 @@ window.App = window.App || {};
     });
   }
 
-  function openWordCard(w) {
+  function openWordCard(w, opts) {
+    opts = opts || {};
     if (!w) return;
     var freq = A.core.freqOf(w.w);
     var label = { high: '高频', mid: '中频', low: '低频', outside: '词库外' }[freq];
@@ -118,11 +119,17 @@ window.App = window.App || {};
     var m = ui.modal({
       title: '单词详情',
       body: body,
-      okText: '加入错题本',
+      okText: opts.inBook ? '移出单词本' : '加入错题本',
       cancelText: '关闭',
       onOk: function () {
-        A.core.addCustom({ kind: 'word', title: w.w, body: senses.join('；'), note: '词库' });
-        ui.toast('已加入自定义错题本', 'success');
+        if (opts.inBook) {
+          A.core.wordbookRemove(w.id);
+          ui.toast('已移出单词本');
+        } else {
+          A.core.addCustom({ kind: 'word', title: w.w, body: senses.join('；'), note: '词库' });
+          ui.toast('已加入自定义错题本', 'success');
+        }
+        if (opts.onChange) opts.onChange();
       }
     });
     var say = m.root.querySelector('[data-say]');
@@ -644,7 +651,7 @@ window.App = window.App || {};
         return (b.meta.at || 0) - (a.meta.at || 0);
       });
       var rows = list.map(function (item) {
-        return '<div class="wb-row">' +
+        return '<div class="wb-row" data-wb-open="' + esc(item.id) + '">' +
           '<div class="wb-main"><strong>' + esc(item.w.w) + '</strong>' +
           '<span class="w-ipa">' + esc(item.w.ph) + '</span>' +
           '<span class="w-zh">' + esc(item.w.zh) + '</span></div>' +
@@ -694,6 +701,14 @@ window.App = window.App || {};
           ui.toast('已移出单词本');
         });
       });
+
+      root.querySelectorAll('[data-wb-open]').forEach(function (row) {
+        row.addEventListener('click', function (e) {
+          if (e.target && e.target.closest && e.target.closest('[data-wb-del]')) return;
+          var w = A.core.getWord(row.getAttribute('data-wb-open'));
+          if (w) openWordCard(w, { inBook: true, onChange: render });
+        });
+      });
     }
 
     function renderRunner() {
@@ -715,7 +730,7 @@ window.App = window.App || {};
         '<div class="check-card' + (s.flipped ? ' flipped' : '') + '">' +
         (s.flipped
           ? '<div class="check-back">' +
-            '<div class="check-back-head"><h2 class="word">' + esc(w.w) + '</h2>' +
+            '<div class="check-back-head"><h2 class="word" data-wb-detail>' + esc(w.w) + '</h2>' +
             '<button class="audio-btn small" data-play>' + icon('volume') + '</button>' +
             '<span class="ipa">' + esc(w.ph) + '</span><span class="pos">' + esc(w.pos) + '</span></div>' +
             '<div class="senses">' + senses + '</div>' +
@@ -727,7 +742,7 @@ window.App = window.App || {};
             '</div><p class="hint">按 1 / 2 / 3 也可以</p></div>'
           : '<div class="check-front">' +
             '<div class="q-type">先自己说一遍意思</div>' +
-            '<h2 class="word">' + esc(w.w) + '</h2>' +
+            '<h2 class="word" data-wb-detail>' + esc(w.w) + '</h2>' +
             '<div class="word-row center"><span class="ipa">' + esc(w.ph) + '</span>' +
             '<button class="audio-btn small" data-play>' + icon('volume') + '</button></div>' +
             '<p class="hint">在心里造句、讲给自己听，再翻面核对</p>' +
@@ -741,6 +756,12 @@ window.App = window.App || {};
       });
       root.querySelectorAll('[data-play]').forEach(function (b) {
         b.addEventListener('click', function () { ui.tts.speak(w.w, { rate: 0.95 }); });
+      });
+      root.querySelectorAll('[data-wb-detail]').forEach(function (el) {
+        el.addEventListener('click', function (e) {
+          e.stopPropagation();
+          openWordCard(w, { inBook: true });
+        });
       });
       var flip = root.querySelector('[data-wb-flip]');
       if (flip) flip.addEventListener('click', function () { s.flipped = true; renderRunner(); });
