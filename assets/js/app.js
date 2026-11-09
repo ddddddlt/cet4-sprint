@@ -15,13 +15,16 @@ window.App = window.App || {};
     { key: 'reading', href: '#/reading', label: '阅读', ic: 'file' },
     { key: 'listening', href: '#/listening', label: '听力', ic: 'headphones' },
     { key: 'translation', href: '#/translation', label: '翻译', ic: 'languages' },
+    { key: 'writing', href: '#/writing', label: '作文', ic: 'pen' },
     { key: 'mistakes', href: '#/mistakes', label: '错题本', ic: 'alert' },
     { key: 'settings', href: '#/settings', label: '设置', ic: 'settings' }
   ];
 
   var TITLES = {
     dashboard: '首页', vocab: '抽查单词', wordbook: '单词本', reading: '阅读', listening: '听力', translation: '翻译',
+    writing: '作文批改',
     readingRunner: '仔细阅读', listeningRunner: '听力练习', translationRunner: '翻译练习',
+    translationReview: '错译复习',
     clozeRunner: '选词填空', matchingRunner: '长篇匹配',
     mistakes: '错题本', settings: '设置', notFound: '页面不存在'
   };
@@ -106,16 +109,18 @@ window.App = window.App || {};
       return { view: 'listening', params: {} };
     }
     if (head === 'translation') {
+      if (parts[1] === 'review') return { view: 'translationReview', params: {} };
       if (parts[1]) return { view: 'translationRunner', params: { id: parts[1] } };
       return { view: 'translation', params: {} };
     }
+    if (head === 'writing') return { view: 'writing', params: {} };
     return { view: 'notFound', params: {} };
   }
 
   function navKeyOf(view) {
     if (view === 'readingRunner' || view === 'clozeRunner' || view === 'matchingRunner') return 'reading';
     if (view === 'listeningRunner') return 'listening';
-    if (view === 'translationRunner') return 'translation';
+    if (view === 'translationRunner' || view === 'translationReview') return 'translation';
     return view;
   }
 

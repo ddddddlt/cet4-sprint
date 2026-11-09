@@ -1,0 +1,78 @@
+/*
+ * 作文模块接入 cet4-sprint 的桥接样式
+ * 1) 去掉模块自带的品牌栏（站点已经有导航）
+ * 2) 把模块的纸感变量映射到站点设计 token
+ * 3) 深色主题下替换模块里写死的浅色底
+ */
+
+.wcoach { max-width: none; padding: 0 0 24px; }
+.wcoach .wc-top { display: none; }
+
+html[data-theme="dark"] .wcoach {
+  --wc-paper: transparent;
+  --wc-card: var(--surface);
+  --wc-ink: var(--ink);
+  --wc-ink-2: var(--ink-2);
+  --wc-muted: var(--muted);
+  --wc-line: var(--line);
+  --wc-line-2: var(--line-2);
+  --wc-brand: #7fb3d3;
+  --wc-brand-2: #9cc8e2;
+  --wc-soft: #1b2a36;
+  --wc-amber: #e2a854;
+  --wc-amber-soft: #33291a;
+  --wc-red: #d99a8d;
+  --wc-red-soft: #2e1f1c;
+  --wc-green: #75cba3;
+  --wc-green-soft: #163127;
+  --wc-shadow: 0 1px 2px rgba(0, 0, 0, .5), 0 18px 40px -28px rgba(0, 0, 0, .85);
+}
+
+html[data-theme="dark"] .wcoach .wc-hrow:hover,
+html[data-theme="dark"] .wcoach .wc-model-notes,
+html[data-theme="dark"] .wcoach .wc-cmp-col,
+html[data-theme="dark"] .wcoach .wc-cmp-summary div,
+html[data-theme="dark"] .wcoach .wc-pad-foot,
+html[data-theme="dark"] .wcoach .wc-pad textarea { background: var(--surface-2); }
+
+html[data-theme="dark"] .wcoach .wc-btn.ghost:hover {
+  background: var(--surface-2);
+  border-color: var(--line);
+}
+
+html[data-theme="dark"] .wcoach .wc-btn.primary {
+  background: #35688c;
+  color: #fff;
+  box-shadow: none;
+}
+html[data-theme="dark"] .wcoach .wc-btn.primary:hover { background: #3f7ba4; }
+
+html[data-theme="dark"] .wcoach .wc-meter,
+html[data-theme="dark"] .wcoach .wc-dim-bar,
+html[data-theme="dark"] .wcoach .wc-ai-bar { background: #2a342e; }
+
+html[data-theme="dark"] .wcoach .wc-cmp-bars i.old { background: #3a463f; }
+
+html[data-theme="dark"] .wcoach .wc-sent-body mark {
+  background: #4a3a12;
+  color: #f2e2b8;
+  box-shadow: none;
+}
+
+html[data-theme="dark"] .wcoach .wc-hint {
+  background: #33291a;
+  color: #e2c58e;
+}
+
+html[data-theme="dark"] .wcoach .wc-issue,
+html[data-theme="dark"] .wcoach .wc-ai-i,
+html[data-theme="dark"] .wcoach .wc-tips li.warn { color: var(--wc-red); }
+
+html[data-theme="dark"] .wcoach .wc-model-notes { border-color: var(--line-2); }
+
+html[data-theme="dark"] .wcoach .wc-band.small,
+html[data-theme="dark"] .wcoach .wc-chip { border-color: var(--line); }
+
+@media (max-width: 960px) {
+  .wcoach { padding: 0 0 24px; }
+}

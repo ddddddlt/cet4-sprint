@@ -1,0 +1,127 @@
+/* ==========================================================================
+   翻译增强样式：AI 机器回译 / 规则评分 / 错译表达 SRS
+   依赖站点已有的设计 token（--surface / --line / --brand ...），自动适配深色主题
+   ========================================================================== */
+
+/* ---------- 列表页：待复习入口 ---------- */
+.ts-srs-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 20px;
+  margin-bottom: 18px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--brand-soft);
+}
+.ts-srs-banner strong { display: block; font-size: 14.5px; }
+.ts-srs-banner p { font-size: 12px; color: var(--muted); margin-top: 3px; }
+
+/* ---------- AI 机器回译 ---------- */
+.ai-back-card .section-head { margin-bottom: 14px; }
+.ai-back-actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.ai-loading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 18px;
+  border-radius: 12px;
+  background: var(--surface-2);
+  color: var(--muted);
+  font-size: 13px;
+}
+.ai-spinner {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid var(--line);
+  border-top-color: var(--brand);
+  animation: ts-spin .8s linear infinite;
+}
+@keyframes ts-spin { to { transform: rotate(360deg); } }
+
+.ai-err {
+  padding: 12px 14px;
+  border-radius: 11px;
+  background: var(--red-soft);
+  color: var(--red);
+  font-size: 12.5px;
+  line-height: 1.65;
+}
+
+.ab-summary {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 14px 18px;
+  border-radius: 13px;
+  margin-bottom: 14px;
+  background: var(--surface-2);
+}
+.ab-summary strong { font-family: var(--font-display); font-size: 32px; line-height: 1; }
+.ab-summary span { font-size: 11px; color: var(--muted); }
+.ab-summary p { font-size: 12.5px; line-height: 1.65; color: var(--ink-2); }
+.ab-summary.ok strong { color: var(--green); }
+.ab-summary.mid strong { color: var(--amber); }
+.ab-summary.bad strong { color: var(--red); }
+
+.ab-row { padding: 12px 0; border-bottom: 1px dashed var(--line-2); }
+.ab-row:last-child { border-bottom: none; }
+.ab-head { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.ab-no {
+  width: 22px; height: 22px; flex: none;
+  border-radius: 50%;
+  background: var(--brand-soft);
+  color: var(--brand-ink);
+  display: grid; place-items: center;
+  font-size: 11px; font-weight: 700;
+}
+.ab-sim { margin-left: auto; font-size: 11.5px; color: var(--muted); }
+.ab-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.ab-col { background: var(--surface-2); border: 1px solid var(--line-2); border-radius: 11px; padding: 10px 12px; min-width: 0; }
+.ab-label { font-size: 10px; letter-spacing: .08em; color: var(--muted); }
+.ab-col p { margin-top: 5px; font-family: var(--font-display); font-size: 13px; line-height: 1.75; color: var(--ink-2); }
+.ab-col del { background: var(--red-soft); color: var(--red); text-decoration: line-through; text-decoration-color: rgba(180, 71, 58, .35); border-radius: 3px; padding: 0 2px; }
+.ab-col ins { background: var(--green-soft); color: var(--green); text-decoration: underline; border-radius: 3px; padding: 0 2px; }
+
+/* ---------- 规则评分 ---------- */
+.rule-score .rs-head { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; margin-bottom: 4px; }
+.rule-score .rs-head strong { font-family: var(--font-display); font-size: 44px; line-height: .9; color: var(--brand); }
+.rule-score .rs-head span { font-size: 13px; color: var(--muted); }
+.rule-score .rs-head em { font-style: normal; font-size: 12px; color: var(--muted); margin-left: 8px; }
+.rs-dims { display: flex; flex-direction: column; gap: 9px; margin-top: 14px; }
+.rs-dim { display: grid; grid-template-columns: 68px 1fr 34px; gap: 10px; align-items: center; font-size: 12.5px; color: var(--muted); }
+.rs-dim strong { text-align: right; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.rs-bar { height: 7px; border-radius: 999px; background: var(--line); overflow: hidden; }
+.rs-bar i { display: block; height: 100%; border-radius: 999px; background: var(--brand); }
+
+/* ---------- 错译 SRS ---------- */
+.srs-wrap { max-width: 640px; margin: 10px auto 0; }
+.srs-card { text-align: center; padding: 42px 36px; }
+.srs-tag {
+  display: inline-block;
+  font-size: 10.5px;
+  letter-spacing: .12em;
+  color: var(--brand);
+  background: var(--brand-soft);
+  padding: 4px 10px;
+  border-radius: 999px;
+}
+.srs-front { font-family: var(--font-display); font-size: 30px; line-height: 1.4; margin: 20px 0 10px; }
+.srs-context { font-size: 12.5px; color: var(--muted); line-height: 1.75; max-width: 480px; margin: 0 auto; }
+.srs-answer { margin-top: 24px; padding-top: 20px; border-top: 1px dashed var(--line); }
+.srs-label { font-size: 10.5px; letter-spacing: .1em; color: var(--muted); }
+.srs-back { font-family: var(--font-display); font-size: 22px; color: var(--brand); margin-top: 6px; }
+.srs-rate { display: flex; gap: 10px; justify-content: center; margin-top: 22px; }
+.srs-card > .btn { margin-top: 20px; }
+.srs-done { max-width: 560px; margin: 40px auto; text-align: center; padding: 40px; }
+.srs-big { font-family: var(--font-display); font-size: 56px; line-height: 1; color: var(--brand); }
+.srs-done h2 { font-size: 22px; margin: 10px 0 8px; }
+
+@media (max-width: 720px) {
+  .ab-cols { grid-template-columns: 1fr; }
+  .ts-srs-banner { flex-direction: column; align-items: flex-start; }
+  .srs-card { padding: 30px 20px; }
+  .srs-front { font-size: 24px; }
+}

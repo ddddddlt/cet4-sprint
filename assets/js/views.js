@@ -1874,6 +1874,29 @@ window.App = window.App || {};
     };
   };
 
+  /* ================= 翻译增强：AI 回译 / 规则评分 / 错译 SRS ================= */
+  function trSrsList() {
+    var s = A.core.getState();
+    if (!Array.isArray(s.translationSrs)) s.translationSrs = [];
+    return s.translationSrs;
+  }
+  function trSrsDue() {
+    var t = A.core.todayStart();
+    return trSrsList().filter(function (c) { return c.due <= t; });
+  }
+  function trMarks(chars, marks, tag) {
+    var html = '';
+    var open = false;
+    chars.forEach(function (ch, i) {
+      var miss = !marks[i];
+      if (miss && !open) { html += '<' + tag + '>'; open = true; }
+      if (!miss && open) { html += '</' + tag + '>'; open = false; }
+      html += esc(ch);
+    });
+    if (open) html += '</' + tag + '>';
+    return html;
+  }
+
   /* ================= 翻译 ================= */
   views.translation = function () {
     var sets = window.CET4_TRANSLATION || [];
@@ -1899,8 +1922,15 @@ window.App = window.App || {};
     var tip = '<div class="banner tip">' + icon('languages') +
       '<div><strong>翻译占 15%（106.5 分）</strong><span>题材集中在传统文化与数字生活。先找主干（谁 + 做了什么），再用从句、分词补修饰；不会的词用简单表达解释，不要留空。</span></div></div>';
 
+    var due = trSrsDue().length;
+    var srsBanner = due
+      ? '<div class="ts-srs-banner"><div><strong>待复习 ' + due + ' 个表达</strong>' +
+      '<p>来自之前翻译时没译出的得分点，按间隔重复排期</p></div>' +
+      '<a class="btn btn-primary small" href="#/translation/review">开始复习</a></div>'
+      : '';
+
     return {
-      html: pageHead('翻译', '汉译英 · 得分点检查 · 逐句对照') + tip +
+      html: pageHead('翻译', '汉译英 · 得分点检查 · 逐句对照') + tip + srsBanner +
         (cards ? '<div class="set-grid">' + cards + '</div>'
           : emptyState('languages', '还没有翻译题', '在 assets/js/data/translation.js 中添加题目即可'))
     };
@@ -1924,6 +1954,9 @@ window.App = window.App || {};
     var gradedBand = null;
     var wasGraded = false;
     var saveTimer = null;
+    var aiBack = null;
+    var aiLoading = false;
+    var aiError = '';
 
     var BANDS = [
       { v: 14, label: '13–15', desc: '完整准确' },
@@ -2051,14 +2084,154 @@ window.App = window.App || {};
         '<div class="section-head"><div><h2>逐句对照</h2><p>参考译文不是唯一答案，重点看结构</p></div></div>' +
         rows +
         '</section>' +
+        '<section class="card rule-score">' + ruleCard() + '</section>' +
+        '<section class="card ai-back-card">' +
+        '<div class="section-head"><div><h2>AI 机器回译</h2><p>把你的英文译回中文，看看和原文差多少</p></div></div>' +
+        aiBackBlock() +
+        '</section>' +
         '<section class="card grade-card">' +
         '<div class="section-head"><div><h2>自评档位</h2><p>满分 15 分，选择后计入今日记录</p></div></div>' +
         '<div class="grade-row">' + gradeBtns + '</div>' +
         '<p class="grade-note" id="grade-note">' + (wasGraded ? '已记录：' + gradedBand + ' 分档，可重新选择。' : '选择后会计入今日学习记录。') + '</p>' +
-        '<div class="ts-nav"><button class="btn btn-ghost" data-retry>' + icon('rotate') + '重做</button>' +
+        '<div class="ts-nav"><button class="btn btn-ghost" data-add-srs>' + icon('bookmark') + '未命中得分点加入复习</button>' +
+        '<button class="btn btn-ghost" data-retry>' + icon('rotate') + '重做</button>' +
         '<a class="btn btn-primary" href="#/translation">返回列表</a></div>' +
         '</section>' +
         '</div></div>';
+    }
+
+    function ruleStats() {
+      var SE = window.SubjectiveEngine;
+      var text = answers.join(' ').trim();
+      var hit = points.filter(function (p) { return p.hit; }).length;
+      var total = points.length;
+      var coverage = total ? hit / total : 0;
+      var issues = SE ? SE.runRules(text) : [];
+      var errs = issues.filter(function (i) { return i.severity === 'error'; }).length;
+      var warns = issues.length - errs;
+      var refWords = set.sentences.reduce(function (n, s) { return n + wc(s.en); }, 0);
+      var words = wc(text);
+      var ratio = refWords ? words / refWords : 0;
+      var content = Math.round(coverage * 100);
+      var language = Math.max(15, 100 - errs * 9 - warns * 3 - (ratio < 0.6 ? 15 : 0));
+      var fluency = 55 + (ratio >= 0.8 && ratio <= 1.3 ? 35 : ratio >= 0.6 && ratio <= 1.5 ? 22 : 8);
+      if (words / Math.max(1, set.sentences.length) >= 8) fluency += 10;
+      fluency = Math.min(100, fluency);
+      var markers = (text.match(/\b(which|that|who|whose|because|although|though|when|while|whereas|if|since|as)\b/gi) || []).length;
+      var nonFinite = (text.match(/\b(to\s+\w+|by\s+\w+ing|instead\s+of\s+\w+ing)\b/gi) || []).length;
+      var variety = Math.min(100, 55 + markers * 5 + nonFinite * 6);
+      var totalScore = Math.round(content * 0.45 + language * 0.2 + fluency * 0.18 + variety * 0.17);
+      var band = SE ? SE.bandOf(totalScore) : (totalScore >= 86 ? 14 : totalScore >= 72 ? 11 : totalScore >= 52 ? 8 : totalScore >= 38 ? 5 : 2);
+      var score = SE ? SE.score106(band) : Math.round(band / 15 * 106.5);
+      return {
+        content: content, language: language, fluency: fluency, variety: variety,
+        band: band, score: score, hit: hit, total: total
+      };
+    }
+
+    function ruleCard() {
+      var r = ruleStats();
+      var dims = [
+        ['信息完整', r.content], ['语言准确', r.language], ['表达流畅', r.fluency], ['句式多样', r.variety]
+      ];
+      return '<div class="section-head"><div><h2>规则评分</h2><p>按信息点、语法规则和长度自动估算，用来对照自评</p></div></div>' +
+        '<div class="rs-head"><strong>' + r.band + '</strong><span>/ 15 分档</span>' +
+        '<em>折合 ' + r.score + ' 分 · 信息点 ' + r.hit + '/' + r.total + '</em></div>' +
+        '<div class="rs-dims">' + dims.map(function (d) {
+          return '<div class="rs-dim"><span>' + d[0] + '</span>' +
+            '<div class="rs-bar"><i style="width:' + d[1] + '%"></i></div>' +
+            '<strong>' + d[1] + '</strong></div>';
+        }).join('') + '</div>' +
+        '<p class="muted small">规则引擎估算，用于定位问题，不等同于阅卷分数。</p>';
+    }
+
+    function aiBackBlock() {
+      if (aiLoading) {
+        return '<div class="ai-loading"><span class="ai-spinner"></span><span>正在调用 DeepSeek 做机器回译…</span></div>';
+      }
+      if (aiError) {
+        return '<div class="ai-err">' + esc(aiError) + '</div>' +
+          '<div class="ai-back-actions" style="margin-top:12px">' +
+          '<button class="btn btn-primary" data-ai-back>重试</button>' +
+          '<button class="btn btn-ghost" data-ai-settings>AI 设置</button></div>';
+      }
+      if (aiBack) {
+        var avg = aiBack.reduce(function (n, it) { return n + it.sim; }, 0) / Math.max(1, aiBack.length);
+        var pct = Math.round(avg * 100);
+        var tone = pct >= 80 ? 'ok' : pct >= 55 ? 'mid' : 'bad';
+        var rows = aiBack.map(function (it, i) {
+          var p = Math.round(it.sim * 100);
+          return '<div class="ab-row">' +
+            '<div class="ab-head"><span class="ab-no">' + (i + 1) + '</span><span class="ab-sim">还原度 ' + p + '%</span></div>' +
+            '<div class="ab-cols">' +
+            '<div class="ab-col"><span class="ab-label">中文原文（红字没还原）</span><p>' + trMarks(it.cmp.source, it.cmp.sourceMarks, 'del') + '</p></div>' +
+            '<div class="ab-col"><span class="ab-label">AI 回译（绿字原文没有）</span><p>' + trMarks(it.cmp.user, it.cmp.userMarks, 'ins') + '</p></div>' +
+            '</div></div>';
+        }).join('');
+        return '<div class="ab-summary ' + tone + '"><div><strong>' + pct + '%</strong><span>平均还原度</span></div>' +
+          '<p>' + (tone === 'ok' ? 'AI 把你的英文译回中文后，和原文基本一致，主要信息都译出来了。'
+            : tone === 'mid' ? '大部分信息对上了，但有几处意思跑偏或漏译。'
+              : 'AI 回译和原文出入较大，建议对照逐句参考译文再看一遍。') + '</p></div>' +
+          rows +
+          '<div class="ai-back-actions" style="margin-top:12px">' +
+          '<button class="btn btn-ghost" data-ai-back>重新回译</button></div>';
+      }
+      return '<p class="muted small" style="margin-bottom:12px">把这次写的英文交给 DeepSeek 译回中文，再和原文逐句比对：还原度高说明意思传达到了，低说明有漏译或理解偏差。</p>' +
+        '<div class="ai-back-actions"><button class="btn btn-primary" data-ai-back>' + icon('languages') + '开始机器回译</button>' +
+        '<span class="muted small">约 3–10 秒，会产生少量 API 费用</span></div>';
+    }
+
+    function runAIBack() {
+      var LLM = window.DeepSeekLLM;
+      var SE = window.SubjectiveEngine;
+      if (!LLM || !SE) { ui.toast('AI 模块未加载'); return; }
+      if (!LLM.isConfigured()) { LLM.settings(function () { runAIBack(); }); return; }
+      aiLoading = true;
+      aiError = '';
+      render();
+      var lines = set.sentences.map(function (s, i) {
+        return (i + 1) + '. ' + (String(answers[i] || '').trim() || s.en);
+      }).join('\n');
+      var content = '把下面每句英文翻译成自然、通顺的中文，保持原意，不要解释，不要遗漏信息。\n' + lines +
+        '\n\n只输出 JSON：{"translations":["第1句的中文","第2句的中文"]}';
+      LLM.chatJSON([
+        { role: 'system', content: '你是英译中翻译，只输出 JSON，不要输出其他文字。' },
+        { role: 'user', content: content }
+      ], { maxTokens: 1000 }).then(function (data) {
+        var arr = (data && data.translations) || [];
+        aiBack = set.sentences.map(function (s, i) {
+          var zh = String(arr[i] || '').trim();
+          return { zh: zh, sim: zh ? SE.zhSimilarity(s.zh, zh) : 0, cmp: SE.charDiff(s.zh, zh) };
+        });
+        aiLoading = false;
+        render();
+        ui.toast('机器回译完成');
+      }).catch(function (err) {
+        aiLoading = false;
+        aiError = err.message;
+        render();
+        ui.toast(err.message, 'danger');
+      });
+    }
+
+    function addSrs() {
+      var list = trSrsList();
+      var seen = {};
+      list.forEach(function (c) { seen[c.id] = true; });
+      var added = 0;
+      points.filter(function (p) { return !p.hit; }).forEach(function (p) {
+        var id = 't:' + set.id + ':' + p.zh;
+        if (seen[id]) return;
+        list.push({
+          id: id, front: p.zh, back: p.en, context: set.title,
+          due: A.core.todayStart(), interval: 0, ease: 2.5, reps: 0, last: 0
+        });
+        seen[id] = true;
+        added += 1;
+      });
+      A.core.save();
+      ui.toast(added ? '已加入 ' + added + ' 张复习卡' : '这次没有未命中的得分点', added ? 'success' : '');
+      render();
     }
 
     function render() {
@@ -2091,6 +2264,15 @@ window.App = window.App || {};
         root.querySelectorAll('[data-band]').forEach(function (b) {
           b.addEventListener('click', function () { chooseBand(+b.getAttribute('data-band')); });
         });
+        root.querySelectorAll('[data-ai-back]').forEach(function (b) {
+          b.addEventListener('click', runAIBack);
+        });
+        var aiSet = root.querySelector('[data-ai-settings]');
+        if (aiSet) aiSet.addEventListener('click', function () {
+          if (window.DeepSeekLLM) window.DeepSeekLLM.settings(function () { runAIBack(); });
+        });
+        var srsBtn = root.querySelector('[data-add-srs]');
+        if (srsBtn) srsBtn.addEventListener('click', addSrs);
       }
       var t = root.querySelector('#timer');
       if (t) t.innerHTML = icon('clock') + ui.mmss(elapsed);
@@ -2157,6 +2339,117 @@ window.App = window.App || {};
         if (saveTimer) clearTimeout(saveTimer);
         if (interval) { clearInterval(interval); interval = null; }
       }
+    };
+  };
+
+  /* ================= 错译表达复习（SRS） ================= */
+  views.translationReview = function () {
+    var root = null;
+    var queue = [];
+    var idx = 0;
+    var revealed = false;
+    var ok = 0;
+    var again = {};
+
+    function find(id) {
+      var list = trSrsList();
+      for (var i = 0; i < list.length; i++) if (list[i].id === id) return list[i];
+      return null;
+    }
+
+    function start() {
+      var due = trSrsDue();
+      if (!due.length) {
+        root.innerHTML = pageHead('错译复习', '来自翻译里没译出的得分点') +
+          emptyState('checkCircle', '没有到期卡片', '去翻译页做完一套，点「未命中得分点加入复习」',
+            '<a class="btn btn-primary" href="#/translation">去翻译</a>');
+        return;
+      }
+      queue = due.map(function (c) { return c.id; });
+      idx = 0;
+      revealed = false;
+      ok = 0;
+      again = {};
+      renderCard();
+    }
+
+    function rate(g) {
+      var card = find(queue[idx]);
+      if (card) {
+        if (g === 1) {
+          card.interval = 0;
+          card.ease = Math.max(1.3, (card.ease || 2.5) - 0.2);
+          card.due = A.core.todayStart();
+        } else {
+          card.ease = Math.min(3, (card.ease || 2.5) + (g === 3 ? 0.1 : -0.05));
+          card.interval = card.reps
+            ? Math.max(1, Math.round((card.interval || 1) * card.ease))
+            : (g === 3 ? 3 : 1);
+          card.due = A.core.addDays(A.core.todayStart(), card.interval);
+        }
+        card.reps = (card.reps || 0) + 1;
+        card.last = Date.now();
+        A.core.save();
+      }
+      if (g === 1 && !again[queue[idx]]) {
+        again[queue[idx]] = true;
+        queue.push(queue[idx]);
+      }
+      if (g >= 2) ok += 1;
+      idx += 1;
+      revealed = false;
+      renderCard();
+    }
+
+    function renderCard() {
+      if (idx >= queue.length) return renderDone();
+      var card = find(queue[idx]);
+      if (!card) { idx += 1; return renderCard(); }
+      root.innerHTML = '<div class="runner">' +
+        '<div class="runner-top"><a class="back-link" href="#/translation">' + icon('arrowLeft') + '翻译</a>' +
+        '<h1 class="runner-title">错译复习</h1><span class="chip chip-type">中译英</span>' +
+        '<div class="runner-right"><span class="timer">' + (idx + 1) + ' / ' + queue.length + '</span></div></div>' +
+        '<div class="srs-wrap"><section class="card srs-card">' +
+        '<span class="srs-tag">得分点</span>' +
+        '<h2 class="srs-front">' + esc(card.front) + '</h2>' +
+        (card.context ? '<p class="srs-context">' + esc(card.context) + '</p>' : '') +
+        (revealed
+          ? '<div class="srs-answer"><span class="srs-label">参考表达</span>' +
+          '<p class="srs-back">' + esc(card.back) + '</p></div>' +
+          '<div class="srs-rate">' +
+          '<button class="btn btn-ghost" data-rate="1">忘记</button>' +
+          '<button class="btn btn-ghost" data-rate="2">模糊</button>' +
+          '<button class="btn btn-primary" data-rate="3">会了</button></div>'
+          : '<button class="btn btn-primary" data-show>显示答案</button>') +
+        '</section></div></div>';
+
+      var show = root.querySelector('[data-show]');
+      if (show) show.addEventListener('click', function () { revealed = true; renderCard(); });
+      root.querySelectorAll('[data-rate]').forEach(function (b) {
+        b.addEventListener('click', function () { rate(+b.getAttribute('data-rate')); });
+      });
+    }
+
+    function renderDone() {
+      root.innerHTML = '<div class="runner">' +
+        '<div class="runner-top"><a class="back-link" href="#/translation">' + icon('arrowLeft') + '翻译</a>' +
+        '<h1 class="runner-title">错译复习</h1></div>' +
+        '<section class="card srs-done"><div class="srs-big">' + ok + '</div>' +
+        '<h2>本轮复习完成</h2>' +
+        '<p class="muted">共 ' + queue.length + ' 张卡，答对 ' + ok + ' 张。选「忘记」的卡片今天会再出现一次。</p>' +
+        '<div class="ts-nav"><a class="btn btn-primary" href="#/translation">返回翻译</a>' +
+        '<button class="btn btn-ghost" data-again>再复习一轮</button></div></section></div>';
+      var againBtn = root.querySelector('[data-again]');
+      if (againBtn) againBtn.addEventListener('click', start);
+    }
+
+    return {
+      html: '',
+      mount: function (r) {
+        root = r;
+        start();
+      },
+      destroy: function () { }
     };
   };
 
