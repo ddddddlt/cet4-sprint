@@ -37,13 +37,15 @@ window.App = window.App || {};
       return '<a class="tab-item" data-nav="' + n.key + '" href="' + n.href + '">' + icon(n.ic) + '<span>' + n.label + '</span></a>';
     }).join('');
 
+    var themeItem = '<button class="nav-item nav-theme" data-theme-toggle>' + icon('moon') + '<span>深色模式</span></button>';
+
     return '<div class="shell">' +
       '<aside class="sidebar">' +
       '<a class="brand" href="#/">' +
       '<span class="brand-mark">四</span>' +
       '<span class="brand-text"><strong>四级冲刺</strong><span>CET-4 SPRINT</span></span>' +
       '</a>' +
-      '<nav class="nav">' + nav + '</nav>' +
+      '<nav class="nav">' + nav + themeItem + '</nav>' +
       '<div class="side-foot">' +
       '<div class="side-count"><strong id="side-days">—</strong><span>天后考试</span></div>' +
       '<div class="side-streak">' + icon('flame') + '连续打卡 <strong id="side-streak">0</strong> 天</div>' +
@@ -53,7 +55,10 @@ window.App = window.App || {};
       '<main class="main">' +
       '<header class="topbar">' +
       '<a class="brand mini" href="#/"><span class="brand-mark">四</span><span class="brand-text"><strong>四级冲刺</strong></span></a>' +
-      '<div class="topbar-right"><a class="icon-btn" href="#/settings" aria-label="设置">' + icon('settings') + '</a></div>' +
+      '<div class="topbar-right">' +
+      '<button class="icon-btn" data-theme-toggle aria-label="切换深色模式">' + icon('moon') + '</button>' +
+      '<a class="icon-btn" href="#/settings" aria-label="设置">' + icon('settings') + '</a>' +
+      '</div>' +
       '</header>' +
       '<div class="view" id="view"></div>' +
       '</main>' +
@@ -163,13 +168,38 @@ window.App = window.App || {};
     if (mainEl) mainEl.scrollTop = 0;
   }
 
-  A.app = { refreshNav: refreshNav };
+  function refreshThemeButtons() {
+    var dark = document.documentElement.getAttribute('data-theme') === 'dark';
+    document.querySelectorAll('[data-theme-toggle]').forEach(function (b) {
+      var isNav = b.classList.contains('nav-theme');
+      b.innerHTML = icon(dark ? 'sun' : 'moon') +
+        (isNav ? '<span>' + (dark ? '浅色模式' : '深色模式') + '</span>' : '');
+      b.setAttribute('aria-label', dark ? '切换到浅色模式' : '切换到深色模式');
+      b.title = dark ? '切换到浅色模式' : '切换到深色模式';
+    });
+  }
+
+  function bindThemeToggles() {
+    document.querySelectorAll('[data-theme-toggle]').forEach(function (b) {
+      if (b.__themeBound) return;
+      b.__themeBound = true;
+      b.addEventListener('click', function () {
+        var dark = A.core.applyTheme();
+        A.core.setThemeMode(dark ? 'light' : 'dark');
+        refreshThemeButtons();
+      });
+    });
+  }
+
+  A.app = { refreshNav: refreshNav, refreshTheme: refreshThemeButtons };
 
   function boot() {
     A.core.load();
     var app = document.getElementById('app');
     app.innerHTML = shellHtml();
     viewEl = document.getElementById('view');
+    refreshThemeButtons();
+    bindThemeToggles();
     ui.tts.init();
     window.addEventListener('hashchange', render);
     if (!location.hash) location.replace('#/');
