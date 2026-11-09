@@ -632,6 +632,49 @@ h1, h2, h3, h4, p { margin: 0; }
   border-radius: 50%;
   background: radial-gradient(circle, rgba(18, 101, 90, .07), transparent 70%);
 }
+.wb-entry {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 14px;
+  padding: 16px 20px;
+  transition: border-color .16s, transform .16s;
+}
+.wb-entry:hover { border-color: var(--brand-2); transform: translateY(-1px); }
+.wb-entry-ic {
+  width: 38px;
+  height: 38px;
+  border-radius: 11px;
+  background: var(--brand-soft);
+  color: var(--brand);
+  display: grid;
+  place-items: center;
+  flex: none;
+}
+.wb-entry-ic .ic { width: 18px; height: 18px; }
+.wb-entry-main { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
+.wb-entry-main strong { font-size: 15px; }
+.wb-entry-main span { font-size: 12px; color: var(--muted); }
+.wb-entry-count { font-size: 12.5px; color: var(--brand); font-weight: 600; white-space: nowrap; }
+.wb-entry > .ic { width: 16px; height: 16px; color: #c8c1b0; }
+
+.book-btn { margin-top: 14px; }
+
+.wb-toolbar { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; }
+.wb-list { padding: 6px 20px; }
+.wb-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px dashed var(--line-2);
+}
+.wb-row:last-child { border-bottom: none; }
+.wb-main { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; flex: 1; min-width: 0; }
+.wb-main strong { font-family: var(--font-display); font-size: 17px; }
+.wb-summary-actions { display: flex; gap: 10px; margin-top: 18px; flex-wrap: wrap; }
+.btn[disabled] { opacity: .45; pointer-events: none; }
+
 .start-badge {
   display: inline-flex;
   align-items: center;
@@ -643,8 +686,7 @@ h1, h2, h3, h4, p { margin: 0; }
   background: var(--brand-soft);
   padding: 5px 11px;
   border-radius: 999px;
-}
-.start-badge .ic { width: 13px; height: 13px; }
+}.start-badge .ic { width: 13px; height: 13px; }
 .start-top h2 { font-size: 22px; margin: 14px 0 8px; letter-spacing: -.01em; }
 .start-top p { color: var(--muted); font-size: 13px; max-width: 460px; }
 
@@ -2133,6 +2175,9 @@ html[data-theme="dark"] .btn-danger-ghost { color: #f2b0a5; }
   .page-head h1 { font-size: 24px; }
 
   .study-card { padding: 26px 20px 24px; min-height: 340px; border-radius: 18px; }
+  .check-card { padding: 30px 22px; min-height: 320px; border-radius: 18px; }
+  .check-front .word { font-size: 38px; overflow-wrap: anywhere; }
+  .check-back-head .word { font-size: 26px; overflow-wrap: anywhere; }
   .word { font-size: 36px; }
   .cloze-sentence { font-size: 19px; }
   .spell-zh { font-size: 21px; }
