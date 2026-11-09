@@ -1969,6 +1969,8 @@ window.App = window.App || {};
   views.settings = function () {
     var s = S();
     var canStore = A.core.storageOK();
+    var syncCfg = A.core.syncConfig();
+    var syncFmt = function (t) { return t ? new Date(t).toLocaleString() : '—'; };
 
     var html = pageHead('设置', '学习计划与数据管理') +
       storageBanner() +
@@ -1994,8 +1996,27 @@ window.App = window.App || {};
       '<div class="about">' +
       '<h4>关于</h4>' +
       '<p>四级冲刺 v1.0 · 一期功能的本地版：词汇间隔重复、阅读三题型、听力与翻译练习、错题本、打卡与热力图。</p>' +
-      '<p>内置 1000 个四级核心词、3 类阅读题、4 段听力与 4 段翻译，可在 <code>assets/js/data/</code> 中继续扩充；全部数据仅保存在本机，不上传。</p>' +
+      '<p>内置 1000 个四级核心词、3 类阅读题、4 段听力与 4 段翻译，可在 <code>assets/js/data/</code> 中继续扩充；默认只保存在本机，开启云同步后会上传到你的 GitHub 仓库。</p>' +
       '</div>' +
+      '</section>' +
+      '<section class="card">' +
+      sectionHead('云同步', '两台设备共用一个仓库进度文件', '') +
+      '<div class="form">' +
+      field('GitHub Token',
+        '<input class="input" type="password" id="sync-token" autocomplete="off" placeholder="' +
+        (syncCfg.token ? '已保存，重新粘贴可替换' : 'ghp_...') + '">',
+        '只保存在本机浏览器；需要 public_repo 权限，在 github.com/settings/tokens 创建') +
+      '<div class="form-actions"><button class="btn btn-ghost" id="sync-save-token">' + icon('check') + '保存 Token</button></div>' +
+      '</div>' +
+      '<div class="data-actions">' +
+      '<button class="btn btn-primary" id="sync-push">' + icon('upload') + '上传本机进度</button>' +
+      '<button class="btn btn-ghost" id="sync-pull">' + icon('download') + '下载云端进度</button>' +
+      '</div>' +
+      '<div class="storage-state ' + (syncCfg.token ? 'ok' : 'bad') + '" id="sync-state">' +
+      icon(syncCfg.token ? 'checkCircle' : 'alert') +
+      '<span>' + (syncCfg.token
+        ? '已配置 · 上次上传 ' + esc(syncFmt(syncCfg.lastPush)) + ' · 上次下载 ' + esc(syncFmt(syncCfg.lastPull))
+        : '未配置 Token，云同步不可用') + '</span></div>' +
       '</section>' +
       '</div>';
 
@@ -2043,6 +2064,45 @@ window.App = window.App || {};
             }
           };
           reader.readAsText(f);
+        });
+
+        var syncSave = root.querySelector('#sync-save-token');
+        if (syncSave) syncSave.addEventListener('click', function () {
+          var v = (root.querySelector('#sync-token').value || '').trim();
+          if (!v) { ui.toast('先粘贴 GitHub Token'); return; }
+          if (!/^(ghp_|github_pat_)/.test(v)) { ui.toast('Token 格式不对'); return; }
+          A.core.syncSaveConfig({ token: v });
+          ui.toast('Token 已保存', 'success');
+          setTimeout(function () { location.reload(); }, 500);
+        });
+
+        var syncPushBtn = root.querySelector('#sync-push');
+        if (syncPushBtn) syncPushBtn.addEventListener('click', function () {
+          if (!A.core.syncConfig().token) { ui.toast('先在设置里保存 Token'); return; }
+          ui.toast('正在上传…');
+          A.core.syncPush().then(function () {
+            ui.toast('已上传到云端', 'success');
+            setTimeout(function () { location.reload(); }, 600);
+          }).catch(function (e) { ui.toast(e.message || '上传失败', 'danger'); });
+        });
+
+        var syncPullBtn = root.querySelector('#sync-pull');
+        if (syncPullBtn) syncPullBtn.addEventListener('click', function () {
+          ui.toast('正在读取云端…');
+          A.core.syncPull().then(function (p) {
+            if (!p) { ui.toast('云端还没有进度'); return; }
+            ui.modal({
+              title: '用云端进度覆盖本机？',
+              body: '<p>云端保存时间：' + esc(new Date(p.savedAt).toLocaleString()) + '</p>' +
+                '<p class="muted small">本机当前进度会被覆盖，建议先导出备份。</p>',
+              okText: '覆盖本机', danger: true,
+              onOk: function () {
+                A.core.importJSON(JSON.stringify(p.state));
+                ui.toast('已同步云端进度', 'success');
+                setTimeout(function () { location.reload(); }, 600);
+              }
+            });
+          }).catch(function (e) { ui.toast(e.message || '读取失败', 'danger'); });
         });
 
         root.querySelector('#reset').addEventListener('click', function () {
