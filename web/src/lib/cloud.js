@@ -24,6 +24,19 @@ export function setCloudConfig(patch) {
   return cfg
 }
 
+async function request(url, opts, ms = 15000) {
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), ms)
+  try {
+    return await fetch(url, { ...(opts || {}), signal: controller.signal })
+  } catch (e) {
+    if (e && e.name === 'AbortError') throw new Error('请求超时（15 秒），请检查网络后重试')
+    throw e
+  } finally {
+    clearTimeout(timer)
+  }
+}
+
 export function resetCloudConfig() {
   try { localStorage.removeItem(key()) } catch (e) { /* ignore */ }
 }
@@ -50,7 +63,7 @@ function prepare(cfg) {
 }
 
 async function checkRepo(cfg) {
-  const res = await fetch(`${API}/repos/${cfg.repo}`, { headers: headers(cfg) })
+  const res = await request(`${API}/repos/${cfg.repo}`, { headers: headers(cfg) })
   if (res.status === 404) throw new Error(`仓库 ${cfg.repo} 不存在，或当前 Token 无权访问这个私有仓库`)
   if (res.status === 401 || res.status === 403) throw new Error('Token 无效，或没有该仓库的访问权限')
   if (!res.ok) throw new Error('仓库检查失败（HTTP ' + res.status + '）')
@@ -58,7 +71,7 @@ async function checkRepo(cfg) {
 }
 
 async function checkBranch(cfg) {
-  const res = await fetch(`${API}/repos/${cfg.repo}/branches/${encodeURIComponent(cfg.branch)}`, { headers: headers(cfg) })
+  const res = await request(`${API}/repos/${cfg.repo}/branches/${encodeURIComponent(cfg.branch)}`, { headers: headers(cfg) })
   if (res.status === 404) throw new Error(`仓库 ${cfg.repo} 里没有分支 "${cfg.branch}"，请填写仓库的默认分支`)
   if (res.status === 401 || res.status === 403) throw new Error('Token 没有读取该仓库分支的权限')
   if (!res.ok) throw new Error('分支检查失败（HTTP ' + res.status + '）')
@@ -94,7 +107,7 @@ function b64decode(text) {
 export async function remoteRead(cfg) {
   prepare(cfg)
   const url = `${API}/repos/${cfg.repo}/contents/${encodePath(cfg.path)}?ref=${encodeURIComponent(cfg.branch)}&t=${Date.now()}`
-  const res = await fetch(url, { headers: headers(cfg) })
+  const res = await request(url, { headers: headers(cfg) })
   if (res.status === 404) {
     await checkRepo(cfg)
     await checkBranch(cfg)
@@ -124,7 +137,7 @@ export async function pushCloud(core, cfg, options = {}) {
     branch: cfg.branch,
   }
   if (remote && remote.sha) body.sha = remote.sha
-  const res = await fetch(`${API}/repos/${cfg.repo}/contents/${encodePath(cfg.path)}`, {
+  const res = await request(`${API}/repos/${cfg.repo}/contents/${encodePath(cfg.path)}`, {
     method: 'PUT',
     headers: { ...headers(cfg), 'Content-Type': 'application/json' },
     body: JSON.stringify(body),

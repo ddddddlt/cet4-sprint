@@ -276,12 +276,10 @@ export function Settings() {
           </label>
           <div className="mt-4 flex flex-wrap gap-2">
             <Button variant="outline" disabled={cloudBusy} onClick={() => { saveCloud(); setCloudMsg('配置已保存') }}>保存配置</Button>
-            <Button variant="ghost" disabled={cloudBusy} onClick={() => {
-              if (!window.confirm('清空当前档案的本机云同步配置？不会删除云端文件。')) return
+            <Button variant="outline" onClick={() => {
               resetCloudConfig()
-              const fresh = getCloudConfig()
-              setCloud(fresh)
-              setCloudMsg('已清空本机云同步配置，请重新填写')
+              setCloud(getCloudConfig())
+              setCloudMsg('已清空本机云同步配置，请重新填写仓库、分支和 Token')
             }}>重置配置</Button>
             <Button variant="outline" disabled={cloudBusy} onClick={() => { saveCloud(); runCloud('测试连接', async () => {
               const r = await testCloud(cloud)
@@ -300,7 +298,7 @@ export function Settings() {
             }) }}>从云端恢复</Button>
           </div>
           <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-muted-foreground">
-            <span>{cloudMsg || '私有仓库必须在 Token 的 Repository access 中勾选；分支默认 main。'}</span>
+            <span aria-live="polite">{cloudMsg || '私有仓库必须在 Token 的 Repository access 中勾选；分支默认 main。'}</span>
             {cloud.lastPush ? <span>上次上传 {new Date(cloud.lastPush).toLocaleString()}</span> : null}
             {cloud.lastPull ? <span>上次恢复 {new Date(cloud.lastPull).toLocaleString()}</span> : null}
           </div>

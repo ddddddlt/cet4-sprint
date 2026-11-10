@@ -37,7 +37,7 @@ const Button = React.forwardRef(({ className, variant, size, asChild = false, ch
       ref,
     })
   }
-  return <button ref={ref} className={classes} {...props}>{children}</button>
+  return <button ref={ref} type="button" className={classes} {...props}>{children}</button>
 })
 Button.displayName = 'Button'
 
