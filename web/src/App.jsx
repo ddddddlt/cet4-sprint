@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import Vocab from './pages/Vocab'
 import Wordbook from './pages/Wordbook'
+import DrillRunner from './pages/DrillRunner'
 import {
   AlertTriangle,
   ArrowUpRight,
@@ -385,7 +386,7 @@ function Drill() {
       <PageHead
         eyebrow="VOCAB DEEP PRACTICE"
         title="词汇深练"
-        description="五种模式 · 每轮 10 词 · 记录自动保存。v2 保留深练入口，具体答题仍可回到旧版。"
+        description="五种模式 · 每轮 10 词 · 记录自动保存。拼写、听写、词义、搭配与词根都在 v2 里完成。"
         action={<Badge variant="outline" className="rounded-md font-normal">覆盖 200 词</Badge>}
       />
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
@@ -412,7 +413,7 @@ function Drill() {
                 </div>
                 <Button variant={enabled ? 'default' : 'secondary'} className="mt-5 w-full justify-between" disabled={!enabled} asChild={enabled}>
                   {enabled ? (
-                    <a href={legacyUrl(`#/drill/${mode.key}`)}>
+                    <a href={`#/drill/${mode.key}`}>
                       开始{mode.name}
                       <ArrowUpRight className="h-4 w-4 opacity-60" />
                     </a>
@@ -451,7 +452,9 @@ export default function App() {
   }, [route])
 
   let page
+  const drillMode = route.startsWith('#/drill/') ? route.split('?')[0].replace('#/drill/', '') : null
   if (route.startsWith('#/practice')) page = <Practice />
+  else if (drillMode) page = <DrillRunner key={drillMode} mode={drillMode} />
   else if (route.startsWith('#/drill')) page = <Drill />
   else if (route.startsWith('#/vocab')) page = <Vocab />
   else if (route.startsWith('#/wordbook')) page = <Wordbook />
