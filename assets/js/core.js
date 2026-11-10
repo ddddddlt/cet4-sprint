@@ -45,6 +45,7 @@ window.App = window.App || {};
       cards: {},
       daily: {},
       attempts: { reading: {}, listening: {}, translation: {} },
+      qstats: {},
       wrong: { words: {}, questions: {} },
       drafts: { translation: {} },
       custom: [],
@@ -67,6 +68,7 @@ window.App = window.App || {};
     s.daily = s.daily || {};
     s.attempts = s.attempts || { reading: {}, listening: {}, translation: {} };
     s.attempts.translation = s.attempts.translation || {};
+    s.qstats = s.qstats || {};
     s.wrong = s.wrong || { words: {}, questions: {} };
     s.wrong.words = s.wrong.words || {};
     s.wrong.questions = s.wrong.questions || {};
@@ -722,6 +724,36 @@ window.App = window.App || {};
     return (state.attempts[kind] || {})[setId] || null;
   }
 
+  function recordQuestion(qid, ok) {
+    var q = state.qstats[qid] || { n: 0, ok: 0, last: 0, lastOk: false };
+    q.n += 1;
+    if (ok) q.ok += 1;
+    q.last = Date.now();
+    q.lastOk = !!ok;
+    state.qstats[qid] = q;
+    save();
+    return q;
+  }
+
+  function questionStat(qid) {
+    var q = state.qstats[qid];
+    if (!q) return null;
+    return { n: q.n || 0, ok: q.ok || 0, last: q.last || 0, lastOk: !!q.lastOk };
+  }
+
+  function attemptSummary(kind, setId) {
+    var a = (state.attempts[kind] || {})[setId];
+    if (!a) return { done: false, times: 0, lastAt: 0, best: 0, total: 0, lastScore: 0 };
+    return {
+      done: true,
+      times: a.times || 1,
+      lastAt: a.at || 0,
+      best: a.best || a.score || 0,
+      total: a.total || 0,
+      lastScore: a.score || 0
+    };
+  }
+
   function wrongQuestions() {
     return Object.keys(state.wrong.questions).map(function (qid) {
       var e = state.wrong.questions[qid];
@@ -951,6 +983,9 @@ window.App = window.App || {};
     wrongQuestion: wrongQuestion,
     wrongQuestions: wrongQuestions,
     attempt: attempt,
+    attemptSummary: attemptSummary,
+    recordQuestion: recordQuestion,
+    questionStat: questionStat,
     // 自定义
     customList: customList,
     addCustom: addCustom,

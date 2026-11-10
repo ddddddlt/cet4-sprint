@@ -200,6 +200,78 @@ window.App = window.App || {};
     });
   }
 
+  /* ---------------- 套题状态 / 筛选 / 单题历史 ---------------- */
+  function attemptWhen(ts) {
+    if (!ts) return '';
+    var today = A.core.todayStart();
+    var day = A.core.startOfDay(ts);
+    if (day === today) return '今天';
+    if (day === today - 86400000) return '昨天';
+    return ui.dateLabel(ts);
+  }
+
+  function hasWrongSet(setId) {
+    return A.core.wrongQuestions().some(function (e) { return e.setId === setId; });
+  }
+
+  function setStatusHtml(kind, setId) {
+    var sum = A.core.attemptSummary(kind, setId);
+    var out = '<div class="set-status">';
+    if (!sum.done) {
+      out += '<span class="muted">未做</span>';
+    } else {
+      out += '<span>已做 ' + sum.times + ' 次 · 最近 ' + esc(attemptWhen(sum.lastAt)) + ' · 最好 ' + sum.best + ' / ' + sum.total + '</span>';
+    }
+    if (hasWrongSet(setId)) {
+      out += '<span class="set-wrong"><span class="dot"></span>有错题</span>';
+    }
+    return out + '</div>';
+  }
+
+  function filterBarHtml(done, todo) {
+    return '<div class="filter-bar" data-set-filter role="group" aria-label="筛选套题">' +
+      '<button type="button" class="chip on" data-filter="all" aria-pressed="true">全部 ' + (done + todo) + '</button>' +
+      '<button type="button" class="chip" data-filter="todo" aria-pressed="false">未做 ' + todo + '</button>' +
+      '<button type="button" class="chip" data-filter="done" aria-pressed="false">做过 ' + done + '</button>' +
+      '</div>';
+  }
+
+  function bindSetFilter(root) {
+    var bar = root.querySelector('[data-set-filter]');
+    if (!bar) return;
+
+    function apply(mode) {
+      root.querySelectorAll('.set-card[data-done]').forEach(function (card) {
+        var done = card.getAttribute('data-done') === '1';
+        card.hidden = mode === 'todo' ? done : mode === 'done' ? !done : false;
+      });
+      root.querySelectorAll('.reading-group').forEach(function (group) {
+        var any = false;
+        group.querySelectorAll('.set-card').forEach(function (card) {
+          if (!card.hidden) any = true;
+        });
+        group.hidden = !any;
+      });
+      bar.querySelectorAll('[data-filter]').forEach(function (b) {
+        var on = b.getAttribute('data-filter') === mode;
+        b.classList.toggle('on', on);
+        b.setAttribute('aria-pressed', on ? 'true' : 'false');
+      });
+    }
+
+    bar.addEventListener('click', function (e) {
+      var b = e.target && e.target.closest ? e.target.closest('[data-filter]') : null;
+      if (!b) return;
+      apply(b.getAttribute('data-filter'));
+    });
+    apply('all');
+  }
+
+  function historyHtml(stat) {
+    if (!stat) return '';
+    return '<div class="q-history">做过 ' + stat.n + ' 次 · 上次' + (stat.lastOk ? '对' : '错') + '</div>';
+  }
+
   /* ================= 首页 ================= */
   views.dashboard = function () {
     var s = S();
@@ -1117,16 +1189,14 @@ window.App = window.App || {};
     var all = careful.length + cloze.length + matching.length;
 
     function card(set, route, metaHtml) {
-      var att = A.core.attempt('reading', set.id);
-      var status = att
-        ? '<span class="chip status-ok">已完成 ' + att.best + ' / ' + att.total + '</span>'
-        : '<span class="chip">未开始</span>';
-      return '<article class="set-card">' +
-        '<div class="set-top"><span class="chip chip-type">' + esc(set.type) + '</span>' + status + '</div>' +
+      var sum = A.core.attemptSummary('reading', set.id);
+      return '<article class="set-card" data-set-id="' + esc(set.id) + '" data-done="' + (sum.done ? '1' : '0') + '">' +
+        '<div class="set-top"><span class="chip chip-type">' + esc(set.type) + '</span></div>' +
         '<h3>' + esc(set.title) + '</h3>' +
         '<p class="set-intro">' + esc(set.topic || set.intro || '') + '</p>' +
+        setStatusHtml('reading', set.id) +
         '<div class="set-meta">' + metaHtml + '<span class="dot">' + esc(set.level) + '</span></div>' +
-        '<a class="btn btn-soft" href="#/' + route + '/' + set.id + '">' + (att ? '再做一遍' : '开始练习') + icon('arrowRight') + '</a>' +
+        '<a class="btn btn-soft" href="#/' + route + '/' + set.id + '">' + (sum.done ? '再做一遍' : '开始练习') + icon('arrowRight') + '</a>' +
         '</article>';
     }
 
@@ -1155,12 +1225,17 @@ window.App = window.App || {};
     });
 
     var lookup = '<div class="lookup-bar"><input id="reading-lookup" class="input" type="search" autocomplete="off" aria-label="查词，输入英文单词后回车" placeholder="查词：输入英文单词，回车查询"></div>';
+    var doneCount = careful.concat(matching, cloze).filter(function (s) {
+      return A.core.attemptSummary('reading', s.id).done;
+    }).length;
 
     return {
-      html: pageHead('阅读', '仔细阅读 · 长篇匹配 · 选词填空') + lookup + tip +
+      html: pageHead('阅读', '仔细阅读 · 长篇匹配 · 选词填空') + lookup +
+        filterBarHtml(doneCount, all - doneCount) + tip +
         (all ? body : emptyState('file', '还没有阅读题', '在 assets/js/data/ 中添加题目即可')),
       mount: function (root) {
         bindLookup(root.querySelector('#reading-lookup'));
+        bindSetFilter(root);
       }
     };
   };
@@ -1180,8 +1255,14 @@ window.App = window.App || {};
     var startedAt = Date.now();
     var elapsed = 0;
     var result = null;
+    var history = {};
 
     function showAnswer() { return submitted || review; }
+
+    function histFor(qid) {
+      if (Object.prototype.hasOwnProperty.call(history, qid)) return history[qid];
+      return review ? A.core.questionStat(qid) : null;
+    }
 
     function scrollToTarget(el, smooth) {
       if (!el) return;
@@ -1296,6 +1377,7 @@ window.App = window.App || {};
         var isWrong = review && wrongIds.indexOf(q.id) >= 0;
         var explain = showAnswer()
           ? '<div class="explain"><div class="ex-row"><span class="ex-label">答案</span><strong>' + ['A', 'B', 'C', 'D'][q.answer] + '</strong></div>' +
+          historyHtml(histFor(q.id)) +
           '<p>' + esc(q.explain) + '</p>' +
           '<div class="ex-evidence">' + icon('target') + '<span>定位句已在左侧高亮</span></div></div>'
           : '';
@@ -1408,7 +1490,10 @@ window.App = window.App || {};
     function doSubmit(root) {
       var score = 0;
       set.questions.forEach(function (q) {
-        if (answers[q.id] === q.answer) score += 1;
+        var ok = answers[q.id] === q.answer;
+        history[q.id] = A.core.questionStat(q.id);
+        A.core.recordQuestion(q.id, ok);
+        if (ok) score += 1;
         else A.core.wrongQuestion(q.id, 'reading', set.id, {
           stem: q.stem,
           answer: ['A', 'B', 'C', 'D'][q.answer] + '. ' + q.options[q.answer],
@@ -1430,6 +1515,7 @@ window.App = window.App || {};
       answers = {};
       submitted = false;
       result = null;
+      history = {};
       elapsed = 0;
       startedAt = Date.now();
       render(root);
@@ -1480,6 +1566,7 @@ window.App = window.App || {};
     var startedAt = Date.now();
     var elapsed = 0;
     var activeBlank = null;
+    var history = {};
 
     function bankItem(k) {
       for (var i = 0; i < set.bank.length; i++) if (set.bank[i].k === k) return set.bank[i];
@@ -1573,6 +1660,7 @@ window.App = window.App || {};
           '<div class="cr-body"><div class="cr-ans">' + icon(ok ? 'check' : 'x') +
           '<strong>' + b.answer + '. ' + esc(item.w) + '</strong>' +
           '<span class="cr-mine">' + (ok ? '你的选择正确' : '你选了 ' + (mine ? mine + '. ' + esc(bankItem(mine).w) : '空着')) + '</span></div>' +
+          historyHtml(history[set.id + '-b' + b.no]) +
           '<p>' + esc(b.explain) + '</p></div></div>';
       }).join('');
       return '<div class="runner">' + topBar() +
@@ -1643,7 +1731,11 @@ window.App = window.App || {};
     function doSubmit() {
       var score = 0;
       set.blanks.forEach(function (b) {
-        if (answers[b.no] === b.answer) score += 1;
+        var qid = set.id + '-b' + b.no;
+        var ok = answers[b.no] === b.answer;
+        history[qid] = A.core.questionStat(qid);
+        A.core.recordQuestion(qid, ok);
+        if (ok) score += 1;
         else {
           A.core.wrongQuestion(set.id + '-b' + b.no, 'cloze', set.id, {
             stem: '选词填空 · 第 ' + b.no + ' 空',
@@ -1666,6 +1758,7 @@ window.App = window.App || {};
       answers = {};
       submitted = false;
       activeBlank = null;
+      history = {};
       elapsed = 0;
       startedAt = Date.now();
       render();
@@ -1714,6 +1807,7 @@ window.App = window.App || {};
     var submitted = false;
     var startedAt = Date.now();
     var elapsed = 0;
+    var history = {};
 
     function letters() { return set.paragraphs.map(function (p) { return p.k; }); }
     function paraText(k) {
@@ -1740,6 +1834,7 @@ window.App = window.App || {};
         var result = submitted
           ? '<div class="stmt-result">' +
             '<span class="sr-ans">' + icon(mine === st.answer ? 'check' : 'x') + '答案 ' + st.answer + '</span>' +
+            historyHtml(history[st.id]) +
             '<p>' + esc(st.explain) + '</p></div>'
           : '';
         return '<div class="stmt" data-stmt="' + st.id + '">' +
@@ -1829,7 +1924,10 @@ window.App = window.App || {};
     function doSubmit() {
       var score = 0;
       set.statements.forEach(function (st) {
-        if (answers[st.id] === st.answer) score += 1;
+        var ok = answers[st.id] === st.answer;
+        history[st.id] = A.core.questionStat(st.id);
+        A.core.recordQuestion(st.id, ok);
+        if (ok) score += 1;
         else {
           A.core.wrongQuestion(st.id, 'matching', set.id, {
             stem: st.text,
@@ -1851,6 +1949,7 @@ window.App = window.App || {};
     function retryAll() {
       answers = {};
       submitted = false;
+      history = {};
       elapsed = 0;
       startedAt = Date.now();
       render();
@@ -1886,25 +1985,27 @@ window.App = window.App || {};
   views.listening = function () {
     var sets = window.CET4_LISTENING || [];
     var cards = sets.map(function (set) {
-      var att = A.core.attempt('listening', set.id);
-      var status = att ? '<span class="chip status-ok">已完成 ' + att.best + ' / ' + att.total + '</span>' : '<span class="chip">未开始</span>';
-      return '<article class="set-card">' +
-        '<div class="set-top"><span class="chip chip-type">' + esc(set.type) + '</span>' + status + '</div>' +
+      var sum = A.core.attemptSummary('listening', set.id);
+      return '<article class="set-card" data-set-id="' + esc(set.id) + '" data-done="' + (sum.done ? '1' : '0') + '">' +
+        '<div class="set-top"><span class="chip chip-type">' + esc(set.type) + '</span></div>' +
         '<h3>' + esc(set.title) + '</h3>' +
         '<p class="set-intro">' + esc(set.intro) + '</p>' +
+        setStatusHtml('listening', set.id) +
         '<div class="set-meta"><span>' + icon('headphones') + set.questions.length + ' 题</span>' +
         '<span>' + icon('clock') + '约 ' + Math.ceil(set.seconds / 60) + ' 分钟</span>' +
         '<span class="dot">' + esc(set.level) + '</span></div>' +
-        '<a class="btn btn-soft" href="#/listening/' + set.id + '">' + (att ? '再听一遍' : '开始练习') + icon('arrowRight') + '</a>' +
+        '<a class="btn btn-soft" href="#/listening/' + set.id + '">' + (sum.done ? '再听一遍' : '开始练习') + icon('arrowRight') + '</a>' +
         '</article>';
     }).join('');
+    var doneCount = sets.filter(function (set) { return A.core.attemptSummary('listening', set.id).done; }).length;
 
     var tip = '<div class="banner tip">' + icon('headphones') +
       '<div><strong>关于音频</strong><span>练习音频由浏览器语音合成朗读，音色取决于系统。正式备考建议配合真题音频精听。</span></div></div>';
 
     return {
-      html: pageHead('听力', '长对话 · 听力篇章 · 原文精听') + tip +
-        (cards ? '<div class="set-grid">' + cards + '</div>' : emptyState('headphones', '还没有听力题', '在 assets/js/data/content.js 中添加题目即可'))
+      html: pageHead('听力', '长对话 · 听力篇章 · 原文精听') + filterBarHtml(doneCount, sets.length - doneCount) + tip +
+        (cards ? '<div class="set-grid">' + cards + '</div>' : emptyState('headphones', '还没有听力题', '在 assets/js/data/content.js 中添加题目即可')),
+      mount: function (root) { bindSetFilter(root); }
     };
   };
 
@@ -1922,6 +2023,7 @@ window.App = window.App || {};
     var rate = 1;
     var showText = false;
     var playing = false;
+    var history = {};
 
     function clean(text) {
       return text.replace(/^[MW]:\s*/gm, '').trim();
@@ -1956,6 +2058,7 @@ window.App = window.App || {};
       return set.questions.map(function (q, idx) {
         var explain = submitted
           ? '<div class="explain"><div class="ex-row"><span class="ex-label">答案</span><strong>' + ['A', 'B', 'C', 'D'][q.answer] + '</strong></div>' +
+          historyHtml(history[q.id]) +
           '<p>' + esc(q.explain) + '</p>' +
           '<div class="ex-evidence">' + icon('volume') + '<span>原文：' + esc(q.evidence) + '</span></div></div>'
           : '';
@@ -2083,7 +2186,10 @@ window.App = window.App || {};
       stop();
       var score = 0;
       set.questions.forEach(function (q) {
-        if (answers[q.id] === q.answer) score += 1;
+        var ok = answers[q.id] === q.answer;
+        history[q.id] = A.core.questionStat(q.id);
+        A.core.recordQuestion(q.id, ok);
+        if (ok) score += 1;
         else A.core.wrongQuestion(q.id, 'listening', set.id, {
           stem: q.stem,
           answer: ['A', 'B', 'C', 'D'][q.answer] + '. ' + q.options[q.answer],
@@ -2105,6 +2211,7 @@ window.App = window.App || {};
       answers = {};
       submitted = false;
       result = null;
+      history = {};
       elapsed = 0;
       startedAt = Date.now();
       showText = false;
@@ -2145,31 +2252,29 @@ window.App = window.App || {};
   views.translation = function () {
     var sets = window.CET4_TRANSLATION || [];
     var cards = sets.map(function (set) {
-      var att = A.core.attempt('translation', set.id);
-      var status = !att
-        ? '<span class="chip">未开始</span>'
-        : att.graded
-          ? '<span class="chip status-ok">自评 ' + att.score + ' / 15</span>'
-          : '<span class="chip status-due">待自评</span>';
+      var sum = A.core.attemptSummary('translation', set.id);
       var zhCount = (set.zh || '').replace(/\s/g, '').length;
-      return '<article class="set-card">' +
-        '<div class="set-top"><span class="chip chip-type">汉译英</span>' + status + '</div>' +
+      return '<article class="set-card" data-set-id="' + esc(set.id) + '" data-done="' + (sum.done ? '1' : '0') + '">' +
+        '<div class="set-top"><span class="chip chip-type">汉译英</span></div>' +
         '<h3>' + esc(set.title) + '</h3>' +
         '<p class="set-intro">' + esc(set.topic) + ' · 约 ' + zhCount + ' 字</p>' +
+        setStatusHtml('translation', set.id) +
         '<div class="set-meta"><span>' + icon('languages') + set.sentences.length + ' 句</span>' +
         '<span>' + icon('clock') + '约 ' + set.minutes + ' 分钟</span>' +
         '<span class="dot">' + esc(set.level) + '</span></div>' +
-        '<a class="btn btn-soft" href="#/translation/' + set.id + '">' + (att ? '再练一次' : '开始翻译') + icon('arrowRight') + '</a>' +
+        '<a class="btn btn-soft" href="#/translation/' + set.id + '">' + (sum.done ? '再练一次' : '开始翻译') + icon('arrowRight') + '</a>' +
         '</article>';
     }).join('');
+    var doneCount = sets.filter(function (set) { return A.core.attemptSummary('translation', set.id).done; }).length;
 
     var tip = '<div class="banner tip">' + icon('languages') +
       '<div><strong>翻译占 15%（106.5 分）</strong><span>题材集中在传统文化与数字生活。先找主干（谁 + 做了什么），再用从句、分词补修饰；不会的词用简单表达解释，不要留空。</span></div></div>';
 
     return {
-      html: pageHead('翻译', '汉译英 · 得分点检查 · 逐句对照') + tip +
+      html: pageHead('翻译', '汉译英 · 得分点检查 · 逐句对照') + filterBarHtml(doneCount, sets.length - doneCount) + tip +
         (cards ? '<div class="set-grid">' + cards + '</div>'
-          : emptyState('languages', '还没有翻译题', '在 assets/js/data/translation.js 中添加题目即可'))
+          : emptyState('languages', '还没有翻译题', '在 assets/js/data/translation.js 中添加题目即可')),
+      mount: function (root) { bindSetFilter(root); }
     };
   };
 
@@ -2191,6 +2296,7 @@ window.App = window.App || {};
     var gradedBand = null;
     var wasGraded = false;
     var saveTimer = null;
+    var history = {};
 
     var BANDS = [
       { v: 14, label: '13–15', desc: '完整准确' },
@@ -2307,6 +2413,7 @@ window.App = window.App || {};
       return '<div class="runner">' + topBar() +
         '<div class="ts-wrap">' +
         '<section class="card trans-result">' +
+        historyHtml(history[set.id]) +
         '<div class="tr-nums">' +
         '<div><strong>' + kpLabel + '</strong><span>得分点</span></div>' +
         '<div><strong>' + wc(text) + '</strong><span>词数</span></div>' +
@@ -2366,6 +2473,10 @@ window.App = window.App || {};
     function finishAll() {
       elapsed = Math.round((Date.now() - startedAt) / 1000);
       points = checkPoints(answers.join(' '));
+      // 翻译没有自动判分：按整篇记录一次，得分点覆盖达到 60% 记为“对”，仅用于历史提示
+      history[set.id] = A.core.questionStat(set.id);
+      var hitCount = points.filter(function (p) { return p.hit; }).length;
+      A.core.recordQuestion(set.id, points.length ? hitCount >= Math.ceil(points.length * 0.6) : false);
       var prev = A.core.attempt('translation', set.id);
       wasGraded = !!(prev && prev.graded);
       gradedBand = wasGraded ? prev.score : null;
@@ -2395,6 +2506,7 @@ window.App = window.App || {};
       idx = 0;
       submitted = false;
       points = [];
+      history = {};
       elapsed = 0;
       startedAt = Date.now();
       persist();
