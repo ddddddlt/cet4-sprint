@@ -455,6 +455,7 @@ window.App = window.App || {};
         ids: ids, idx: 0, flipped: false,
         stats: { 1: 0, 2: 0, 3: 0 },
         group: { 1: 0, 2: 0, 3: 0 },
+        retry: {}, retrySeen: {}, retryCount: 0,
         pendingBreak: false,
         startTs: Date.now()
       };
@@ -471,10 +472,11 @@ window.App = window.App || {};
       if (!checkSession) { r.innerHTML = storageBanner() + landing(); bindLanding(r); return; }
       var s = checkSession;
       if (s.idx >= s.ids.length) { renderSummary(r); return; }
-      if (s.pendingBreak && s.idx % 10 === 0) { renderBreak(r); return; }
+      if (s.pendingBreak) { renderBreak(r); return; }
 
       var w = A.core.getWord(s.ids[s.idx]);
       if (!w) { s.idx += 1; renderCard(r); return; }
+      if (s.retry[w.id] && !s.retrySeen[w.id]) s.retrySeen[w.id] = true;
       var total = A.core.checkTarget();
       var done = A.core.todayRecord().checkDone || 0;
       var groupNo = Math.floor(s.idx / 10) + 1;
@@ -549,12 +551,31 @@ window.App = window.App || {};
     function grade(g, r) {
       var s = checkSession;
       var id = s.ids[s.idx];
-      A.core.reviewWord(id, g);
-      s.stats[g] += 1;
-      s.group[g] += 1;
+      var wasRetry = !!s.retrySeen[id];
+      A.core.reviewWord(id, g, wasRetry ? { daily: false } : undefined);
+      if (!wasRetry) {
+        s.stats[g] += 1;
+        s.group[g] += 1;
+      }
+
+      if (g <= 2 && !wasRetry && !s.retry[id]) {
+        s.retry[id] = 1;
+        s.retryCount += 1;
+        var pos = s.idx + 3;
+        if (pos >= s.ids.length) pos = s.ids.length;
+        s.ids.splice(pos, 0, id);
+      }
+
       s.idx += 1;
       s.flipped = false;
-      if (s.idx % 10 === 0 && s.idx < s.ids.length) { s.pendingBreak = true; renderBreak(r); return; }
+
+      var done = A.core.todayRecord().checkDone || 0;
+      var target = A.core.checkTarget();
+      if (done > 0 && done % 10 === 0 && done < target) {
+        s.pendingBreak = true;
+        renderBreak(r);
+        return;
+      }
       if (s.idx >= s.ids.length) { renderSummary(r); return; }
       renderCard(r);
     }
@@ -562,7 +583,7 @@ window.App = window.App || {};
     function renderBreak(r) {
       var s = checkSession;
       s.pendingBreak = false;
-      var n = s.idx / 10;
+      var n = Math.max(1, Math.round((A.core.todayRecord().checkDone || 0) / 10));
       var g = s.group;
       s.group = { 1: 0, 2: 0, 3: 0 };
       r.innerHTML = storageBanner() +
@@ -591,12 +612,14 @@ window.App = window.App || {};
       var n = s.stats[1] + s.stats[2] + s.stats[3];
       var rate = n ? Math.round(((s.stats[2] + s.stats[3]) / n) * 100) : 0;
       var mins = Math.max(1, Math.round((Date.now() - s.startTs) / 60000));
+      var done = A.core.todayRecord().checkDone || 0;
+      var target = A.core.checkTarget();
       r.innerHTML = storageBanner() +
         '<div class="session-end card">' +
         '<div class="se-ring">' + ui.ring(rate / 100, 120, 8) +
         '<div class="se-ring-label"><strong>' + rate + '%</strong><span>记得率</span></div></div>' +
         '<h2>本轮抽查完成</h2>' +
-        '<p class="muted">记得 ' + s.stats[3] + ' · 模糊 ' + s.stats[2] + ' · 忘了 ' + s.stats[1] + ' · ' + mins + ' 分钟</p>' +
+        '<p class="muted">完成 ' + done + ' / ' + target + ' · 记得 ' + s.stats[3] + ' · 模糊 ' + s.stats[2] + ' · 忘了 ' + s.stats[1] + ' · 回插 ' + s.retryCount + ' 次 · ' + mins + ' 分钟</p>' +
         '<div class="se-actions">' +
         '<button class="btn btn-primary" data-add10>+10 个</button>' +
         '<button class="btn btn-ghost" data-again>' + icon('rotate') + '再抽查一轮</button>' +
