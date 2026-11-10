@@ -724,6 +724,10 @@ window.App = window.App || {};
       entry.explain = meta.explain || entry.explain;
       entry.title = meta.title || entry.title;
       entry.type = meta.type || entry.type;
+      entry.passage = meta.passage || entry.passage;
+      entry.context = meta.context || entry.context;
+      entry.options = meta.options || entry.options;
+      entry.exam = meta.exam == null ? entry.exam : meta.exam;
     }
     state.wrong.questions[qid] = entry;
     save();
@@ -841,7 +845,8 @@ window.App = window.App || {};
         qid: qid, kind: e.kind || 'reading', setId: e.setId,
         count: e.count || 1, last: e.last || 0,
         title: e.title || '', type: e.type || '',
-        stem: e.stem || '', answer: e.answer || '', explain: e.explain || ''
+        stem: e.stem || '', answer: e.answer || '', explain: e.explain || '',
+        passage: e.passage || '', context: e.context || '', options: e.options || null, exam: e.exam
       };
     });
   }

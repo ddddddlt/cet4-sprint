@@ -114,7 +114,12 @@ export function ListeningRunner({ id }) {
       core.recordQuestion(q.id, ok)
       if (!ok) core.wrongQuestion(q.id, 'listening', set.id, {
         stem: q.stem, answer: ['A', 'B', 'C', 'D'][q.answer] + '. ' + q.options[q.answer], explain: q.explain, title: set.title, type: set.type,
+        context: set.transcript, options: q.options,
       })
+      else {
+        const st = core.getState()
+        if (st.wrong.questions[q.id]) { delete st.wrong.questions[q.id]; core.save() }
+      }
     })
     core.recordSet('listening', set.id, n, set.questions.length)
     core.clearSession('listening', set.id)

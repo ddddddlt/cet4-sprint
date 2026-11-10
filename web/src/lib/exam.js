@@ -17,6 +17,7 @@ export function listPapers() {
 export function makeExam(paper, index) {
   return {
     id: paperId(paper, index),
+    index,
     label: paperLabel(paper, index),
     writing: paper.writing || null,
     reading: Array.isArray(paper.reading) ? paper.reading : (paper.reading ? [paper.reading] : []),

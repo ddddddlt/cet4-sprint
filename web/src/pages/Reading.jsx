@@ -186,6 +186,7 @@ export function ReadingRunner({ id, reviewQ }) {
       core.recordQuestion(q.id, ok)
       if (!ok) core.wrongQuestion(q.id, 'reading', set.id, {
         stem: q.stem, answer: ['A', 'B', 'C', 'D'][q.answer] + '. ' + q.options[q.answer], explain: q.explain, title: set.title, type: set.type,
+        passage: set.passage, options: q.options,
       })
       else {
         const st = core.getState()
@@ -311,7 +312,12 @@ export function ClozeRunner({ id }) {
       core.recordQuestion(set.id + '-b' + b.no, ok)
       if (!ok) core.wrongQuestion(set.id + '-b' + b.no, 'cloze', set.id, {
         stem: '选词填空 · 第 ' + b.no + ' 空', answer: b.answer, explain: b.explain, title: set.title, type: '选词填空',
+        passage: set.passage, context: '备选词：' + set.bank.map((x) => x.w).join(' / '),
       })
+      else {
+        const st = core.getState()
+        if (st.wrong.questions[set.id + '-b' + b.no]) { delete st.wrong.questions[set.id + '-b' + b.no]; core.save() }
+      }
     })
     core.recordSet('reading', set.id, n, set.blanks.length)
     core.clearSession('cloze', set.id)
@@ -399,7 +405,14 @@ export function MatchingRunner({ id }) {
       const ok = answers[st.id] === st.answer
       if (ok) n += 1
       core.recordQuestion(st.id, ok)
-      if (!ok) core.wrongQuestion(st.id, 'matching', set.id, { stem: st.text, answer: st.answer, explain: st.explain, title: set.title, type: '长篇匹配' })
+      if (!ok) core.wrongQuestion(st.id, 'matching', set.id, {
+        stem: st.text, answer: st.answer, explain: st.explain, title: set.title, type: '长篇匹配',
+        context: set.paragraphs.map((x) => x.k + '. ' + x.text).join('\n\n'),
+      })
+      else {
+        const stt = core.getState()
+        if (stt.wrong.questions[st.id]) { delete stt.wrong.questions[st.id]; core.save() }
+      }
     })
     core.recordSet('reading', set.id, n, set.statements.length)
     core.clearSession('matching', set.id)
