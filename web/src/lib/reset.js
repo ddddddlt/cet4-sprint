@@ -17,6 +17,10 @@ export function clearToday(core) {
   const count = { wordbook: 0, wrong: 0, questions: 0, attempts: 0 }
 
   delete st.daily[key]
+  st.syncTombstones = st.syncTombstones || { wrong: {}, attempts: {} }
+  st.syncTombstones.wrong = st.syncTombstones.wrong || {}
+  st.syncTombstones.attempts = st.syncTombstones.attempts || {}
+  const now = Date.now()
 
   Object.keys(st.wordbook || {}).forEach((id) => {
     const item = st.wordbook[id]
@@ -38,6 +42,7 @@ export function clearToday(core) {
     const item = st.wrong.questions[id]
     if (item && item.last >= start) {
       delete st.wrong.questions[id]
+      st.syncTombstones.wrong[id] = now
       count.questions += 1
     }
   })
@@ -53,6 +58,7 @@ export function clearToday(core) {
       const item = bucket[id]
       if (item && item.at >= start) {
         delete bucket[id]
+        st.syncTombstones.attempts[kind + ':' + id] = now
         count.attempts += 1
       }
     })

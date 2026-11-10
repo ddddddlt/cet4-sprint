@@ -493,7 +493,7 @@ export function Settings() {
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div>
               <h2 className="font-display text-lg font-semibold">Supabase 账号同步</h2>
-              <p className="mt-1 text-xs text-muted-foreground">真实邮箱账号，每个人只读写自己的进度；不需要 GitHub Token。</p>
+              <p className="mt-1 text-xs text-muted-foreground">真实邮箱账号，每个人只读写自己的进度；错题与练习记录会增量合并。</p>
             </div>
             <Badge variant="default" className="font-normal">推荐</Badge>
           </div>

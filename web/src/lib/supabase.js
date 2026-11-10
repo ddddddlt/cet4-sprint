@@ -1,5 +1,6 @@
 import { hashState } from './cloud'
 import { activeProfile } from './profiles'
+import { mergeWrongAndAttempts } from './syncMerge'
 
 const KEY = 'cet4-sprint/supabase/v1'
 const PROFILE_META = 'cet4-sprint/supabase/profile/v1/'
@@ -223,7 +224,8 @@ export async function fetchRemoteSupabase() {
 
 export async function applyRemoteSupabase(core, row) {
   if (!row || !row.data) throw new Error('云端没有可恢复的进度')
-  core.importJSON(JSON.stringify(row.data))
+  const merged = mergeWrongAndAttempts(row.data, JSON.parse(core.exportJSON()))
+  core.importJSON(JSON.stringify(merged))
   saveSupabaseConfig({
     lastPull: Date.now(),
     lastHash: canonicalHash(row.data),
@@ -247,8 +249,13 @@ function dataCounts(state) {
   }
 }
 
-export async function pushSupabase(core) {
+export async function pushSupabase(core, opts = {}) {
   const { cfg, session } = await ensureSession()
+  const previous = opts.remote || await fetchRemoteSupabase()
+  if (previous && previous.data) {
+    const merged = mergeWrongAndAttempts(JSON.parse(core.exportJSON()), previous.data)
+    core.importJSON(JSON.stringify(merged))
+  }
   const state = JSON.parse(core.exportJSON())
   const local = dataCounts(state)
   const updatedAt = new Date().toISOString()
@@ -267,20 +274,20 @@ export async function pushSupabase(core) {
       updated_at: updatedAt,
     }, { Prefer: 'resolution=merge-duplicates,return=representation' })
   }
-  const remote = await fetchRemoteSupabase()
-  if (remote && remote.user_id && remote.user_id !== session.user.id) {
+  const verified = await fetchRemoteSupabase()
+  if (verified && verified.user_id && verified.user_id !== session.user.id) {
     const message = '上传后校验失败：云端返回的用户不是当前登录账号'
     saveSupabaseConfig({ lastError: message })
     throw new Error(message)
   }
-  const cloud = dataCounts(remote && remote.data)
-  if (!remote || cloud.wrong !== local.wrong || cloud.attempts !== local.attempts) {
+  const cloud = dataCounts(verified && verified.data)
+  if (!verified || cloud.wrong !== local.wrong || cloud.attempts !== local.attempts) {
     const message = '上传后校验失败：云端错题 ' + cloud.wrong + ' / 练习 ' + cloud.attempts + '，本机错题 ' + local.wrong + ' / 练习 ' + local.attempts
     saveSupabaseConfig({ lastError: message })
     throw new Error(message)
   }
   const finalHash = canonicalHash(core.exportJSON())
-  saveSupabaseConfig({ lastPush: Date.now(), lastHash: finalHash, lastRemoteAt: (remote && remote.updated_at) || updatedAt, lastError: '' })
+  saveSupabaseConfig({ lastPush: Date.now(), lastHash: finalHash, lastRemoteAt: (verified && verified.updated_at) || updatedAt, lastError: '' })
   return { updatedAt }
 }
 

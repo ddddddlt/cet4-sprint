@@ -413,7 +413,7 @@ function recordResult(exam, state, result) {
         stem: q.stem, answer: ['A', 'B', 'C', 'D'][q.answer] + '. ' + q.options[q.answer], explain: q.explain, title: set.title, type: '仔细阅读',
         passage: set.passage, options: q.options, exam: exam.index,
       })
-      else { const st = core.getState(); delete st.wrong.questions[q.id]; core.save() }
+      else core.removeWrongQuestion(q.id)
     })
     core.recordSet('reading', set.id, n, set.questions.length, seconds)
   })
@@ -427,10 +427,7 @@ function recordResult(exam, state, result) {
         stem: '选词填空 · 第 ' + b.no + ' 空', answer: b.answer, explain: b.explain, title: exam.cloze.title, type: '选词填空',
         passage: exam.cloze.passage, context: '备选词：' + (exam.cloze.bank || []).map((x) => x.w).join(' / '), exam: exam.index,
       })
-      else {
-        const st = core.getState()
-        if (st.wrong.questions[exam.cloze.id + '-b' + b.no]) { delete st.wrong.questions[exam.cloze.id + '-b' + b.no]; core.save() }
-      }
+      else core.removeWrongQuestion(exam.cloze.id + '-b' + b.no)
     })
     core.recordSet('reading', exam.cloze.id, n, exam.cloze.blanks.length, seconds)
   }
@@ -444,10 +441,7 @@ function recordResult(exam, state, result) {
         stem: st.text, answer: st.answer, explain: st.explain, title: exam.matching.title, type: '长篇匹配',
         context: (exam.matching.paragraphs || []).map((x) => x.k + '. ' + x.text).join('\n\n'), exam: exam.index,
       })
-      else {
-        const stt = core.getState()
-        if (stt.wrong.questions[st.id]) { delete stt.wrong.questions[st.id]; core.save() }
-      }
+      else core.removeWrongQuestion(st.id)
     })
     core.recordSet('reading', exam.matching.id, n, exam.matching.statements.length, seconds)
   }

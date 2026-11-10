@@ -1,0 +1,86 @@
+function clone(value) {
+  return JSON.parse(JSON.stringify(value == null ? {} : value))
+}
+
+function stamp(value) {
+  return Number(value) || 0
+}
+
+function newer(a, b, field) {
+  if (!a) return b
+  if (!b) return a
+  return stamp(b[field]) > stamp(a[field]) ? b : a
+}
+
+function mergeTombstoneGroup(local, remote) {
+  const out = {}
+  ;[remote || {}, local || {}].forEach((group) => {
+    Object.keys(group).forEach((key) => {
+      out[key] = Math.max(stamp(out[key]), stamp(group[key]))
+    })
+  })
+  return out
+}
+
+function mergeQuestions(local, remote, tombstones) {
+  const out = {}
+  const keys = new Set([...Object.keys(local || {}), ...Object.keys(remote || {})])
+  keys.forEach((key) => {
+    const a = local && local[key]
+    const b = remote && remote[key]
+    const chosen = newer(a, b, 'last')
+    if (!chosen) return
+    if (stamp(tombstones[key]) > stamp(chosen.last)) return
+    const entry = clone(chosen)
+    entry.count = Math.max(stamp(a && a.count), stamp(b && b.count), 1)
+    entry.last = Math.max(stamp(a && a.last), stamp(b && b.last))
+    out[key] = entry
+  })
+  return out
+}
+
+function mergeAttemptBuckets(local, remote, tombstones) {
+  const kinds = new Set([...Object.keys(local || {}), ...Object.keys(remote || {})])
+  const out = {}
+  kinds.forEach((kind) => {
+    const a = local && local[kind] || {}
+    const b = remote && remote[kind] || {}
+    const bucket = {}
+    const ids = new Set([...Object.keys(a), ...Object.keys(b)])
+    ids.forEach((id) => {
+      const x = a[id]
+      const y = b[id]
+      const chosen = newer(x, y, 'at')
+      if (!chosen) return
+      if (stamp(tombstones[kind + ':' + id]) > stamp(chosen.at)) return
+      const entry = { ...clone(chosen) }
+      entry.at = Math.max(stamp(x && x.at), stamp(y && y.at))
+      if (x && y) entry.best = Math.max(stamp(x.best), stamp(y.best))
+      bucket[id] = entry
+    })
+    out[kind] = bucket
+  })
+  return out
+}
+
+export function mergeWrongAndAttempts(base, incoming) {
+  const local = clone(base)
+  const remote = clone(incoming)
+  const localTombs = local.syncTombstones || {}
+  const remoteTombs = remote.syncTombstones || {}
+  const wrongTombstones = mergeTombstoneGroup(localTombs.wrong, remoteTombs.wrong)
+  const attemptTombstones = mergeTombstoneGroup(localTombs.attempts, remoteTombs.attempts)
+
+  const out = { ...local }
+  out.wrong = {
+    ...(local.wrong || {}),
+    questions: mergeQuestions(local.wrong && local.wrong.questions, remote.wrong && remote.wrong.questions, wrongTombstones),
+  }
+  out.attempts = mergeAttemptBuckets(local.attempts, remote.attempts, attemptTombstones)
+  out.syncTombstones = {
+    ...(local.syncTombstones || {}),
+    wrong: wrongTombstones,
+    attempts: attemptTombstones,
+  }
+  return out
+}

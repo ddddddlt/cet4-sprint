@@ -201,11 +201,7 @@ export function TranslationRunner({ id }) {
         })
         setWrongMsg('已收录进错题本：AI 判断存在遗漏或错误')
       } else {
-        const st = core.getState()
-        if (st.wrong.questions[qid]) {
-          delete st.wrong.questions[qid]
-          core.save()
-        }
+        core.removeWrongQuestion(qid)
         setWrongMsg('AI 未发现需要收录的原则性问题')
       }
     } catch (e) {

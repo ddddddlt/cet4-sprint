@@ -50,6 +50,7 @@ window.App = window.App || {};
       sessions: {},
       drill: { byMode: { spelling: { n: 0, ok: 0 }, dictation: { n: 0, ok: 0 }, sense: { n: 0, ok: 0 }, collocation: { n: 0, ok: 0 }, root: { n: 0, ok: 0 } }, byWord: {} },
       wrong: { words: {}, questions: {} },
+      syncTombstones: { wrong: {}, attempts: {} },
       drafts: { translation: {} },
       custom: [],
       wordbook: {}
@@ -82,6 +83,9 @@ window.App = window.App || {};
     s.wrong = s.wrong || { words: {}, questions: {} };
     s.wrong.words = s.wrong.words || {};
     s.wrong.questions = s.wrong.questions || {};
+    s.syncTombstones = s.syncTombstones || {};
+    s.syncTombstones.wrong = s.syncTombstones.wrong || {};
+    s.syncTombstones.attempts = s.syncTombstones.attempts || {};
     s.drafts = s.drafts || { translation: {} };
     s.drafts.translation = s.drafts.translation || {};
     s.drafts.writing = s.drafts.writing || {};
@@ -701,6 +705,7 @@ window.App = window.App || {};
 
   function recordWriting(id, words, seconds) {
     var bucket = state.attempts.writing || (state.attempts.writing = {});
+    if (state.syncTombstones && state.syncTombstones.attempts) delete state.syncTombstones.attempts['writing:' + id];
     bucket[id] = { at: Date.now(), words: words, seconds: seconds || 0 };
     var rec = dayRecord();
     rec.seconds += seconds || 0;
@@ -714,7 +719,22 @@ window.App = window.App || {};
     save();
   }
 
+  function removeWrongQuestion(qid) {
+    delete state.wrong.questions[qid];
+    if (!state.syncTombstones.wrong) state.syncTombstones.wrong = {};
+    state.syncTombstones.wrong[qid] = Date.now();
+    save();
+  }
+
+  function removeAttempt(kind, setId) {
+    if (state.attempts[kind]) delete state.attempts[kind][setId];
+    if (!state.syncTombstones.attempts) state.syncTombstones.attempts = {};
+    state.syncTombstones.attempts[kind + ':' + setId] = Date.now();
+    save();
+  }
+
   function wrongQuestion(qid, kind, setId, meta) {    var entry = state.wrong.questions[qid] || { count: 0, last: 0, kind: kind, setId: setId };
+    if (state.syncTombstones && state.syncTombstones.wrong) delete state.syncTombstones.wrong[qid];
     entry.count += 1;
     entry.last = Date.now();
     entry.kind = kind;
@@ -1068,6 +1088,8 @@ window.App = window.App || {};
     recordSet: recordSet,
     wrongQuestion: wrongQuestion,
     wrongQuestions: wrongQuestions,
+    removeWrongQuestion: removeWrongQuestion,
+    removeAttempt: removeAttempt,
     attempt: attempt,
     attemptSummary: attemptSummary,
     drillStats: drillStats,
