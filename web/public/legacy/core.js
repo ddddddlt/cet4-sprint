@@ -41,7 +41,8 @@ window.App = window.App || {};
         checkTarget: 50,
         dailyMinutes: 30,
         name: '',
-        theme: 'auto'
+        theme: 'auto',
+        updatedAt: 0
       },
       cards: {},
       daily: {},
@@ -86,6 +87,7 @@ window.App = window.App || {};
     s.syncTombstones = s.syncTombstones || {};
     s.syncTombstones.wrong = s.syncTombstones.wrong || {};
     s.syncTombstones.attempts = s.syncTombstones.attempts || {};
+    s.syncTombstones.sessions = s.syncTombstones.sessions || {};
     s.drafts = s.drafts || { translation: {} };
     s.drafts.translation = s.drafts.translation || {};
     s.drafts.writing = s.drafts.writing || {};
@@ -111,6 +113,7 @@ window.App = window.App || {};
 
   function setThemeMode(mode) {
     state.settings.theme = (mode === 'light' || mode === 'dark') ? mode : 'auto';
+    state.settings.updatedAt = Date.now();
     save();
     applyTheme();
     return state.settings.theme;
@@ -795,6 +798,7 @@ window.App = window.App || {};
   function saveSession(runner, setId, data) {
     var key = runner + ':' + setId;
     var now = Date.now();
+    if (state.syncTombstones && state.syncTombstones.sessions) delete state.syncTombstones.sessions[key];
     state.sessions[key] = {
       runner: runner,
       setId: setId,
@@ -828,7 +832,10 @@ window.App = window.App || {};
   }
 
   function clearSession(runner, setId) {
-    delete state.sessions[runner + ':' + setId];
+    var key = runner + ':' + setId;
+    delete state.sessions[key];
+    if (!state.syncTombstones.sessions) state.syncTombstones.sessions = {};
+    state.syncTombstones.sessions[key] = Date.now();
     save();
   }
 

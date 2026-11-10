@@ -71,6 +71,79 @@ function mergeAttemptBuckets(local, remote, tombstones) {
   return out
 }
 
+function mergeCards(baseCards, incomingCards) {
+  const out = {}
+  const keys = new Set([...Object.keys(baseCards || {}), ...Object.keys(incomingCards || {})])
+  keys.forEach((key) => {
+    const a = baseCards && baseCards[key]
+    const b = incomingCards && incomingCards[key]
+    const chosen = newer(a, b, 'last')
+    if (!chosen) return
+    const entry = clone(chosen)
+    if (a && b) {
+      entry.reps = Math.max(stamp(a.reps), stamp(b.reps))
+      entry.lapses = Math.max(stamp(a.lapses), stamp(b.lapses))
+      entry.wrong = Math.max(stamp(a.wrong), stamp(b.wrong))
+    }
+    out[key] = entry
+  })
+  return out
+}
+
+function mergeDaily(baseDaily, incomingDaily) {
+  const out = {}
+  const keys = new Set([...Object.keys(baseDaily || {}), ...Object.keys(incomingDaily || {})])
+  keys.forEach((key) => {
+    const a = baseDaily && baseDaily[key]
+    const b = incomingDaily && incomingDaily[key]
+    if (!a) { out[key] = clone(b); return }
+    if (!b) { out[key] = clone(a); return }
+    const entry = { ...clone(a) }
+    Object.keys(b).forEach((field) => {
+      if (typeof b[field] === 'number') entry[field] = Math.max(stamp(a[field]), stamp(b[field]))
+      else if (entry[field] == null) entry[field] = b[field]
+    })
+    out[key] = entry
+  })
+  return out
+}
+
+function mergeSessions(baseSessions, incomingSessions, tombstones) {
+  const out = {}
+  const keys = new Set([...Object.keys(baseSessions || {}), ...Object.keys(incomingSessions || {})])
+  keys.forEach((key) => {
+    const a = baseSessions && baseSessions[key]
+    const b = incomingSessions && incomingSessions[key]
+    const chosen = newer(a, b, 'updatedAt')
+    if (!chosen) return
+    const at = stamp(chosen.updatedAt) || stamp(chosen.startedAt)
+    if (stamp(tombstones[key]) > at) return
+    out[key] = clone(chosen)
+  })
+  return out
+}
+
+export function mergeProgress(base, incoming) {
+  const out = mergeWrongAndAttempts(base, incoming)
+  const local = base || {}
+  const remote = incoming || {}
+  const localTombs = local.syncTombstones || {}
+  const remoteTombs = remote.syncTombstones || {}
+  const sessionTombstones = mergeTombstoneGroup(localTombs.sessions, remoteTombs.sessions)
+
+  const baseSettings = local.settings || {}
+  const incomingSettings = remote.settings || {}
+  out.settings = stamp(incomingSettings.updatedAt) > stamp(baseSettings.updatedAt)
+    ? clone(incomingSettings)
+    : clone(baseSettings)
+
+  out.cards = mergeCards(local.cards, remote.cards)
+  out.daily = mergeDaily(local.daily, remote.daily)
+  out.sessions = mergeSessions(local.sessions, remote.sessions, sessionTombstones)
+  out.syncTombstones = { ...(out.syncTombstones || {}), sessions: sessionTombstones }
+  return out
+}
+
 export function mergeWrongAndAttempts(base, incoming) {
   const local = clone(base)
   const remote = clone(incoming)

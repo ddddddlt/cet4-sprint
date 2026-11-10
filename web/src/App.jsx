@@ -564,66 +564,10 @@ function recentRows(core) {
     })
   })
 
-  Object.keys(st.daily || {}).forEach((key) => {
-    const rec = st.daily[key] || {}
-    const total = (rec.checkDone || 0) + (rec.reviews || 0) + (rec.newWords || 0)
-    if (!total) return
-    const parts = key.split('-').map(Number)
-    rows.push({
-      key: 'daily:' + key,
-      at: new Date(parts[0], parts[1] - 1, parts[2]).getTime(),
-      label: '抽查',
-      title: '单词抽查',
-      zh: `${rec.checkDone || 0} 个抽查 · ${rec.reviews || 0} 次复习`,
-      metric: `${rec.checkDone || 0} 词`,
-      href: '#/vocab',
-    })
-  })
+  return rows.filter((r) => r.at).sort((a, b) => b.at - a.at).slice(0, 3)
+}
 
-  const drill = Object.keys((st.drill && st.drill.byWord) || {})
-    .map((id) => ({ id, ...(st.drill.byWord[id] || {}) }))
-    .sort((a, b) => (b.last || 0) - (a.last || 0))[0]
-  if (drill && drill.last) {
-    const word = core.getWord(drill.id)
-    rows.push({
-      key: 'drill:' + drill.id,
-      at: drill.last,
-      label: '深练',
-      title: '词汇深练',
-      zh: word ? `${word.w} · ${word.zh}` : '最近一次词汇训练',
-      metric: `${drill.n || 0} 次`,
-      href: '#/drill',
-    })
-  }
-
-  const words = Object.keys(st.wordbook || {}).map((id) => ({ id, ...(st.wordbook[id] || {}) })).sort((a, b) => (b.at || 0) - (a.at || 0))
-  if (words.length) {
-    rows.push({
-      key: 'wordbook',
-      at: words[0].at || 0,
-      label: '单词本',
-      title: '单词本',
-      zh: `已收藏 ${words.length} 个词`,
-      metric: `${words.length} 词`,
-      href: '#/wordbook',
-    })
-  }
-
-  const wrong = Object.values((st.wrong && st.wrong.questions) || {}).sort((a, b) => (b.last || 0) - (a.last || 0))[0]
-  if (wrong && wrong.last) {
-    rows.push({
-      key: 'mistakes',
-      at: wrong.last,
-      label: '错题本',
-      title: '错题本',
-      zh: `最近收录：${wrong.title || wrong.type || '练习题'}`,
-      metric: `${core.wrongQuestions().length} 题`,
-      href: '#/mistakes',
-    })
-  }
-
-  return rows.filter((r) => r.at).sort((a, b) => b.at - a.at).slice(0, 5)
-}function Dashboard() {
+function Dashboard() {
   useCore()
   const core = window.App?.core
   const exam = core ? core.examInfo() : {}

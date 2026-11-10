@@ -1,6 +1,6 @@
 import { hashState } from './cloud'
 import { activeProfile } from './profiles'
-import { mergeWrongAndAttempts } from './syncMerge'
+import { mergeProgress } from './syncMerge'
 
 const KEY = 'cet4-sprint/supabase/v1'
 const PROFILE_META = 'cet4-sprint/supabase/profile/v1/'
@@ -224,7 +224,7 @@ export async function fetchRemoteSupabase() {
 
 export async function applyRemoteSupabase(core, row) {
   if (!row || !row.data) throw new Error('云端没有可恢复的进度')
-  const merged = mergeWrongAndAttempts(row.data, JSON.parse(core.exportJSON()))
+  const merged = mergeProgress(row.data, JSON.parse(core.exportJSON()))
   core.importJSON(JSON.stringify(merged))
   saveSupabaseConfig({
     lastPull: Date.now(),
@@ -253,7 +253,7 @@ export async function pushSupabase(core, opts = {}) {
   const { cfg, session } = await ensureSession()
   const previous = opts.remote || await fetchRemoteSupabase()
   if (previous && previous.data) {
-    const merged = mergeWrongAndAttempts(JSON.parse(core.exportJSON()), previous.data)
+    const merged = mergeProgress(JSON.parse(core.exportJSON()), previous.data)
     core.importJSON(JSON.stringify(merged))
   }
   const state = JSON.parse(core.exportJSON())

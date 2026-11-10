@@ -308,6 +308,7 @@ export function Settings() {
     st.settings.examDate = examDate || st.settings.examDate
     st.settings.name = name
     st.settings.dailyMinutes = Math.max(5, Math.min(240, Number(minutes) || 30))
+    st.settings.updatedAt = Date.now()
     core.setCheckTarget(+target || 50)
     core.save()
     setSaved(true)
