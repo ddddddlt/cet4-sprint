@@ -118,7 +118,7 @@ export function ListeningRunner({ id }) {
       })
       else core.removeWrongQuestion(q.id)
     })
-    core.recordSet('listening', set.id, n, set.questions.length)
+    core.recordSet('listening', set.id, n, set.questions.length, undefined, { route: 'listening', title: set.title, zh: set.intro, type: set.type })
     core.clearSession('listening', set.id)
     setScore(n)
     setSubmitted(true)

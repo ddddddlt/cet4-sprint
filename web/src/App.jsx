@@ -550,25 +550,80 @@ function recentRows(core) {
       if (!a || !a.at) return
       const catalog = catalogs.find((c) => c.kind === kind && c.items.some((x) => x.id === id))
       const item = catalog && catalog.items.find((x) => x.id === id)
+      const route = a.route || (catalog ? catalog.route : kind)
+      const exam = a.exam != null ? a.exam : null
       rows.push({
         key: kind + ':' + id,
-        kind,
-        id,
         at: a.at,
-        best: a.best || a.score || 0,
-        total: a.total || 0,
-        words: a.words || 0,
-        label: catalog ? catalog.label : '练习',
-        route: catalog ? catalog.route : kind,
-        title: item ? (item.title || item.topic || id) : id,
-        href: '#/' + (catalog ? catalog.route : kind) + '/' + id,
+        label: a.type || (catalog ? catalog.label : '练习'),
+        title: a.title || (item ? (item.title || item.topic || id) : id),
+        zh: a.zh || (item ? (item.topic || item.intro || '') : ''),
+        metric: a.total ? Math.round((a.best / a.total) * 100) + '%' : (a.words || 0) + ' 词',
+        href: route === 'exam' && exam != null ? '#/exam/' + exam : '#/' + route + '/' + id,
       })
     })
   })
-  return rows.sort((a, b) => b.at - a.at).slice(0, 3)
-}
 
-function Dashboard() {
+  Object.keys(st.daily || {}).forEach((key) => {
+    const rec = st.daily[key] || {}
+    const total = (rec.checkDone || 0) + (rec.reviews || 0) + (rec.newWords || 0)
+    if (!total) return
+    const parts = key.split('-').map(Number)
+    rows.push({
+      key: 'daily:' + key,
+      at: new Date(parts[0], parts[1] - 1, parts[2]).getTime(),
+      label: '抽查',
+      title: '单词抽查',
+      zh: `${rec.checkDone || 0} 个抽查 · ${rec.reviews || 0} 次复习`,
+      metric: `${rec.checkDone || 0} 词`,
+      href: '#/vocab',
+    })
+  })
+
+  const drill = Object.keys((st.drill && st.drill.byWord) || {})
+    .map((id) => ({ id, ...(st.drill.byWord[id] || {}) }))
+    .sort((a, b) => (b.last || 0) - (a.last || 0))[0]
+  if (drill && drill.last) {
+    const word = core.getWord(drill.id)
+    rows.push({
+      key: 'drill:' + drill.id,
+      at: drill.last,
+      label: '深练',
+      title: '词汇深练',
+      zh: word ? `${word.w} · ${word.zh}` : '最近一次词汇训练',
+      metric: `${drill.n || 0} 次`,
+      href: '#/drill',
+    })
+  }
+
+  const words = Object.keys(st.wordbook || {}).map((id) => ({ id, ...(st.wordbook[id] || {}) })).sort((a, b) => (b.at || 0) - (a.at || 0))
+  if (words.length) {
+    rows.push({
+      key: 'wordbook',
+      at: words[0].at || 0,
+      label: '单词本',
+      title: '单词本',
+      zh: `已收藏 ${words.length} 个词`,
+      metric: `${words.length} 词`,
+      href: '#/wordbook',
+    })
+  }
+
+  const wrong = Object.values((st.wrong && st.wrong.questions) || {}).sort((a, b) => (b.last || 0) - (a.last || 0))[0]
+  if (wrong && wrong.last) {
+    rows.push({
+      key: 'mistakes',
+      at: wrong.last,
+      label: '错题本',
+      title: '错题本',
+      zh: `最近收录：${wrong.title || wrong.type || '练习题'}`,
+      metric: `${core.wrongQuestions().length} 题`,
+      href: '#/mistakes',
+    })
+  }
+
+  return rows.filter((r) => r.at).sort((a, b) => b.at - a.at).slice(0, 5)
+}function Dashboard() {
   useCore()
   const core = window.App?.core
   const exam = core ? core.examInfo() : {}
@@ -761,11 +816,14 @@ function Recent({ rows }) {
         {rows.length ? (
           <div className="space-y-1">
             {rows.map((r) => (
-              <a key={r.key} href={r.href} className="flex min-h-10 items-center gap-3 rounded-lg px-2 text-xs text-muted-foreground hover:bg-white/[.05] hover:text-foreground">
-                <span className="w-8 shrink-0 text-[var(--faint)]">{r.label}</span>
-                <span className="min-w-0 flex-1 truncate">{r.title}</span>
-                <span className="t-num text-[11px]">{r.total ? Math.round((r.best / r.total) * 100) + '%' : r.words + ' 词'}</span>
-                <ChevronRight className="h-3.5 w-3.5 opacity-40" aria-hidden="true" />
+              <a key={r.key} href={r.href} className="flex min-h-12 items-center gap-3 rounded-lg px-2 py-1.5 text-xs text-muted-foreground hover:bg-white/[.05] hover:text-foreground">
+                <span className="w-12 shrink-0 text-[var(--faint)]">{r.label}</span>
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate">{r.title}</span>
+                  {r.zh && r.zh !== r.title ? <span className="mt-0.5 block truncate text-[10px] text-[var(--faint)]">{r.zh}</span> : null}
+                </span>
+                <span className="t-num shrink-0 text-[11px]">{r.metric}</span>
+                <ChevronRight className="h-3.5 w-3.5 shrink-0 opacity-40" aria-hidden="true" />
               </a>
             ))}
           </div>

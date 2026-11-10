@@ -167,7 +167,7 @@ export function TranslationRunner({ id }) {
 
   function submit() {
     core.saveDraft(set.id, JSON.stringify(texts))
-    core.recordSet('translation', set.id, 0, 15)
+    core.recordSet('translation', set.id, 0, 15, undefined, { route: 'translation', title: set.title, zh: set.topic, type: '翻译' })
     setSubmitted(true)
     window.scrollTo(0, 0)
     askAI()
@@ -344,7 +344,7 @@ export function WritingRunner({ id }) {
 
   function submit() {
     core.saveWritingDraft(set.id, text)
-    core.recordWriting(set.id, words, elapsed)
+    core.recordWriting(set.id, words, elapsed, { route: 'writing', title: set.topic, zh: set.topic, type: '写作' })
     setSubmitted(true)
     window.scrollTo(0, 0)
     askAI()

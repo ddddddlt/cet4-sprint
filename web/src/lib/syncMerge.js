@@ -32,6 +32,10 @@ function mergeQuestions(local, remote, tombstones) {
     if (!chosen) return
     if (stamp(tombstones[key]) > stamp(chosen.last)) return
     const entry = clone(chosen)
+    const other = chosen === a ? b : a
+    ;['title', 'zh', 'type', 'passage', 'context', 'options', 'exam'].forEach((field) => {
+      if (entry[field] == null && other && other[field] != null) entry[field] = clone(other[field])
+    })
     entry.count = Math.max(stamp(a && a.count), stamp(b && b.count), 1)
     entry.last = Math.max(stamp(a && a.last), stamp(b && b.last))
     out[key] = entry
@@ -54,6 +58,10 @@ function mergeAttemptBuckets(local, remote, tombstones) {
       if (!chosen) return
       if (stamp(tombstones[kind + ':' + id]) > stamp(chosen.at)) return
       const entry = { ...clone(chosen) }
+      const other = chosen === x ? y : x
+      ;['title', 'zh', 'type', 'route', 'exam'].forEach((field) => {
+        if (entry[field] == null && other && other[field] != null) entry[field] = other[field]
+      })
       entry.at = Math.max(stamp(x && x.at), stamp(y && y.at))
       if (x && y) entry.best = Math.max(stamp(x.best), stamp(y.best))
       bucket[id] = entry

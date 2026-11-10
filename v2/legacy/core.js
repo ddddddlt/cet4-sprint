@@ -658,17 +658,19 @@ window.App = window.App || {};
   }
 
   /* ---------------- 练习记录 ---------------- */
-  function recordSet(kind, setId, score, total, seconds) {
+  function recordSet(kind, setId, score, total, seconds, meta) {
     var now = Date.now();
     var bucket = state.attempts[kind] || (state.attempts[kind] = {});
     var prev = bucket[setId];
-    bucket[setId] = {
+    var entry = {
       score: score,
       total: total,
       at: now,
       best: prev ? Math.max(prev.best || 0, score) : score,
       times: prev ? (prev.times || 1) + 1 : 1
     };
+    if (meta) Object.keys(meta).forEach(function (key) { if (meta[key] != null) entry[key] = meta[key]; });
+    bucket[setId] = entry;
     var rec = dayRecord();
     if (kind === 'reading') rec.reading += 1;
     else if (kind === 'listening') rec.listening += 1;
@@ -703,10 +705,11 @@ window.App = window.App || {};
     save();
   }
 
-  function recordWriting(id, words, seconds) {
+  function recordWriting(id, words, seconds, meta) {
     var bucket = state.attempts.writing || (state.attempts.writing = {});
     if (state.syncTombstones && state.syncTombstones.attempts) delete state.syncTombstones.attempts['writing:' + id];
     bucket[id] = { at: Date.now(), words: words, seconds: seconds || 0 };
+    if (meta) Object.keys(meta).forEach(function (key) { if (meta[key] != null) bucket[id][key] = meta[key]; });
     var rec = dayRecord();
     rec.seconds += seconds || 0;
     save();

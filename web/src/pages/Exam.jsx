@@ -415,7 +415,7 @@ function recordResult(exam, state, result) {
       })
       else core.removeWrongQuestion(q.id)
     })
-    core.recordSet('reading', set.id, n, set.questions.length, seconds)
+    core.recordSet('reading', set.id, n, set.questions.length, seconds, { route: 'exam', exam: exam.index, title: set.title, zh: set.topic, type: '仔细阅读' })
   })
   if (exam.cloze) {
     let n = 0
@@ -429,7 +429,7 @@ function recordResult(exam, state, result) {
       })
       else core.removeWrongQuestion(exam.cloze.id + '-b' + b.no)
     })
-    core.recordSet('reading', exam.cloze.id, n, exam.cloze.blanks.length, seconds)
+    core.recordSet('reading', exam.cloze.id, n, exam.cloze.blanks.length, seconds, { route: 'exam', exam: exam.index, title: exam.cloze.title, zh: exam.cloze.topic, type: '选词填空' })
   }
   if (exam.matching) {
     let n = 0
@@ -443,10 +443,10 @@ function recordResult(exam, state, result) {
       })
       else core.removeWrongQuestion(st.id)
     })
-    core.recordSet('reading', exam.matching.id, n, exam.matching.statements.length, seconds)
+    core.recordSet('reading', exam.matching.id, n, exam.matching.statements.length, seconds, { route: 'exam', exam: exam.index, title: exam.matching.title, zh: exam.matching.topic, type: '长篇匹配' })
   }
-  if (exam.writing) core.recordWriting(exam.writing.id, result.writingWords, seconds)
-  if (exam.translation) core.recordSet('translation', exam.translation.id, 0, 15, seconds)
+  if (exam.writing) core.recordWriting(exam.writing.id, result.writingWords, seconds, { route: 'exam', exam: exam.index, title: exam.label, zh: exam.label, type: '写作' })
+  if (exam.translation) core.recordSet('translation', exam.translation.id, 0, 15, seconds, { route: 'exam', exam: exam.index, title: exam.label, zh: exam.label, type: '翻译' })
 }
 
 function ExamResult({ exam, state, showReview, setShowReview }) {
