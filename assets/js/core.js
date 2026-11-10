@@ -392,7 +392,7 @@ window.App = window.App || {};
   }
 
   function gradeCard(card, g, now) {
-    var mult = g === 1 ? 0.3 : g === 2 ? 1.25 : g === 3 ? 2.1 : 3.2;
+    var mult = g === 1 ? 0.6 : g === 2 ? 1.25 : g === 3 ? 2.1 : 3.2;
     if (card.reps === 0) {
       card.S = g === 1 ? 0.4 : g === 2 ? 0.8 : 1.2;
     } else {
@@ -403,8 +403,8 @@ window.App = window.App || {};
 
     var days;
     if (g === 1) {
-      days = 0; // 今天内重来，队列里会再出现
-      card.due = addDays(now, 1);
+      days = 0;
+      card.due = todayStart();
     } else {
       days = Math.max(1, Math.round(card.S * (0.9 + Math.random() * 0.2)));
       card.due = addDays(now, days);
