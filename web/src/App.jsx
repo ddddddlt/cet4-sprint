@@ -1,8 +1,11 @@
 import { useEffect, useMemo, useState } from 'react'
+import Vocab from './pages/Vocab'
+import Wordbook from './pages/Wordbook'
 import {
   AlertTriangle,
   ArrowUpRight,
   Bookmark,
+  BookMarked,
   BookOpen,
   CalendarDays,
   ChevronRight,
@@ -24,6 +27,7 @@ import { cn } from './lib/utils'
 
 const NAV = [
   { key: 'home', label: '首页', icon: Home, href: '#/' },
+  { key: 'vocab', label: '抽查', icon: BookMarked, href: '#/vocab' },
   { key: 'practice', label: '题目练习', icon: Layers, href: '#/practice' },
   { key: 'drill', label: '词汇深练', icon: Sparkles, href: '#/drill' },
 ]
@@ -84,7 +88,12 @@ function Shell({ route, children }) {
     ? 'practice'
     : route.startsWith('#/drill')
       ? 'drill'
-      : 'home'
+      : route.startsWith('#/vocab')
+        ? 'vocab'
+        : route.startsWith('#/wordbook')
+          ? 'wordbook'
+          : 'home'
+  const title = route.startsWith('#/practice') ? '题目练习' : route.startsWith('#/drill') ? '词汇深练' : route.startsWith('#/vocab') ? '抽查单词' : route.startsWith('#/wordbook') ? '单词本' : '首页'
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -118,12 +127,12 @@ function Shell({ route, children }) {
           {MORE.map((item) => (
             <a
               key={item.key}
-              href={legacyUrl(item.href)}
+              href={item.key === 'wordbook' ? item.href : legacyUrl(item.href)}
               className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-card hover:text-foreground"
             >
               <item.icon className="h-4 w-4" />
               {item.label}
-              <ArrowUpRight className="ml-auto h-3.5 w-3.5 opacity-40" />
+              {item.key === 'wordbook' ? null : <ArrowUpRight className="ml-auto h-3.5 w-3.5 opacity-40" />}
             </a>
           ))}
         </nav>
@@ -146,7 +155,7 @@ function Shell({ route, children }) {
           <div className="hidden items-center gap-2 text-sm text-muted-foreground lg:flex">
             <span>四级冲刺</span>
             <ChevronRight className="h-3.5 w-3.5" />
-            <span className="text-foreground">{route.startsWith('#/practice') ? '题目练习' : route.startsWith('#/drill') ? '词汇深练' : '首页'}</span>
+            <span className="text-foreground">{title}</span>
           </div>
           <div className="ml-auto flex items-center gap-2">
             <Badge variant="secondary" className="rounded-md font-normal">v2 预览</Badge>
@@ -163,8 +172,8 @@ function Shell({ route, children }) {
         <div className="mx-auto flex max-w-md items-stretch px-2">
           {[
             { key: 'home', label: '首页', icon: Home, href: '#/' },
+            { key: 'vocab', label: '抽查', icon: BookMarked, href: '#/vocab' },
             { key: 'practice', label: '练习', icon: Layers, href: '#/practice' },
-            { key: 'drill', label: '深练', icon: Sparkles, href: '#/drill' },
             { key: 'mistakes', label: '错题本', icon: AlertTriangle, href: legacyUrl('#/mistakes') },
             { key: 'settings', label: '设置', icon: Settings, href: legacyUrl('#/settings') },
           ].map((item) => (
@@ -237,7 +246,7 @@ function Dashboard() {
         </div>
         <div className="mt-7 flex flex-wrap gap-2.5">
           <Button asChild>
-            <a href={legacyUrl('#/vocab')}>开始抽查 <ArrowUpRight className="h-4 w-4" /></a>
+            <a href="#/vocab">开始抽查 <ArrowUpRight className="h-4 w-4" /></a>
           </Button>
           <Button variant="outline" asChild>
             <a href="#/practice">题目练习 <ChevronRight className="h-4 w-4" /></a>
@@ -347,7 +356,7 @@ function Practice() {
               </div>
               <Progress value={item.total ? (item.done / item.total) * 100 : 0} className="h-1.5" />
               <Button variant="outline" className="mt-5 w-full justify-between" asChild>
-                <a href={legacyUrl(item.href)}>
+                <a href={item.key === 'wordbook' ? item.href : legacyUrl(item.href)}>
                   打开{item.name}练习
                   <ArrowUpRight className="h-4 w-4 opacity-60" />
                 </a>
@@ -437,13 +446,15 @@ export default function App() {
   const route = useHashRoute()
   useEffect(() => {
     window.scrollTo(0, 0)
-    const name = route.startsWith('#/practice') ? '题目练习' : route.startsWith('#/drill') ? '词汇深练' : '首页'
+    const name = route.startsWith('#/practice') ? '题目练习' : route.startsWith('#/drill') ? '词汇深练' : route.startsWith('#/vocab') ? '抽查单词' : route.startsWith('#/wordbook') ? '单词本' : '首页'
     document.title = name + ' · 四级冲刺 v2'
   }, [route])
 
   let page
   if (route.startsWith('#/practice')) page = <Practice />
   else if (route.startsWith('#/drill')) page = <Drill />
+  else if (route.startsWith('#/vocab')) page = <Vocab />
+  else if (route.startsWith('#/wordbook')) page = <Wordbook />
   else if (route === '#/' || route === '') page = <Dashboard />
   else page = <NotFound />
 
