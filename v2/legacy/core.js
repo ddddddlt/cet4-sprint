@@ -51,7 +51,7 @@ window.App = window.App || {};
       sessions: {},
       drill: { byMode: { spelling: { n: 0, ok: 0 }, dictation: { n: 0, ok: 0 }, sense: { n: 0, ok: 0 }, collocation: { n: 0, ok: 0 }, root: { n: 0, ok: 0 } }, byWord: {} },
       wrong: { words: {}, questions: {} },
-      syncTombstones: { wrong: {}, attempts: {} },
+      syncTombstones: { wrong: {}, attempts: {}, sessions: {}, cards: {}, daily: {} },
       drafts: { translation: {} },
       custom: [],
       wordbook: {}
@@ -88,6 +88,8 @@ window.App = window.App || {};
     s.syncTombstones.wrong = s.syncTombstones.wrong || {};
     s.syncTombstones.attempts = s.syncTombstones.attempts || {};
     s.syncTombstones.sessions = s.syncTombstones.sessions || {};
+    s.syncTombstones.cards = s.syncTombstones.cards || {};
+    s.syncTombstones.daily = s.syncTombstones.daily || {};
     s.drafts = s.drafts || { translation: {} };
     s.drafts.translation = s.drafts.translation || {};
     s.drafts.writing = s.drafts.writing || {};
@@ -388,11 +390,12 @@ window.App = window.App || {};
   }
 
   /* ---------------- 每日记录 ---------------- */
-  function dayRecord(key) {
+  function dayRecord(key, touch) {
     var k = key || dateKey(Date.now());
     if (!state.daily[k]) {
-      state.daily[k] = { reviews: 0, correct: 0, newWords: 0, checkDone: 0, checkTarget: 0, reading: 0, listening: 0, translation: 0, seconds: 0 };
+      state.daily[k] = { reviews: 0, correct: 0, newWords: 0, checkDone: 0, checkTarget: 0, reading: 0, listening: 0, translation: 0, seconds: 0, updatedAt: 0 };
     }
+    if (touch) state.daily[k].updatedAt = Date.now();
     return state.daily[k];
   }
   function todayRecord() { return dayRecord(); }
@@ -444,7 +447,7 @@ window.App = window.App || {};
     }
     var g = correct ? (ms < 3800 ? 4 : 3) : 1;
     var days = gradeCard(card, g, now);
-    var rec = dayRecord();
+    var rec = dayRecord(undefined, true);
     rec.reviews += 1;
     if (correct) rec.correct += 1;
     else {
@@ -514,7 +517,7 @@ window.App = window.App || {};
   }
 
   function setCheckTarget(n) {
-    var rec = todayRecord();
+    var rec = dayRecord(undefined, true);
     rec.checkTarget = clamp(Math.round(n) || 50, 10, 200);
     save();
     return rec.checkTarget;
@@ -558,7 +561,7 @@ window.App = window.App || {};
     var wasNew = !card;
     if (!card) card = state.cards[id] = newCard();
     var days = gradeCard(card, grade, t);
-    var rec = dayRecord();
+    var rec = dayRecord(undefined, true);
     rec.reviews += 1;
     if (opts.daily !== false) rec.checkDone = (rec.checkDone || 0) + 1;
     if (grade >= 2) rec.correct += 1;
@@ -674,7 +677,7 @@ window.App = window.App || {};
     };
     if (meta) Object.keys(meta).forEach(function (key) { if (meta[key] != null) entry[key] = meta[key]; });
     bucket[setId] = entry;
-    var rec = dayRecord();
+    var rec = dayRecord(undefined, true);
     if (kind === 'reading') rec.reading += 1;
     else if (kind === 'listening') rec.listening += 1;
     else if (kind === 'translation') rec.translation = (rec.translation || 0) + 1;
@@ -713,7 +716,7 @@ window.App = window.App || {};
     if (state.syncTombstones && state.syncTombstones.attempts) delete state.syncTombstones.attempts['writing:' + id];
     bucket[id] = { at: Date.now(), words: words, seconds: seconds || 0 };
     if (meta) Object.keys(meta).forEach(function (key) { if (meta[key] != null) bucket[id][key] = meta[key]; });
-    var rec = dayRecord();
+    var rec = dayRecord(undefined, true);
     rec.seconds += seconds || 0;
     save();
     return bucket[id];

@@ -14,13 +14,26 @@ export function clearToday(core) {
   const st = core.getState()
   const start = startOfDay(Date.now())
   const key = dateKey(Date.now())
-  const count = { wordbook: 0, wrong: 0, questions: 0, attempts: 0 }
+  const count = { wordbook: 0, wrong: 0, questions: 0, attempts: 0, cards: 0 }
 
-  delete st.daily[key]
   st.syncTombstones = st.syncTombstones || { wrong: {}, attempts: {} }
   st.syncTombstones.wrong = st.syncTombstones.wrong || {}
   st.syncTombstones.attempts = st.syncTombstones.attempts || {}
+  st.syncTombstones.cards = st.syncTombstones.cards || {}
+  st.syncTombstones.daily = st.syncTombstones.daily || {}
+  st.syncTombstones.sessions = st.syncTombstones.sessions || {}
   const now = Date.now()
+  if (st.daily[key]) st.syncTombstones.daily[key] = now
+  delete st.daily[key]
+
+  Object.keys(st.cards || {}).forEach((id) => {
+    const card = st.cards[id]
+    if (card && card.last >= start) {
+      delete st.cards[id]
+      st.syncTombstones.cards[id] = now
+      count.cards += 1
+    }
+  })
 
   Object.keys(st.wordbook || {}).forEach((id) => {
     const item = st.wordbook[id]
@@ -69,6 +82,7 @@ export function clearToday(core) {
     if (item && item.last >= start) delete st.drill.byWord[id]
   })
 
+  Object.keys(st.sessions || {}).forEach((sid) => { st.syncTombstones.sessions[sid] = now })
   st.sessions = {}
   core.save()
   return { key, ...count }

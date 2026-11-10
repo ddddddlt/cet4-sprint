@@ -71,7 +71,7 @@ function mergeAttemptBuckets(local, remote, tombstones) {
   return out
 }
 
-function mergeCards(baseCards, incomingCards) {
+function mergeCards(baseCards, incomingCards, tombstones) {
   const out = {}
   const keys = new Set([...Object.keys(baseCards || {}), ...Object.keys(incomingCards || {})])
   keys.forEach((key) => {
@@ -79,6 +79,7 @@ function mergeCards(baseCards, incomingCards) {
     const b = incomingCards && incomingCards[key]
     const chosen = newer(a, b, 'last')
     if (!chosen) return
+    if (stamp(tombstones[key]) > stamp(chosen.last)) return
     const entry = clone(chosen)
     if (a && b) {
       entry.reps = Math.max(stamp(a.reps), stamp(b.reps))
@@ -90,19 +91,24 @@ function mergeCards(baseCards, incomingCards) {
   return out
 }
 
-function mergeDaily(baseDaily, incomingDaily) {
+function mergeDaily(baseDaily, incomingDaily, tombstones) {
   const out = {}
   const keys = new Set([...Object.keys(baseDaily || {}), ...Object.keys(incomingDaily || {})])
   keys.forEach((key) => {
+    const tomb = stamp(tombstones[key])
     const a = baseDaily && baseDaily[key]
     const b = incomingDaily && incomingDaily[key]
-    if (!a) { out[key] = clone(b); return }
-    if (!b) { out[key] = clone(a); return }
-    const entry = { ...clone(a) }
-    Object.keys(b).forEach((field) => {
-      if (typeof b[field] === 'number') entry[field] = Math.max(stamp(a[field]), stamp(b[field]))
-      else if (entry[field] == null) entry[field] = b[field]
+    const left = a && (stamp(a.updatedAt) > tomb || !tomb) ? a : null
+    const right = b && (stamp(b.updatedAt) > tomb || !tomb) ? b : null
+    if (!left && !right) return
+    if (!left) { out[key] = clone(right); return }
+    if (!right) { out[key] = clone(left); return }
+    const entry = { ...clone(left) }
+    Object.keys(right).forEach((field) => {
+      if (typeof right[field] === 'number') entry[field] = Math.max(stamp(left[field]), stamp(right[field]))
+      else if (entry[field] == null) entry[field] = right[field]
     })
+    entry.updatedAt = Math.max(stamp(left.updatedAt), stamp(right.updatedAt))
     out[key] = entry
   })
   return out
@@ -130,6 +136,8 @@ export function mergeProgress(base, incoming) {
   const localTombs = local.syncTombstones || {}
   const remoteTombs = remote.syncTombstones || {}
   const sessionTombstones = mergeTombstoneGroup(localTombs.sessions, remoteTombs.sessions)
+  const cardTombstones = mergeTombstoneGroup(localTombs.cards, remoteTombs.cards)
+  const dailyTombstones = mergeTombstoneGroup(localTombs.daily, remoteTombs.daily)
 
   const baseSettings = local.settings || {}
   const incomingSettings = remote.settings || {}
@@ -137,10 +145,10 @@ export function mergeProgress(base, incoming) {
     ? clone(incomingSettings)
     : clone(baseSettings)
 
-  out.cards = mergeCards(local.cards, remote.cards)
-  out.daily = mergeDaily(local.daily, remote.daily)
+  out.cards = mergeCards(local.cards, remote.cards, cardTombstones)
+  out.daily = mergeDaily(local.daily, remote.daily, dailyTombstones)
   out.sessions = mergeSessions(local.sessions, remote.sessions, sessionTombstones)
-  out.syncTombstones = { ...(out.syncTombstones || {}), sessions: sessionTombstones }
+  out.syncTombstones = { ...(out.syncTombstones || {}), sessions: sessionTombstones, cards: cardTombstones, daily: dailyTombstones }
   return out
 }
 

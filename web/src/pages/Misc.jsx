@@ -444,7 +444,7 @@ export function Settings() {
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <h2 className="font-display text-lg font-semibold">清空今天的学习记录</h2>
-              <p className="mt-1 max-w-[560px] text-xs leading-relaxed text-muted-foreground">删除今天的抽查数、热力图记录、答题记录、今天新增的单词本和错题。不会回滚已经写入的 SRS 记忆，也不会删除历史记录。</p>
+              <p className="mt-1 max-w-[560px] text-xs leading-relaxed text-muted-foreground">删除今天的抽查数、热力图记录、答题记录、今天新增的单词本和错题，并撤销今天写入的 SRS 复习进度。历史记录不会删除。</p>
             </div>
             <Badge variant="outline" className="font-normal">不可撤销</Badge>
           </div>
@@ -457,7 +457,7 @@ export function Settings() {
               }
               const result = clearToday(core)
               setConfirmToday(false)
-              setTodayMsg('已清空今天：单词本 ' + result.wordbook + ' 个、错题 ' + result.wrong + ' 个、答题 ' + result.attempts + ' 条')
+              setTodayMsg('已清空今天：单词本 ' + result.wordbook + ' 个、错题 ' + result.wrong + ' 个、答题 ' + result.attempts + ' 条、SRS ' + result.cards + ' 个')
               setTimeout(() => window.location.reload(), 800)
             }}>{confirmToday ? '确认清空今天' : '清空今天'}</Button>
             {todayMsg ? <span className="text-xs text-muted-foreground" aria-live="polite">{todayMsg}</span> : null}
