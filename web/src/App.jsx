@@ -98,16 +98,9 @@ function useCore() {
 
 function Brand({ compact = false }) {
   return (
-    <a href="#/" className="flex items-center gap-3" aria-label="四级冲刺首页">
-      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[linear-gradient(135deg,#6f5cff,#2b46c8)] font-display text-lg text-white shadow-[0_0_20px_rgba(111,92,255,.25)]">四</span>
-      {compact ? (
-        <span className="hidden text-sm font-medium text-foreground min-[380px]:block">四级冲刺</span>
-      ) : (
-        <span className="min-w-0">
-          <span className="block text-sm font-medium leading-tight text-foreground">四级冲刺</span>
-          <span className="block font-mono-ui text-[11px] uppercase tracking-[.18em] text-[var(--faint)]">CET-4</span>
-        </span>
-      )}
+    <a href="#/" className="flex items-center gap-2.5" aria-label="四级冲刺首页">
+      <img src="./cet-logo-cropped.png" alt="CET" className="h-8 w-auto max-w-[72px] object-contain" />
+      {!compact ? <span className="truncate text-sm font-medium text-foreground">四级冲刺</span> : null}
     </a>
   )
 }
@@ -246,23 +239,30 @@ function Shell({ route, children }) {
 
   return (
     <div className="app-root">
-      <aside className="fixed inset-y-0 left-0 z-40 hidden w-[72px] flex-col items-center border-r border-white/5 bg-[rgba(5,6,10,.38)] py-5 backdrop-blur-xl lg:flex">
-        <a href="#/" aria-label="四级冲刺首页" className="mb-8">
-          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[linear-gradient(135deg,#6f5cff,#2b46c8)] font-display text-lg text-white shadow-[0_0_20px_rgba(111,92,255,.28)]">四</span>
-        </a>
-        <nav className="flex flex-1 flex-col items-center gap-2">
+      <aside className="fixed inset-y-0 left-0 z-40 hidden w-[208px] flex-col border-r border-white/5 bg-[rgba(5,6,10,.42)] px-3 py-5 backdrop-blur-xl lg:flex">
+        <div className="px-2"><Brand /></div>
+        <div className="mb-2 mt-8 px-3 t-eyebrow">学习</div>
+        <nav className="flex w-full flex-col gap-1">
           {NAV.map((item) => (
-            <a key={item.key} href={item.href} title={item.label} aria-label={item.label} className="rail-icon relative" data-active={tabKey === item.key}>
-              <item.icon className="h-[18px] w-[18px]" strokeWidth={1.5} aria-hidden="true" />
+            <a key={item.key} href={item.href} aria-current={tabKey === item.key ? 'page' : undefined}
+              className={cn('flex min-h-11 items-center gap-3 rounded-xl border border-transparent px-3 text-sm text-muted-foreground transition-colors hover:bg-white/[.05] hover:text-foreground',
+                tabKey === item.key && 'border-white/10 bg-white/[.07] text-foreground')}>
+              <item.icon className="h-[18px] w-[18px] shrink-0" strokeWidth={1.5} aria-hidden="true" />
+              <span>{item.label}</span>
             </a>
           ))}
         </nav>
-        <a href="#/settings" title="设置" aria-label="设置" className="rail-icon relative" data-active={tabKey === 'settings'}>
-          <Settings className="h-[18px] w-[18px]" strokeWidth={1.5} aria-hidden="true" />
-        </a>
+        <div className="mt-auto w-full border-t border-white/5 pt-3">
+          <a href="#/settings" aria-current={tabKey === 'settings' ? 'page' : undefined}
+            className={cn('flex min-h-11 items-center gap-3 rounded-xl border border-transparent px-3 text-sm text-muted-foreground transition-colors hover:bg-white/[.05] hover:text-foreground',
+              tabKey === 'settings' && 'border-white/10 bg-white/[.07] text-foreground')}>
+            <Settings className="h-[18px] w-[18px] shrink-0" strokeWidth={1.5} aria-hidden="true" />
+            <span>设置</span>
+          </a>
+        </div>
       </aside>
 
-      <div className="lg:pl-[72px]">
+      <div className="lg:pl-[208px]">
         <header className="glass-nav sticky top-0 z-30 flex h-16 items-center gap-3 border-x-0 border-t-0 px-4 md:px-6 lg:px-8">
           <div className="flex min-w-0 items-center gap-3">
             <div className="lg:hidden"><Brand compact /></div>
@@ -290,7 +290,7 @@ function Shell({ route, children }) {
           </div>
         </header>
 
-        <main key={route} className={cn('page-enter mx-auto w-full max-w-[720px] px-4 pb-[calc(108px+env(safe-area-inset-bottom))] pt-6 md:max-w-[688px] md:px-6 lg:max-w-[764px] lg:px-8 lg:pb-12 xl:max-w-[764px]', tabKey === 'home' && 'xl:max-w-[1108px]')}>
+        <main key={route} className="page-enter mx-auto w-full max-w-[720px] px-4 pb-[calc(108px+env(safe-area-inset-bottom))] pt-6 md:max-w-[800px] md:px-6 lg:max-w-[928px] lg:px-8 lg:pb-12 xl:max-w-[1228px]">
           {children}
         </main>
       </div>
@@ -427,7 +427,7 @@ function Dashboard() {
   ]
 
   return (
-    <div className="grid gap-6 xl:grid-cols-[minmax(0,720px)_300px] xl:items-start">
+    <div className="grid gap-6 xl:grid-cols-[minmax(0,840px)_300px] xl:items-start">
       <div className="min-w-0 space-y-6">
         <header>
           <div className="t-eyebrow mb-2">{dateLabel} · DAY {dayNo}</div>
