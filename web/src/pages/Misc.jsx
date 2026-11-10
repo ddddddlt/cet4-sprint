@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { AlertTriangle, ArrowUpRight, Check, Save } from 'lucide-react'
+import { AlertTriangle, ArrowLeft, ArrowUpRight, Check, Save } from 'lucide-react'
 import { createProfile, listProfiles, removeProfile, renameProfile, switchProfile } from '../lib/profiles'
 import { getCloudConfig, setCloudConfig, resetCloudConfig, pushCloud, pullCloud, testCloud } from '../lib/cloud'
 import { getSupabaseConfig, saveSupabaseConfig, signIn, signUp, signOut, testSupabase, pushSupabase, pullSupabase } from '../lib/supabase'
@@ -15,21 +15,80 @@ function useCoreReady() {
   return ready
 }
 
+function mistakeType(e) {
+  if (e.type) return e.type
+  if (e.kind === 'translation') return '翻译'
+  if (e.kind === 'listening') return '听力'
+  if (e.kind === 'matching') return '长篇匹配'
+  if (e.kind === 'cloze') return '选词填空'
+  return '仔细阅读'
+}
+
+function mistakeGroups(list) {
+  const map = {}
+  list.forEach((e) => {
+    const type = mistakeType(e)
+    if (!map[type]) map[type] = { type, items: [] }
+    map[type].items.push(e)
+  })
+  return Object.values(map)
+    .map((g) => ({ ...g, items: g.items.slice().sort((a, b) => (b.last || 0) - (a.last || 0)) }))
+    .sort((a, b) => (b.items[0]?.last || 0) - (a.items[0]?.last || 0))
+}
+
+function MistakeCard({ e }) {
+  const link = e.exam != null ? `#/exam/${e.exam}` : e.kind === 'listening' ? `#/listening/${e.setId}` : `#/${e.kind}/${e.setId}?review=1&q=${e.qid}`
+  const hasFull = !!(e.passage || e.context || (Array.isArray(e.options) && e.options.length))
+  return (
+    <Card className="">
+      <CardContent className="p-5">
+        <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+          <span>{e.title || '未命名题目'}</span>
+          <span>·</span>
+          <span>错 {e.count} 次</span>
+        </div>
+        <p className="mt-2 whitespace-pre-line text-sm leading-relaxed">{e.stem}</p>
+        {hasFull ? (
+          <details className="mt-3 rounded-lg border border-white/10 bg-secondary/20 px-3 py-2">
+            <summary className="cursor-pointer text-xs text-primary">查看完整题目</summary>
+            <div className="mt-3 space-y-3 text-xs leading-relaxed text-muted-foreground">
+              {e.passage ? <div><div className="mb-1 font-medium text-foreground">原文</div><p className="whitespace-pre-line">{String(e.passage).replace(/\{\{\d+\}\}/g, '____')}</p></div> : null}
+              {e.context ? <div><div className="mb-1 font-medium text-foreground">题目内容</div><p className="whitespace-pre-line">{e.context}</p></div> : null}
+              {Array.isArray(e.options) && e.options.length ? (
+                <div>
+                  <div className="mb-1 font-medium text-foreground">选项</div>
+                  <div className="space-y-1">{e.options.map((o, i) => <p key={i}>{String.fromCharCode(65 + i)}. {o}</p>)}</div>
+                </div>
+              ) : null}
+            </div>
+          </details>
+        ) : null}
+        {e.kind === 'translation' ? (
+          <div className="mt-3 rounded-lg border border-white/10 bg-secondary/30 p-3">
+            <div className="text-[11px] text-muted-foreground">参考译文</div>
+            <p className="mt-1 whitespace-pre-line text-xs leading-relaxed">{e.answer}</p>
+          </div>
+        ) : (
+          <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+            <Badge variant="outline" className="font-normal">答案 {e.answer}</Badge>
+          </div>
+        )}
+        {e.explain ? <p className="mt-3 rounded-lg bg-secondary/40 p-3 text-xs leading-relaxed text-muted-foreground">{e.explain}</p> : null}
+        {e.setId ? (
+          <a className="mt-3 inline-flex items-center gap-1 text-xs text-primary hover:underline" href={link}>
+            {e.exam != null ? '查看整套模考' : '去原题重做'} <ArrowUpRight className="h-3.5 w-3.5" />
+          </a>
+        ) : null}
+      </CardContent>
+    </Card>
+  )
+}
+
 export function Mistakes() {
   useCoreReady()
   const core = window.App?.core
   const list = core ? core.wrongQuestions() : []
-  const groups = useMemo(() => {
-    const map = {}
-    list.forEach((e) => {
-      const type = e.type || (e.kind === 'translation' ? '翻译' : e.kind === 'listening' ? '听力' : '阅读')
-      if (!map[type]) map[type] = { type, items: [] }
-      map[type].items.push(e)
-    })
-    return Object.values(map)
-      .map((g) => ({ ...g, items: g.items.slice().sort((a, b) => (b.last || 0) - (a.last || 0)) }))
-      .sort((a, b) => (b.items[0]?.last || 0) - (a.items[0]?.last || 0))
-  }, [list])
+  const groups = useMemo(() => mistakeGroups(list), [list])
 
   return (
     <>
@@ -37,71 +96,27 @@ export function Mistakes() {
         <div>
           <div className="mb-2 text-[11px] uppercase tracking-[0.18em] text-muted-foreground">MISTAKES</div>
           <h1 className="font-display text-3xl font-semibold tracking-tight sm:text-4xl">错题本</h1>
-          <p className="mt-2 text-sm text-muted-foreground">按题型归组 · 只收录错的小题 · 点击查看完整题目</p>
+          <p className="mt-2 text-sm text-muted-foreground">按题型进入 · 只收录错的小题 · 可查看完整题目</p>
         </div>
         <Badge variant="outline" className="rounded-md font-normal">{list.length} 题</Badge>
       </div>
 
       {groups.length ? (
-        <div className="space-y-8">
+        <div className="grid gap-3 sm:grid-cols-2">
           {groups.map((g) => (
-            <section key={g.type}>
-              <div className="mb-3 flex items-center justify-between">
-                <h2 className="font-display text-lg font-semibold">
-                  {g.type}
-                  <span className="ml-2 text-xs font-normal text-muted-foreground">{g.items.length} 题</span>
-                </h2>
+            <a key={g.type} href={'#/mistakes/' + encodeURIComponent(g.type)} className="glass-card group flex flex-col p-5 transition-colors hover:border-white/20">
+              <div className="flex items-center justify-between gap-3">
+                <h2 className="font-display text-xl font-semibold">{g.type}</h2>
+                <Badge variant="outline" className="font-normal">{g.items.length} 题</Badge>
               </div>
-              <div className="space-y-2">
-                {g.items.map((e) => {
-                  const link = e.exam != null ? `#/exam/${e.exam}` : e.kind === 'listening' ? `#/listening/${e.setId}` : `#/${e.kind}/${e.setId}?review=1&q=${e.qid}`
-                  const hasFull = !!(e.passage || e.context || (Array.isArray(e.options) && e.options.length))
-                  return (
-                    <Card key={e.qid} className="">
-                      <CardContent className="p-5">
-                        <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                          <span>{e.title || '未命名题目'}</span>
-                          <span>·</span>
-                          <span>错 {e.count} 次</span>
-                        </div>
-                        <p className="mt-2 whitespace-pre-line text-sm leading-relaxed">{e.stem}</p>
-                        {hasFull ? (
-                          <details className="mt-3 rounded-lg border border-white/10 bg-secondary/20 px-3 py-2">
-                            <summary className="cursor-pointer text-xs text-primary">查看完整题目</summary>
-                            <div className="mt-3 space-y-3 text-xs leading-relaxed text-muted-foreground">
-                              {e.passage ? <div><div className="mb-1 font-medium text-foreground">原文</div><p className="whitespace-pre-line">{String(e.passage).replace(/\{\{\d+\}\}/g, '____')}</p></div> : null}
-                              {e.context ? <div><div className="mb-1 font-medium text-foreground">题目内容</div><p className="whitespace-pre-line">{e.context}</p></div> : null}
-                              {Array.isArray(e.options) && e.options.length ? (
-                                <div>
-                                  <div className="mb-1 font-medium text-foreground">选项</div>
-                                  <div className="space-y-1">{e.options.map((o, i) => <p key={i}>{String.fromCharCode(65 + i)}. {o}</p>)}</div>
-                                </div>
-                              ) : null}
-                            </div>
-                          </details>
-                        ) : null}
-                        {e.kind === 'translation' ? (
-                          <div className="mt-3 rounded-lg border border-white/10 bg-secondary/30 p-3">
-                            <div className="text-[11px] text-muted-foreground">参考译文</div>
-                            <p className="mt-1 whitespace-pre-line text-xs leading-relaxed">{e.answer}</p>
-                          </div>
-                        ) : (
-                          <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                            <Badge variant="outline" className="font-normal">答案 {e.answer}</Badge>
-                          </div>
-                        )}
-                        {e.explain ? <p className="mt-3 rounded-lg bg-secondary/40 p-3 text-xs leading-relaxed text-muted-foreground">{e.explain}</p> : null}
-                        {e.setId ? (
-                          <a className="mt-3 inline-flex items-center gap-1 text-xs text-primary hover:underline" href={link}>
-                            {e.exam != null ? '查看整套模考' : '去原题重做'} <ArrowUpRight className="h-3.5 w-3.5" />
-                          </a>
-                        ) : null}
-                      </CardContent>
-                    </Card>
-                  )
-                })}
+              <p className="mt-2 truncate text-xs text-muted-foreground">
+                最近：{g.items[0]?.title || g.items[0]?.stem || '—'}
+              </p>
+              <div className="mt-4 flex items-center justify-between text-xs text-muted-foreground">
+                <span>查看这类错题</span>
+                <span className="inline-flex items-center gap-1 text-primary">进入 <ArrowUpRight className="h-3.5 w-3.5" /></span>
               </div>
-            </section>
+            </a>
           ))}
         </div>
       ) : (
@@ -110,6 +125,39 @@ export function Mistakes() {
             <AlertTriangle className="h-8 w-8 text-muted-foreground/50" />
             <h2 className="mt-4 font-display text-lg font-semibold">错题本是空的</h2>
             <p className="mt-1 text-sm text-muted-foreground">做练习时答错的题会自动收进来</p>
+            <Button className="mt-5" asChild><a href="#/practice">去练习</a></Button>
+          </CardContent>
+        </Card>
+      )}
+    </>
+  )
+}
+
+export function MistakeType({ type }) {
+  useCoreReady()
+  const core = window.App?.core
+  const list = (core ? core.wrongQuestions() : []).filter((e) => mistakeType(e) === type)
+  return (
+    <>
+      <div className="mb-6">
+        <a href="#/mistakes" className="mb-5 inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"><ArrowLeft className="h-3.5 w-3.5" /> 错题本</a>
+        <div className="flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <div className="mb-2 text-[11px] uppercase tracking-[0.18em] text-muted-foreground">MISTAKE TYPE</div>
+            <h1 className="font-display text-3xl font-semibold tracking-tight sm:text-4xl">{type || '题型'}错题</h1>
+            <p className="mt-2 text-sm text-muted-foreground">只显示答错的小题 · 展开查看完整题目</p>
+          </div>
+          <Badge variant="outline" className="rounded-md font-normal">{list.length} 题</Badge>
+        </div>
+      </div>
+      {list.length ? (
+        <div className="space-y-2">{list.map((e) => <MistakeCard key={e.qid} e={e} />)}</div>
+      ) : (
+        <Card className="">
+          <CardContent className="flex flex-col items-center py-14 text-center">
+            <AlertTriangle className="h-8 w-8 text-muted-foreground/50" />
+            <h2 className="mt-4 font-display text-lg font-semibold">这一类暂时没有错题</h2>
+            <p className="mt-1 text-sm text-muted-foreground">去对应题型练习，答错的题会自动收进来</p>
             <Button className="mt-5" asChild><a href="#/practice">去练习</a></Button>
           </CardContent>
         </Card>

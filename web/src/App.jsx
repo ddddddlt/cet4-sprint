@@ -5,7 +5,7 @@ import DrillRunner from './pages/DrillRunner'
 import { ReadingList, ReadingRunner, ClozeRunner, MatchingRunner } from './pages/Reading'
 import { ListeningList, ListeningRunner } from './pages/Listening'
 import { TranslationList, TranslationRunner, WritingList, WritingRunner } from './pages/Productive'
-import { Mistakes, Settings as SettingsPage } from './pages/Misc'
+import { Mistakes, MistakeType, Settings as SettingsPage } from './pages/Misc'
 import { ExamList, ExamRunner } from './pages/Exam'
 import AuroraBackground from './components/AuroraBackground'
 import { Magnetic, Tilt } from './components/motion'
@@ -955,6 +955,11 @@ export default function App() {
   else if (clean === '#/writing') page = <WritingList />
   else if (clean.startsWith('#/writing/')) page = <WritingRunner id={clean.replace('#/writing/', '')} />
   else if (clean === '#/mistakes') page = <Mistakes />
+  else if (clean.startsWith('#/mistakes/')) {
+    let type = clean.slice('#/mistakes/'.length)
+    try { type = decodeURIComponent(type) } catch (e) { /* keep raw */ }
+    page = <MistakeType type={type} />
+  }
   else if (clean === '#/settings') page = <SettingsPage />
   else if (route.startsWith('#/practice')) page = <Practice />
   else if (drillMode) page = <DrillRunner key={drillMode} mode={drillMode} />
