@@ -1,6 +1,6 @@
 # 题库内容校验报告
 
-生成时间：2026-11-10 18:40
+生成时间：2026-11-10 18:47
 
 ## 题量
 
@@ -19,7 +19,7 @@
 
 **改前 → 改后**：套卷 9 → 9；阅读 20 篇 / 100 题 → 20 篇 / 100 题；选词 11 → 11；匹配 10 → 10；翻译 13 → 13；听力 2 → 2；写作 18 → 18；词库 1500 → 1500。
 
-**error：0 条，warning：127 条**
+**error：0 条，warning：126 条**
 
 ## 错误（error）
 
@@ -138,7 +138,6 @@
 - `c2606-s3/blank8` · answer · 答案不在备选词中 · `A`
 - `c2606-s3/blank9` · answer · 答案不在备选词中 · `J`
 - `c2606-s3/blank10` · answer · 答案不在备选词中 · `M`
-- `m2506-s1/2506-s1-m9` · paragraph.explain · “定位”引文在原文中找不到 · `One of the really useful things about this competition is that theres a commercial element`
 - `m2506-s2/K` · paragraph · 结尾疑似截断 · `Plus, she adds, it's not an ideal way to reach the advised 'five a day'. "People try to ge…`
 - `m2506-s3/L` · paragraph · 结尾疑似截断 · `Since starting his research on phantom traffic jams, Horn has learned that schools of fish…`
 - `m2512-s3/L` · paragraph · 结尾疑似截断 · `We can rail against "ageism" all we like. It gets us nowhere. And it's easy to forget that…`
