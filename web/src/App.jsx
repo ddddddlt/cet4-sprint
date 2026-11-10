@@ -207,6 +207,9 @@ function SearchPalette({ open, onClose }) {
 function Shell({ route, children, pageAnim = 'page-lateral' }) {
   const [searchOpen, setSearchOpen] = useState(false)
   const [tabbarHidden, setTabbarHidden] = useState(false)
+  const [tabMotion, setTabMotion] = useState(false)
+  const [tabDir, setTabDir] = useState(1)
+  const prevTabRef = useRef(null)
   const lastScrollRef = useRef(0)
   const navRef = useRef(null)
   const sideIndicatorRef = useRef(null)
@@ -402,6 +405,24 @@ function Shell({ route, children, pageAnim = 'page-lateral' }) {
   }, [tabKey])
 
   const tabIndex = BOTTOM.findIndex((x) => x.key === tabKey)
+
+  useEffect(() => {
+    if (prevTabRef.current === null) {
+      prevTabRef.current = tabIndex
+      return undefined
+    }
+    if (prevTabRef.current === tabIndex) return undefined
+    setTabDir(tabIndex >= prevTabRef.current ? 1 : -1)
+    prevTabRef.current = tabIndex
+    setTabMotion(false)
+    const timer = setTimeout(() => setTabMotion(true), 20)
+    const stop = setTimeout(() => setTabMotion(false), 380)
+    return () => {
+      clearTimeout(timer)
+      clearTimeout(stop)
+    }
+  }, [tabIndex])
+
   const title = route.startsWith('#/exam') ? '整套模考' : route.startsWith('#/reading') || route.startsWith('#/cloze') || route.startsWith('#/matching') ? '阅读理解'
     : route.startsWith('#/listening') ? '听力'
       : route.startsWith('#/translation') ? '翻译'
@@ -478,7 +499,11 @@ function Shell({ route, children, pageAnim = 'page-lateral' }) {
 
       <nav data-tabbar data-hidden={tabbarHidden} inert={tabbarHidden ? '' : undefined} onFocusCapture={() => setTabbarHidden(false)} className="mobile-tabbar glass-tab fixed inset-x-3 bottom-[calc(12px+env(safe-area-inset-bottom))] z-40 mx-auto max-w-[520px] md:max-w-[620px] lg:hidden" aria-label="主导航">
         <div className="relative flex items-stretch p-1">
-          {tabIndex >= 0 ? <span className="tab-liquid" style={{ transform: `translateX(${tabIndex * 100}%)`, width: `calc((100% - 8px) / ${BOTTOM.length})` }} aria-hidden="true" /> : null}
+          {tabIndex >= 0 ? (
+            <span className="tab-liquid" data-moving={tabMotion} data-dir={tabDir} style={{ transform: `translateX(${tabIndex * 100}%)`, width: `calc((100% - 8px) / ${BOTTOM.length})` }} aria-hidden="true">
+              <span className="tab-liquid-inner" />
+            </span>
+          ) : null}
           {BOTTOM.map((item) => (
             <a key={item.key} href={item.href} className="tab-item" data-active={tabKey === item.key} aria-current={tabKey === item.key ? 'page' : undefined}>
               <item.icon className="h-[18px] w-[18px]" strokeWidth={1.5} aria-hidden="true" />

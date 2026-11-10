@@ -494,44 +494,71 @@
     bottom: 4px;
     left: 4px;
     width: calc((100% - 8px) / 5);
-    overflow: hidden;
-    border: 1px solid transparent;
     border-radius: var(--r-md);
-    background:
-      radial-gradient(110% 150% at 18% -18%, rgba(255, 255, 255, .28), transparent 58%),
-      linear-gradient(180deg, rgba(255, 255, 255, .17), rgba(255, 255, 255, .055));
-    -webkit-backdrop-filter: blur(18px) saturate(180%) brightness(1.08);
-    backdrop-filter: blur(18px) saturate(180%) brightness(1.08);
-    box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, .38),
-      inset 0 -1px 0 rgba(255, 255, 255, .06),
-      0 6px 18px rgba(0, 0, 0, .20);
-    transition: transform 320ms var(--ease);
+    pointer-events: none;
+    transition: transform 300ms var(--ease-spring);
     will-change: transform;
+    transform-origin: center;
   }
 
-  .tab-liquid::before {
+  .tab-liquid-inner {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    border-radius: inherit;
+    background:
+      radial-gradient(120% 170% at 18% -30%, rgba(255, 255, 255, .38), transparent 55%),
+      radial-gradient(90% 120% at 82% 130%, rgba(111, 92, 255, .16), transparent 62%),
+      linear-gradient(180deg, rgba(255, 255, 255, .19), rgba(255, 255, 255, .05));
+    -webkit-backdrop-filter: blur(22px) saturate(190%) brightness(1.12);
+    backdrop-filter: blur(22px) saturate(190%) brightness(1.12);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, .55),
+      inset 0 -1px 0 rgba(255, 255, 255, .08),
+      0 10px 28px rgba(0, 0, 0, .28);
+    transform-origin: var(--goo-origin, center);
+    transition: transform 220ms var(--ease), opacity 180ms var(--ease);
+  }
+
+  .tab-liquid[data-dir="1"] .tab-liquid-inner {
+    --goo-origin: left center;
+  }
+
+  .tab-liquid[data-dir="-1"] .tab-liquid-inner {
+    --goo-origin: right center;
+  }
+
+  .tab-liquid[data-moving="true"] .tab-liquid-inner {
+    animation: tab-goo 320ms var(--ease-spring) both;
+  }
+
+  .tab-liquid-inner::before {
     content: "";
     position: absolute;
     inset: 0;
     border-radius: inherit;
     padding: 1px;
-    background: linear-gradient(180deg, rgba(255, 255, 255, .60), rgba(255, 255, 255, .12) 48%, rgba(255, 255, 255, .025));
+    background: linear-gradient(180deg, rgba(255, 255, 255, .65), rgba(255, 255, 255, .14) 48%, rgba(255, 255, 255, .025));
     -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
     -webkit-mask-composite: xor;
     mask-composite: exclude;
     pointer-events: none;
   }
 
-  .tab-liquid::after {
+  .tab-liquid-inner::after {
     content: "";
     position: absolute;
-    inset: 0;
+    inset: -1px;
     border-radius: inherit;
     background:
-      radial-gradient(120% 100% at 20% 0%, rgba(255, 255, 255, .16), transparent 55%),
-      linear-gradient(115deg, transparent 16%, rgba(255, 255, 255, .10) 40%, transparent 64%);
+      radial-gradient(58% 100% at 30% 8%, rgba(255, 255, 255, .24), transparent 62%),
+      linear-gradient(115deg, transparent 22%, rgba(255, 255, 255, .13) 46%, transparent 70%);
+    opacity: .75;
     pointer-events: none;
+  }
+
+  .tab-liquid[data-moving="true"] .tab-liquid-inner::after {
+    animation: tab-sheen 320ms var(--ease) both;
   }
 
   .heat-wrap {
@@ -640,6 +667,20 @@
     to { transform: translateX(320%) rotate(12deg); }
   }
 
+  @keyframes tab-goo {
+    0% { transform: scaleX(.82) scaleY(.86); opacity: .72; }
+    26% { transform: scaleX(.90) scaleY(.82); opacity: .88; }
+    55% { transform: scaleX(1.10) scaleY(.92); opacity: 1; }
+    78% { transform: scaleX(.97) scaleY(1.04); opacity: 1; }
+    100% { transform: scaleX(1) scaleY(1); opacity: 1; }
+  }
+
+  @keyframes tab-sheen {
+    0% { transform: translateX(-32%); opacity: .25; }
+    55% { opacity: .9; }
+    100% { transform: translateX(32%); opacity: .55; }
+  }
+
   @keyframes page-forward {
     from { opacity: 0; transform: translateY(10px); }
     to { opacity: 1; transform: translateY(0); }
@@ -726,8 +767,15 @@
   }
 
   .reduce-motion .side-indicator,
-  .reduce-motion .tab-liquid {
+  .reduce-motion .tab-liquid,
+  .reduce-motion .tab-liquid-inner {
     transition: none !important;
+    animation: none !important;
+  }
+
+  .reduce-motion .tab-liquid-inner,
+  .reduce-motion .tab-liquid-inner::after {
+    transform: none !important;
     animation: none !important;
   }
 
@@ -777,6 +825,12 @@
       transform: none !important;
       opacity: 0;
       visibility: hidden;
+    }
+
+    .tab-liquid-inner,
+    .tab-liquid-inner::after {
+      animation: none !important;
+      transform: none !important;
     }
   }
 }
