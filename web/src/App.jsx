@@ -258,7 +258,7 @@ function Shell({ route, children, pageAnim = 'page-lateral' }) {
           return
         }
         const localDirty = localHash !== cfg.lastHash
-        const remoteChanged = !!remote && remoteHash !== cfg.lastHash
+        const remoteChanged = !!remote && String(remote.updated_at || '') !== String(cfg.lastRemoteAt || '')
         if (localDirty && remoteChanged) {
           saveSupabaseConfig({ lastError: '本机和云端都有新改动，未自动覆盖。请手动选择上传或从云端恢复。' })
           return

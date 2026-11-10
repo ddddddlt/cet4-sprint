@@ -280,7 +280,7 @@ export async function pushSupabase(core) {
     throw new Error(message)
   }
   const finalHash = canonicalHash(core.exportJSON())
-  saveSupabaseConfig({ lastPush: Date.now(), lastHash: finalHash, lastRemoteAt: updatedAt, lastError: '' })
+  saveSupabaseConfig({ lastPush: Date.now(), lastHash: finalHash, lastRemoteAt: (remote && remote.updated_at) || updatedAt, lastError: '' })
   return { updatedAt }
 }
 
