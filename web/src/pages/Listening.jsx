@@ -65,6 +65,13 @@ export function ListeningRunner({ id }) {
   const [playing, setPlaying] = useState(false)
   const [showText, setShowText] = useState(false)
   const [rate, setRate] = useState(1)
+  const [resumed, setResumed] = useState(false)
+
+  useEffect(() => {
+    if (!core || !id) return
+    const saved = core.getSession('listening', id)
+    if (saved) { setAnswers(saved.answers || {}); setResumed(true) }
+  }, [id])
 
   const transcript = useMemo(() => String(set?.transcript || '').replace(/^[MW]:\s*/gm, ''), [set])
 
@@ -100,6 +107,7 @@ export function ListeningRunner({ id }) {
       })
     })
     core.recordSet('listening', set.id, n, set.questions.length)
+    core.clearSession('listening', set.id)
     setScore(n)
     setSubmitted(true)
     window.speechSynthesis.cancel()
@@ -116,6 +124,7 @@ export function ListeningRunner({ id }) {
         </div>
       </div>
 
+      {resumed && !submitted ? <div className="mb-3 rounded-lg border bg-card px-4 py-2.5 text-xs text-muted-foreground">已恢复上次作答 · 已答 {Object.keys(answers).length} 题</div> : null}
       {submitted ? (
         <div className="mb-4 rounded-xl border bg-card p-4 font-display text-lg">答对 {score} / {set.questions.length} <a className="ml-3 text-xs text-primary underline" href="#/listening">返回列表</a></div>
       ) : null}
@@ -160,7 +169,7 @@ export function ListeningRunner({ id }) {
                     const correct = submitted && i === q.answer
                     const wrong = submitted && selected && i !== q.answer
                     return (
-                      <button key={i} type="button" disabled={submitted} onClick={() => setAnswers({ ...answers, [q.id]: i })}
+                      <button key={i} type="button" disabled={submitted} onClick={() => { const next = { ...answers, [q.id]: i }; setAnswers(next); core.saveSession('listening', set.id, { answers: next }) }}
                         className={cn('flex w-full items-start gap-2.5 rounded-lg border px-3 py-2.5 text-left text-sm transition-colors',
                           !submitted && 'hover:border-primary/30 hover:bg-secondary/40',
                           selected && !submitted && 'border-primary/40 bg-secondary/60',

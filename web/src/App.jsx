@@ -483,9 +483,10 @@ export default function App() {
 
   let page
   const clean = route.split('?')[0]
+  const params = new URLSearchParams(route.split('?')[1] || '')
   const drillMode = clean.startsWith('#/drill/') ? clean.replace('#/drill/', '') : null
   if (clean === '#/reading') page = <ReadingList />
-  else if (clean.startsWith('#/reading/')) page = <ReadingRunner id={clean.replace('#/reading/', '')} />
+  else if (clean.startsWith('#/reading/')) page = <ReadingRunner id={clean.replace('#/reading/', '')} reviewQ={params.get('q')} />
   else if (clean.startsWith('#/cloze/')) page = <ClozeRunner id={clean.replace('#/cloze/', '')} />
   else if (clean.startsWith('#/matching/')) page = <MatchingRunner id={clean.replace('#/matching/', '')} />
   else if (clean === '#/listening') page = <ListeningList />

@@ -114,15 +114,34 @@ function resultLine(q, submitted, wrongIds) {
   )
 }
 
-export function ReadingRunner({ id }) {
+export function ReadingRunner({ id, reviewQ }) {
   useCoreReady()
   const core = window.App?.core
   const set = (window.CET4_READING || []).find((x) => x.id === id)
   const [answers, setAnswers] = useState({})
   const [submitted, setSubmitted] = useState(false)
-  const [started] = useState(Date.now())
+  const [started, setStarted] = useState(Date.now())
   const [elapsed, setElapsed] = useState(0)
   const [score, setScore] = useState(0)
+  const [resumed, setResumed] = useState(false)
+
+  useEffect(() => {
+    if (!core || !id) return
+    const saved = core.getSession('reading', id)
+    if (saved) {
+      setAnswers(saved.answers || {})
+      setStarted(saved.startedAt || Date.now())
+      setResumed(true)
+    } else {
+      setStarted(Date.now())
+    }
+  }, [id])
+
+  useEffect(() => {
+    if (!reviewQ) return
+    const el = document.getElementById('q-' + reviewQ)
+    if (el) el.scrollIntoView({ block: 'center', behavior: 'smooth' })
+  }, [reviewQ, submitted])
 
   useEffect(() => {
     if (submitted) return
@@ -131,6 +150,20 @@ export function ReadingRunner({ id }) {
   }, [submitted, started])
 
   if (!set) return <div className="py-20 text-center text-sm text-muted-foreground">题目不存在</div>
+  function pickAnswer(qid, value) {
+    const next = { ...answers, [qid]: value }
+    setAnswers(next)
+    core.saveSession('reading', set.id, { answers: next, startedAt: started })
+  }
+
+  function restart() {
+    core.clearSession('reading', set.id)
+    setAnswers({})
+    setStarted(Date.now())
+    setResumed(false)
+    setSubmitted(false)
+  }
+
   const answered = Object.keys(answers).length
   const wrongIds = submitted ? set.questions.filter((q) => answers[q.id] !== q.answer).map((q) => q.id) : []
 
@@ -144,8 +177,15 @@ export function ReadingRunner({ id }) {
       if (!ok) core.wrongQuestion(q.id, 'reading', set.id, {
         stem: q.stem, answer: ['A', 'B', 'C', 'D'][q.answer] + '. ' + q.options[q.answer], explain: q.explain, title: set.title, type: set.type,
       })
+      else {
+        const st = core.getState()
+        delete st.wrong.questions[q.id]
+        core.save()
+      }
     })
     core.recordSet('reading', set.id, n, set.questions.length, elapsed)
+    core.clearSession('reading', set.id)
+    setResumed(false)
     setScore(n)
     setSubmitted(true)
     window.scrollTo(0, 0)
@@ -154,6 +194,8 @@ export function ReadingRunner({ id }) {
   return (
     <div>
       <RunnerTop title={set.title} meta={`${set.type} · ${set.questions.length} 题 · ${Math.floor(elapsed / 60)}:${String(elapsed % 60).padStart(2, '0')}`} />
+      {reviewQ ? <div className="mb-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-2.5 text-xs text-amber-900">错题回顾：已定位到第 {set.questions.findIndex((q) => q.id === reviewQ) + 1} 题，答对后会从错题本移除。</div> : null}
+      {resumed && !submitted ? <div className="mb-3 flex items-center justify-between rounded-lg border bg-card px-4 py-2.5 text-xs"><span className="text-muted-foreground">继续上次练习 · 已作答 {answered} 题</span><button type="button" className="text-primary" onClick={restart}>重新开始</button></div> : null}
       {submitted ? (
         <Card className="paper-texture mb-4">
           <CardContent className="flex flex-wrap items-center justify-between gap-4 p-5">
@@ -170,7 +212,7 @@ export function ReadingRunner({ id }) {
         <Passage text={set.passage} />
         <div className="space-y-3">
           {set.questions.map((q, qi) => (
-            <Card key={q.id} className="paper-texture">
+            <Card key={q.id} id={'q-' + q.id} className={cn('paper-texture', reviewQ === q.id && 'ring-2 ring-primary/40')}>
               <CardContent className="p-5">
                 <div className="flex gap-2">
                   <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-secondary text-xs text-muted-foreground">{qi + 1}</span>
@@ -186,7 +228,7 @@ export function ReadingRunner({ id }) {
                         key={i}
                         type="button"
                         disabled={submitted}
-                        onClick={() => setAnswers({ ...answers, [q.id]: i })}
+                        onClick={() => pickAnswer(q.id, i)}
                         className={cn(
                           'flex w-full items-start gap-2.5 rounded-lg border px-3 py-2.5 text-left text-sm transition-colors',
                           !submitted && 'hover:border-primary/30 hover:bg-secondary/40',
@@ -226,6 +268,13 @@ export function ClozeRunner({ id }) {
   const [active, setActive] = useState(null)
   const [submitted, setSubmitted] = useState(false)
   const [score, setScore] = useState(0)
+  const [resumed, setResumed] = useState(false)
+
+  useEffect(() => {
+    if (!core || !id) return
+    const saved = core.getSession('cloze', id)
+    if (saved) { setAnswers(saved.answers || {}); setResumed(true) }
+  }, [id])
 
   if (!set) return <div className="py-20 text-center text-sm text-muted-foreground">题目不存在</div>
 
@@ -240,6 +289,7 @@ export function ClozeRunner({ id }) {
     Object.keys(next).forEach((k) => { if (next[k] === word) delete next[k] })
     next[target] = word
     setAnswers(next)
+    core.saveSession('cloze', set.id, { answers: next })
     setActive(null)
   }
 
@@ -254,6 +304,7 @@ export function ClozeRunner({ id }) {
       })
     })
     core.recordSet('reading', set.id, n, set.blanks.length)
+    core.clearSession('cloze', set.id)
     setScore(n)
     setSubmitted(true)
   }
@@ -262,6 +313,7 @@ export function ClozeRunner({ id }) {
   return (
     <div>
       <RunnerTop title={set.title} meta={`选词填空 · ${set.blanks.length} 空`} />
+      {resumed && !submitted ? <div className="mb-3 rounded-lg border bg-card px-4 py-2.5 text-xs text-muted-foreground">已恢复上次作答 · 已填 {Object.keys(answers).length} 空</div> : null}
       {submitted ? <div className="mb-4 rounded-xl border bg-card p-4 font-display text-lg">答对 {score} / {set.blanks.length} <a className="ml-3 text-xs text-primary underline" href="#/reading">返回列表</a></div> : null}
       <div className="grid gap-4">
         <Card className="paper-texture">
@@ -317,7 +369,19 @@ export function MatchingRunner({ id }) {
   const [answers, setAnswers] = useState({})
   const [submitted, setSubmitted] = useState(false)
   const [score, setScore] = useState(0)
+  const [resumed, setResumed] = useState(false)
+  useEffect(() => {
+    if (!core || !id) return
+    const saved = core.getSession('matching', id)
+    if (saved) { setAnswers(saved.answers || {}); setResumed(true) }
+  }, [id])
   if (!set) return <div className="py-20 text-center text-sm text-muted-foreground">题目不存在</div>
+
+  function pick(stId, value) {
+    const next = { ...answers, [stId]: value }
+    setAnswers(next)
+    core.saveSession('matching', set.id, { answers: next })
+  }
 
   function submit() {
     let n = 0
@@ -328,6 +392,7 @@ export function MatchingRunner({ id }) {
       if (!ok) core.wrongQuestion(st.id, 'matching', set.id, { stem: st.text, answer: st.answer, explain: st.explain, title: set.title, type: '长篇匹配' })
     })
     core.recordSet('reading', set.id, n, set.statements.length)
+    core.clearSession('matching', set.id)
     setScore(n)
     setSubmitted(true)
   }
@@ -335,6 +400,7 @@ export function MatchingRunner({ id }) {
   return (
     <div>
       <RunnerTop title={set.title} meta={`长篇匹配 · ${set.statements.length} 题`} />
+      {resumed && !submitted ? <div className="mb-3 rounded-lg border bg-card px-4 py-2.5 text-xs text-muted-foreground">已恢复上次作答 · 已选 {Object.keys(answers).length} 题</div> : null}
       {submitted ? <div className="mb-4 rounded-xl border bg-card p-4 font-display text-lg">答对 {score} / {set.statements.length} <a className="ml-3 text-xs text-primary underline" href="#/reading">返回列表</a></div> : null}
       <div className="grid gap-4 lg:grid-cols-[1.05fr_.95fr]">
         <Card className="paper-texture">
@@ -360,7 +426,7 @@ export function MatchingRunner({ id }) {
                 <select
                   disabled={submitted}
                   value={value}
-                  onChange={(e) => setAnswers({ ...answers, [st.id]: e.target.value })}
+                  onChange={(e) => pick(st.id, e.target.value)}
                   className="mt-3 h-9 w-full rounded-md border bg-card px-2 text-sm"
                 >
                   <option value="">选择段落</option>

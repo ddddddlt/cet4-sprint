@@ -61,28 +61,43 @@ export function TranslationRunner({ id }) {
   useCoreReady()
   const core = window.App?.core
   const set = (window.CET4_TRANSLATION || []).find((x) => x.id === id)
-  const [text, setText] = useState('')
+  const [texts, setTexts] = useState([])
   const [submitted, setSubmitted] = useState(false)
   const [band, setBand] = useState(null)
 
   useEffect(() => {
-    if (core && set) {
-      setText(core.getDraft(set.id) || '')
-      const att = core.attempt('translation', set.id)
-      if (att?.graded) setBand(att.score)
+    if (!core || !set) return
+    const raw = core.getDraft(set.id) || ''
+    let arr = set.sentences.map(() => '')
+    if (raw) {
+      try {
+        const parsed = JSON.parse(raw)
+        if (Array.isArray(parsed)) arr = set.sentences.map((_, i) => parsed[i] || '')
+      } catch (e) {
+        arr[0] = raw
+      }
+    }
+    setTexts(arr)
+    const att = core.attempt('translation', set.id)
+    if (att?.graded) {
+      setBand(att.score)
+      setSubmitted(true)
     }
   }, [id])
 
   if (!set) return <div className="py-20 text-center text-sm text-muted-foreground">题目不存在</div>
+  const words = texts.reduce((n, t) => n + ((t || '').trim().match(/[A-Za-z0-9'’-]+/g) || []).length, 0)
 
-  function save(value) {
-    setText(value)
-    clearTimeout(save.t)
-    save.t = setTimeout(() => core.saveDraft(set.id, value), 400)
+  function saveAt(index, value) {
+    const next = texts.slice()
+    next[index] = value
+    setTexts(next)
+    clearTimeout(saveAt.t)
+    saveAt.t = setTimeout(() => core.saveDraft(set.id, JSON.stringify(next)), 400)
   }
 
   function submit() {
-    core.saveDraft(set.id, text)
+    core.saveDraft(set.id, JSON.stringify(texts))
     core.recordSet('translation', set.id, band || 0, 15)
     setSubmitted(true)
     window.scrollTo(0, 0)
@@ -93,80 +108,71 @@ export function TranslationRunner({ id }) {
     core.gradeTranslation(set.id, v)
   }
 
+  function redo() {
+    setTexts(set.sentences.map(() => ''))
+    setSubmitted(false)
+    setBand(null)
+    core.clearSession('translation', set.id)
+  }
+
   return (
     <div className="mx-auto max-w-4xl">
       <div className="mb-5 flex items-center gap-3">
         <Button variant="ghost" size="icon" asChild><a href="#/translation" aria-label="返回"><ArrowLeft className="h-4 w-4" /></a></Button>
-        <div>
+        <div className="min-w-0 flex-1">
           <h1 className="font-display text-lg font-semibold">{set.title}</h1>
-          <div className="mt-0.5 text-xs text-muted-foreground">汉译英 · {set.sentences.length} 句 · 15 分钟</div>
+          <div className="mt-0.5 text-xs text-muted-foreground">汉译英 · {set.sentences.length} 句 · {words} 词</div>
         </div>
+        {!submitted ? <Button onClick={submit}>提交并对照</Button> : null}
       </div>
 
-      <Card className="paper-texture mb-4">
-        <CardContent className="p-6">
-          <div className="mb-2 text-xs text-muted-foreground">中文原文</div>
-          <p className="font-display text-[15px] leading-loose">{set.zh}</p>
-        </CardContent>
-      </Card>
-
-      <Card className="paper-texture">
-        <CardContent className="p-6">
-          <div className="mb-2 flex items-center justify-between">
-            <span className="text-xs text-muted-foreground">你的译文</span>
-            <span className="text-xs text-muted-foreground">{(text.trim().match(/[A-Za-z0-9'’-]+/g) || []).length} 词</span>
-          </div>
-          <textarea
-            value={text}
-            onChange={(e) => save(e.target.value)}
-            disabled={submitted}
-            placeholder="在此输入英文译文…"
-            className="min-h-44 w-full resize-y rounded-lg border bg-card p-4 font-display text-[15px] leading-relaxed outline-none focus:ring-2 focus:ring-ring"
-          />
-          {!submitted ? (
-            <div className="mt-4 flex justify-end">
-              <Button onClick={submit} disabled={!text.trim()}>提交并对照</Button>
-            </div>
-          ) : null}
-        </CardContent>
-      </Card>
+      <div className="space-y-3">
+        {set.sentences.map((s, i) => (
+          <Card key={i} className="paper-texture">
+            <CardContent className="p-5 sm:p-6">
+              <div className="mb-3 flex gap-2">
+                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-secondary text-xs text-muted-foreground">{i + 1}</span>
+                <p className="font-display text-[15px] leading-relaxed">{s.zh}</p>
+              </div>
+              <textarea
+                value={texts[i] || ''}
+                onChange={(e) => saveAt(i, e.target.value)}
+                disabled={submitted}
+                placeholder="输入这一句的英文译文…"
+                className="min-h-24 w-full resize-y rounded-lg border bg-card p-4 font-display text-[15px] leading-relaxed outline-none focus:ring-2 focus:ring-ring"
+              />
+              {submitted ? (
+                <div className="mt-3 rounded-lg border border-border/70 bg-secondary/40 p-4">
+                  <div className="text-[11px] text-muted-foreground">参考译文</div>
+                  <p className="mt-1 font-display text-[15px] leading-relaxed">{s.en}</p>
+                  {s.tip ? <p className="mt-1.5 text-xs text-muted-foreground">{s.tip}</p> : null}
+                </div>
+              ) : null}
+            </CardContent>
+          </Card>
+        ))}
+      </div>
 
       {submitted ? (
-        <>
-          <Card className="paper-texture mt-4">
-            <CardContent className="p-6">
-              <h2 className="font-display text-lg font-semibold">逐句参考</h2>
-              <div className="mt-4 space-y-4">
-                {set.sentences.map((s, i) => (
-                  <div key={i} className="border-b pb-3 last:border-0">
-                    <p className="text-sm text-muted-foreground">{s.zh}</p>
-                    <p className="mt-1 font-display text-[15px] leading-relaxed">{s.en}</p>
-                    {s.tip ? <p className="mt-1 text-xs text-muted-foreground">{s.tip}</p> : null}
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="paper-texture mt-4">
-            <CardContent className="p-6">
-              <h2 className="font-display text-lg font-semibold">自评档位</h2>
-              <p className="mt-1 text-xs text-muted-foreground">参考译文不是唯一答案，选择后会计入今日记录</p>
-              <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-5">
-                {BANDS.map(([v, label, desc]) => (
-                  <button key={v} type="button" onClick={() => choose(v)}
-                    className={`rounded-lg border px-3 py-3 text-left ${band === v ? 'border-primary bg-secondary' : 'bg-card hover:bg-secondary/40'}`}>
-                    <span className="block font-display text-sm font-semibold">{label}</span>
-                    <span className="mt-0.5 block text-[11px] text-muted-foreground">{desc}</span>
-                  </button>
-                ))}
-              </div>
-              <div className="mt-5 flex gap-2">
-                <Button variant="outline" asChild><a href="#/translation">返回列表</a></Button>
-                <Button variant="ghost" onClick={() => { setSubmitted(false); setBand(null) }}>重做</Button>
-              </div>
-            </CardContent>
-          </Card>
-        </>
+        <Card className="paper-texture mt-4">
+          <CardContent className="p-6">
+            <h2 className="font-display text-lg font-semibold">自评档位</h2>
+            <p className="mt-1 text-xs text-muted-foreground">参考译文不是唯一答案，选择后会计入今日记录</p>
+            <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-5">
+              {BANDS.map(([v, label, desc]) => (
+                <button key={v} type="button" onClick={() => choose(v)}
+                  className={`rounded-lg border px-3 py-3 text-left ${band === v ? 'border-primary bg-secondary' : 'bg-card hover:bg-secondary/40'}`}>
+                  <span className="block font-display text-sm font-semibold">{label}</span>
+                  <span className="mt-0.5 block text-[11px] text-muted-foreground">{desc}</span>
+                </button>
+              ))}
+            </div>
+            <div className="mt-5 flex gap-2">
+              <Button variant="outline" asChild><a href="#/translation">返回列表</a></Button>
+              <Button variant="ghost" onClick={redo}>重做</Button>
+            </div>
+          </CardContent>
+        </Card>
       ) : null}
     </div>
   )
