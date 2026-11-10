@@ -326,7 +326,23 @@
     background: var(--accent);
   }
 
+  .magnetic,
+  .tilt-inner {
+    will-change: transform;
+    transition: transform 180ms var(--ease);
+  }
+
+  .tilt {
+    perspective: 900px;
+  }
+
+  .tilt-inner {
+    transform-style: preserve-3d;
+  }
+
   .tab-item {
+    position: relative;
+    z-index: 1;
     display: flex;
     min-height: 48px;
     flex: 1;
@@ -341,7 +357,19 @@
 
   .tab-item[data-active="true"] {
     color: var(--ink);
-    background: var(--chip);
+  }
+
+  .tab-liquid {
+    position: absolute;
+    top: 4px;
+    bottom: 4px;
+    left: 4px;
+    width: calc((100% - 8px) / 5);
+    border: 1px solid rgba(255, 255, 255, .10);
+    border-radius: var(--r-md);
+    background: rgba(255, 255, 255, .07);
+    transition: transform 320ms var(--ease);
+    will-change: transform;
   }
 
   .heat-wrap {
@@ -392,8 +420,10 @@
     50% { opacity: .8; }
   }
 
-  @media (hover: none) {
+  @media (hover: none), (pointer: coarse) {
     .rail-icon:hover { background: transparent; color: var(--muted); }
+    .magnetic,
+    .tilt-inner { transform: none !important; }
   }
 
   @media (pointer: coarse) {
@@ -425,6 +455,13 @@
 
   body.keyboard-open [data-tabbar] {
     display: none;
+  }
+
+  .reduce-motion .magnetic,
+  .reduce-motion .tilt-inner,
+  .reduce-motion .tab-liquid {
+    transform: none !important;
+    transition: none !important;
   }
 
   .reduce-motion *,

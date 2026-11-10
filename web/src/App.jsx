@@ -7,6 +7,7 @@ import { ListeningList, ListeningRunner } from './pages/Listening'
 import { TranslationList, TranslationRunner, WritingList, WritingRunner } from './pages/Productive'
 import { Mistakes, Settings as SettingsPage } from './pages/Misc'
 import AuroraBackground from './components/AuroraBackground'
+import { Magnetic, Tilt } from './components/motion'
 import {
   AlertTriangle,
   ArrowUpRight,
@@ -43,6 +44,14 @@ const NAV = [
   { key: 'drill', label: '词汇深练', icon: Sparkles, href: '#/drill' },
   { key: 'wordbook', label: '单词本', icon: Bookmark, href: '#/wordbook' },
   { key: 'mistakes', label: '错题本', icon: AlertTriangle, href: '#/mistakes' },
+]
+
+const BOTTOM = [
+  { key: 'home', label: '首页', icon: Home, href: '#/' },
+  { key: 'vocab', label: '抽查', icon: BookMarked, href: '#/vocab' },
+  { key: 'practice', label: '练习', icon: Layers, href: '#/practice' },
+  { key: 'drill', label: '深练', icon: Sparkles, href: '#/drill' },
+  { key: 'settings', label: '设置', icon: Settings, href: '#/settings' },
 ]
 
 const MORE = [
@@ -225,6 +234,7 @@ function Shell({ route, children }) {
           : route.startsWith('#/vocab') ? 'vocab'
             : route.startsWith('#/wordbook') ? 'wordbook'
               : 'home'
+  const tabIndex = BOTTOM.findIndex((x) => x.key === tabKey)
   const title = route.startsWith('#/reading') || route.startsWith('#/cloze') || route.startsWith('#/matching') ? '阅读理解'
     : route.startsWith('#/listening') ? '听力'
       : route.startsWith('#/translation') ? '翻译'
@@ -296,15 +306,10 @@ function Shell({ route, children }) {
       </div>
 
       <nav data-tabbar className="glass-tab fixed inset-x-3 bottom-[calc(12px+env(safe-area-inset-bottom))] z-40 mx-auto max-w-[520px] md:max-w-[620px] lg:hidden" aria-label="主导航">
-        <div className="flex items-stretch p-1">
-          {[
-            { key: 'home', label: '首页', icon: Home, href: '#/' },
-            { key: 'vocab', label: '抽查', icon: BookMarked, href: '#/vocab' },
-            { key: 'practice', label: '练习', icon: Layers, href: '#/practice' },
-            { key: 'drill', label: '深练', icon: Sparkles, href: '#/drill' },
-            { key: 'settings', label: '设置', icon: Settings, href: '#/settings' },
-          ].map((item) => (
-            <a key={item.key} href={item.href} className="tab-item" data-active={tabKey === item.key}>
+        <div className="relative flex items-stretch p-1">
+          {tabIndex >= 0 ? <span className="tab-liquid" style={{ transform: `translateX(${tabIndex * 100}%)` }} aria-hidden="true" /> : null}
+          {BOTTOM.map((item) => (
+            <a key={item.key} href={item.href} className="tab-item" data-active={tabKey === item.key} aria-current={tabKey === item.key ? 'page' : undefined}>
               <item.icon className="h-[18px] w-[18px]" strokeWidth={1.5} aria-hidden="true" />
               <span>{item.label}</span>
             </a>
@@ -447,9 +452,11 @@ function Dashboard() {
               <p className="mt-2 text-xs text-[var(--faint)]">预计 {minutes} 分钟 · 今日已完成 {done} / {target}</p>
               <Progress value={pct} className="mt-6" />
               <div className="mt-6">
-                <Button variant="primary" asChild>
-                  <a href="#/vocab">开始抽查 <ArrowUpRight className="h-4 w-4" /></a>
-                </Button>
+                <Magnetic>
+                  <Button variant="primary" asChild>
+                    <a href="#/vocab">开始抽查 <ArrowUpRight className="h-4 w-4" /></a>
+                  </Button>
+                </Magnetic>
               </div>
             </CardContent>
           </Card>
@@ -491,18 +498,20 @@ function Dashboard() {
           </div>
           <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
             {tiles.map((tile) => (
-              <a key={tile.key} href={tile.href} className="glass-card group flex min-h-[124px] flex-col justify-between p-5 transition-colors hover:border-white/20">
-                <div className="flex items-center justify-between">
-                  <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/[.06] text-primary">
-                    <tile.icon className="h-4 w-4" strokeWidth={1.5} aria-hidden="true" />
-                  </span>
-                  <span className="text-[11px] text-[var(--faint)]">{tile.meta}</span>
-                </div>
-                <div>
-                  <div className="t-card">{tile.name}</div>
-                  <p className="mt-1 text-xs text-[var(--faint)]">{tile.desc}</p>
-                </div>
-              </a>
+              <Tilt key={tile.key}>
+                <a href={tile.href} className="glass-card group flex h-full min-h-[124px] flex-col justify-between p-5 transition-colors hover:border-white/20">
+                  <div className="flex items-center justify-between">
+                    <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/[.06] text-primary">
+                      <tile.icon className="h-4 w-4" strokeWidth={1.5} aria-hidden="true" />
+                    </span>
+                    <span className="text-[11px] text-[var(--faint)]">{tile.meta}</span>
+                  </div>
+                  <div>
+                    <div className="t-card">{tile.name}</div>
+                    <p className="mt-1 text-xs text-[var(--faint)]">{tile.desc}</p>
+                  </div>
+                </a>
+              </Tilt>
             ))}
           </div>
         </section>
