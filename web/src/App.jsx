@@ -6,10 +6,12 @@ import { ReadingList, ReadingRunner, ClozeRunner, MatchingRunner } from './pages
 import { ListeningList, ListeningRunner } from './pages/Listening'
 import { TranslationList, TranslationRunner, WritingList, WritingRunner } from './pages/Productive'
 import { Mistakes, Settings as SettingsPage } from './pages/Misc'
+import { ExamList, ExamRunner } from './pages/Exam'
 import AuroraBackground from './components/AuroraBackground'
 import { Magnetic, Tilt } from './components/motion'
 import {
   AlertTriangle,
+  ArrowRight,
   ArrowUpRight,
   Bookmark,
   BookMarked,
@@ -17,6 +19,7 @@ import {
   CalendarDays,
   ChevronRight,
   Clock,
+  FileText,
   Flame,
   Headphones,
   Home,
@@ -41,6 +44,7 @@ const NAV = [
   { key: 'home', label: '首页', icon: Home, href: '#/' },
   { key: 'vocab', label: '抽查', icon: BookMarked, href: '#/vocab' },
   { key: 'practice', label: '题目练习', icon: Layers, href: '#/practice' },
+  { key: 'exam', label: '整套模考', icon: FileText, href: '#/exam' },
   { key: 'drill', label: '词汇深练', icon: Sparkles, href: '#/drill' },
   { key: 'wordbook', label: '单词本', icon: Bookmark, href: '#/wordbook' },
   { key: 'mistakes', label: '错题本', icon: AlertTriangle, href: '#/mistakes' },
@@ -226,7 +230,8 @@ function Shell({ route, children }) {
     return () => document.removeEventListener('keydown', onKey)
   }, [])
 
-  const tabKey = route.startsWith('#/practice') || route.startsWith('#/reading') || route.startsWith('#/cloze') || route.startsWith('#/matching') || route.startsWith('#/listening') || route.startsWith('#/translation') || route.startsWith('#/writing')
+  const tabKey = route.startsWith('#/exam') ? 'exam'
+    : route.startsWith('#/practice') || route.startsWith('#/reading') || route.startsWith('#/cloze') || route.startsWith('#/matching') || route.startsWith('#/listening') || route.startsWith('#/translation') || route.startsWith('#/writing')
     ? 'practice'
     : route.startsWith('#/mistakes') ? 'mistakes'
       : route.startsWith('#/settings') ? 'settings'
@@ -235,7 +240,7 @@ function Shell({ route, children }) {
             : route.startsWith('#/wordbook') ? 'wordbook'
               : 'home'
   const tabIndex = BOTTOM.findIndex((x) => x.key === tabKey)
-  const title = route.startsWith('#/reading') || route.startsWith('#/cloze') || route.startsWith('#/matching') ? '阅读理解'
+  const title = route.startsWith('#/exam') ? '整套模考' : route.startsWith('#/reading') || route.startsWith('#/cloze') || route.startsWith('#/matching') ? '阅读理解'
     : route.startsWith('#/listening') ? '听力'
       : route.startsWith('#/translation') ? '翻译'
         : route.startsWith('#/writing') ? '写作'
@@ -625,6 +630,14 @@ function Practice() {
   return (
     <>
       <PageHead eyebrow="PRACTICE" title="题目练习" description="按题型进入，练习记录自动保存。" action={<Badge variant="outline">4 个题型</Badge>} />
+      <a href="#/exam" className="glass-card mb-4 flex flex-wrap items-center gap-4 p-5 transition-colors hover:border-white/20">
+        <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/[.06] text-primary"><FileText className="h-5 w-5" strokeWidth={1.5} /></span>
+        <span className="min-w-0 flex-1">
+          <span className="block font-display text-xl">整套模考</span>
+          <span className="mt-1 block text-xs text-[var(--faint)]">写作 + 阅读 + 选词 + 匹配 + 翻译 · 125 分钟 · 9 套</span>
+        </span>
+        <span className="text-xs text-primary">进入模考 <ArrowRight className="ml-1 inline h-3.5 w-3.5" /></span>
+      </a>
       <div className="grid gap-4 md:grid-cols-2">
         {data.map((item) => (
           <Card key={item.key} className="group flex flex-col p-0 transition-colors hover:border-white/20">
@@ -719,7 +732,7 @@ function NotFound() {
 }
 
 function needsPapers(route) {
-  return /^#\/(reading|cloze|matching|translation|writing|practice)/.test(route.split('?')[0])
+  return /^#\/(exam|reading|cloze|matching|translation|writing|practice)/.test(route.split('?')[0])
 }
 
 export default function App() {
@@ -734,7 +747,7 @@ export default function App() {
   }, [paperRoute, papersReady])
   useEffect(() => {
     window.scrollTo(0, 0)
-    const name = route.startsWith('#/reading') || route.startsWith('#/cloze') || route.startsWith('#/matching') ? '阅读理解' : route.startsWith('#/listening') ? '听力' : route.startsWith('#/translation') ? '翻译' : route.startsWith('#/writing') ? '写作' : route.startsWith('#/practice') ? '题目练习' : route.startsWith('#/drill') ? '词汇深练' : route.startsWith('#/vocab') ? '抽查单词' : route.startsWith('#/wordbook') ? '单词本' : route.startsWith('#/mistakes') ? '错题本' : route.startsWith('#/settings') ? '设置' : '首页'
+    const name = route.startsWith('#/exam') ? '整套模考' : route.startsWith('#/reading') || route.startsWith('#/cloze') || route.startsWith('#/matching') ? '阅读理解' : route.startsWith('#/listening') ? '听力' : route.startsWith('#/translation') ? '翻译' : route.startsWith('#/writing') ? '写作' : route.startsWith('#/practice') ? '题目练习' : route.startsWith('#/drill') ? '词汇深练' : route.startsWith('#/vocab') ? '抽查单词' : route.startsWith('#/wordbook') ? '单词本' : route.startsWith('#/mistakes') ? '错题本' : route.startsWith('#/settings') ? '设置' : '首页'
     document.title = name + ' · 四级冲刺'
   }, [route])
 
@@ -743,6 +756,8 @@ export default function App() {
   const params = new URLSearchParams(route.split('?')[1] || '')
   const drillMode = clean.startsWith('#/drill/') ? clean.replace('#/drill/', '') : null
   if (paperRoute && !papersReady) page = <LoadingPage />
+  else if (clean === '#/exam') page = <ExamList />
+  else if (clean.startsWith('#/exam/')) page = <ExamRunner key={clean} index={Number(clean.replace('#/exam/', ''))} />
   else if (clean === '#/reading') page = <ReadingList />
   else if (clean.startsWith('#/reading/')) page = <ReadingRunner id={clean.replace('#/reading/', '')} reviewQ={params.get('q')} />
   else if (clean.startsWith('#/cloze/')) page = <ClozeRunner id={clean.replace('#/cloze/', '')} />

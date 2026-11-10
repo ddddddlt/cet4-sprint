@@ -15,19 +15,32 @@ export function Magnetic({ children, className, strength = 4 }) {
   useEffect(() => {
     const el = ref.current
     if (!el || !allowed()) return undefined
+    let raf = 0
+    let last = null
     function move(e) {
-      const r = el.getBoundingClientRect()
-      const x = ((e.clientX - r.left) / r.width - 0.5) * strength * 2
-      const y = ((e.clientY - r.top) / r.height - 0.5) * strength
-      el.style.transform = `translate3d(${x.toFixed(2)}px, ${y.toFixed(2)}px, 0)`
+      last = e
+      if (raf) return
+      raf = requestAnimationFrame(() => {
+        raf = 0
+        if (!last) return
+        const r = el.getBoundingClientRect()
+        const x = ((last.clientX - r.left) / r.width - 0.5) * strength * 2
+        const y = ((last.clientY - r.top) / r.height - 0.5) * strength
+        el.style.transform = `translate3d(${x.toFixed(2)}px, ${y.toFixed(2)}px, 0)`
+        last = null
+      })
     }
     function leave() {
+      if (raf) cancelAnimationFrame(raf)
+      raf = 0
+      last = null
       el.style.transform = 'translate3d(0,0,0)'
     }
     el.addEventListener('pointermove', move, { passive: true })
     el.addEventListener('pointerleave', leave)
     el.addEventListener('blur', leave)
     return () => {
+      if (raf) cancelAnimationFrame(raf)
       el.removeEventListener('pointermove', move)
       el.removeEventListener('pointerleave', leave)
       el.removeEventListener('blur', leave)
@@ -47,19 +60,32 @@ export function Tilt({ children, className, max = 3 }) {
   useEffect(() => {
     const el = ref.current
     if (!el || !allowed()) return undefined
+    let raf = 0
+    let last = null
     function move(e) {
-      const r = el.getBoundingClientRect()
-      const px = (e.clientX - r.left) / r.width - 0.5
-      const py = (e.clientY - r.top) / r.height - 0.5
-      el.style.transform = `perspective(900px) rotateX(${(-py * max).toFixed(2)}deg) rotateY(${(px * max).toFixed(2)}deg) translate3d(0,-2px,0)`
+      last = e
+      if (raf) return
+      raf = requestAnimationFrame(() => {
+        raf = 0
+        if (!last) return
+        const r = el.getBoundingClientRect()
+        const px = (last.clientX - r.left) / r.width - 0.5
+        const py = (last.clientY - r.top) / r.height - 0.5
+        el.style.transform = `perspective(900px) rotateX(${(-py * max).toFixed(2)}deg) rotateY(${(px * max).toFixed(2)}deg) translate3d(0,-2px,0)`
+        last = null
+      })
     }
     function leave() {
+      if (raf) cancelAnimationFrame(raf)
+      raf = 0
+      last = null
       el.style.transform = 'perspective(900px) rotateX(0deg) rotateY(0deg) translate3d(0,0,0)'
     }
     el.addEventListener('pointermove', move, { passive: true })
     el.addEventListener('pointerleave', leave)
     el.addEventListener('blur', leave)
     return () => {
+      if (raf) cancelAnimationFrame(raf)
       el.removeEventListener('pointermove', move)
       el.removeEventListener('pointerleave', leave)
       el.removeEventListener('blur', leave)
