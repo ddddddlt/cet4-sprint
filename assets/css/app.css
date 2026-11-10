@@ -721,6 +721,7 @@ html[data-theme="dark"] :focus-visible { outline-color: #8fe0c6; }
   display: grid;
   grid-template-columns: minmax(0, 1.35fr) minmax(0, .65fr);
   gap: 18px;
+  margin-top: 18px;
   margin-bottom: 18px;
 }
 
