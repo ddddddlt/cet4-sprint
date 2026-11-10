@@ -1,0 +1,452 @@
+{
+ "source": {
+  "year": 2025,
+  "month": 12,
+  "set": 3,
+  "label": "2025年12月·第3套"
+ },
+ "writing": {
+  "id": "w2512-s3",
+  "type": "写作",
+  "title": "2025年12月·第3套 · Writing",
+  "source": "2025年12月·第3套",
+  "minutes": 30,
+  "prompt": "Suppose your university is organizing a forum on how students can make the best use of on-campus resources for academic development. You are now to write an essay to express your view. You will have 30 minutes to write the essay. You should write at least 120 words but no more than 180 words.",
+  "sample": "On-campus resources are a treasure that too many students overlook. In my view, actively making use of these facilities is one of the smartest ways to boost our academic development. There are several practical steps we can take. First, we should visit the library and its online databases regularly, since they offer academic papers and books that turn a rough idea into a well-supported argument. Moreover, we ought to consult professors during their office hours, because a ten-minute talk often clears up confusion that hours of self-study cannot. In addition, attending academic lectures and joining study groups exposes us to fresh perspectives and keeps our motivation high. In short, the campus is full of tools waiting to be used. Only by taking the initiative to utilize them can we truly grow as learners and get the most out of our university years.",
+  "sampleZh": "校内资源是一座被太多学生忽视的宝藏。在我看来，主动利用这些设施，是提升我们学业发展最聪明的方式之一。我们可以采取几项切实可行的做法。首先，我们应当经常光顾图书馆及其在线数据库，因为它们提供的学术论文和书籍能把一个粗糙的想法变成有充分支撑的论证。此外，我们应当在教授的答疑时间当面请教，因为一次十分钟的交流，往往能解开数小时自学都绕不过去的困惑。再者，参加学术讲座、加入学习小组能让我们接触到新视角，并保持高昂的学习动力。总之，校园里满是等待被利用的工具。只有主动去利用它们，我们才能真正作为学习者成长，把大学时光用到极致。",
+  "words": 142
+ },
+ "reading": [
+  {
+   "id": "2512-s3-r1",
+   "type": "仔细阅读",
+   "title": "2025年12月·第3套 · Passage One",
+   "source": "2025年12月·第3套",
+   "minutes": 8,
+   "passage": "New York's Eleven Madison Park has become the first vegan restaurant to be awarded three Michelin stars.\n\nThe fine dining establishment received its first three-star Michelin rating in 2011 when the menu was famed for its fancy animal-based dishes.\n\nHowever, last year, the restaurant's co-owner and famous chef, Daniel Humm, made the bold decision to remove meat from the menu, citing our unsustainable food system. While cow milk is still served for tea and coffee, the menu is almost 100 percent vegan.\n\nAt the time, Humm acknowledged the move was risky, admitting that \"it wasn't clear if guests would come\", but called the gamble \"a risk worth taking.\"\n\n\"In view of the climate crisis, I didn't want to open the same restaurant,\" Humm told the Financial Times in an interview. \"If we can show the possibilities of eating plant-based food in this setting, it can open a lot of doors\" for others to follow.\n\nNow, this impressive new accomplishment validates Eleven Madison Park's decision to take meat off the menu and embrace plant-based foods, with Michelin's 2022 New York guide branding it 'a bold vision of luxury dining'.\n\n\"We took the jump to transform Eleven Madison Park into a plant-based fine dining restaurant knowing in our hearts this is what we believed in,\" stated Humm on Instagram. \"Last night, we were honored to be awarded three Michelin stars for the 11th year in a row. I am so grateful to the team members who contributed through its nearly 25-year history. We are also grateful to our guests and partners who believed in our vision and encouraged us to push harder.\"\n\nThree Michelin stars is the highest award, given to chefs who are at the peak of their profession. \"Their cooking is elevated to an art form and some of their dishes are destined to become classics,\" reads Michelin's website, in a clear nod to plant-based foods' growing significance in the culinary world.\n\n\"I think luxury companies have a real role to play and a responsibility,\" says Humm. \"The more creative we are, the more beautiful and delicious our future will be.\"",
+   "questions": [
+    {
+     "id": "2512-s3-r46",
+     "stem": "What do we learn about New York's Eleven Madison Park?",
+     "options": [
+      "It is the first vegan restaurant to receive the highest Michelin rating.",
+      "It is the first restaurant in the city to remove meat from its menu.",
+      "It was famed throughout the U.S. for its fancy regional dishes.",
+      "It was established as a three-star Michelin restaurant in 2011."
+     ],
+     "answer": 0,
+     "evidence": "New York's Eleven Madison Park has become the first vegan restaurant to be",
+     "explain": "答案 A；定位：New York's Eleven Madison Park has become the first vegan restaurant to be"
+    },
+    {
+     "id": "2512-s3-r47",
+     "stem": "Why did Daniel Humm decide to remove meat from the menu of his restaurant?",
+     "options": [
+      "To encourage more customers to be vegan.",
+      "To contribute to a sustainable food system.",
+      "To show the appeal of a plant-based menu.",
+      "To strive for the three-star Michelin rating."
+     ],
+     "answer": 1,
+     "evidence": "However, last year, the restaurant's co-owner and famous chef, Daniel Humm, made the bold",
+     "explain": "答案 B；定位：However, last year, the restaurant's co-owner and famous chef, Daniel Humm, made the bold"
+    },
+    {
+     "id": "2512-s3-r48",
+     "stem": "What did Daniel Humm think of his move to a meat-free menu?",
+     "options": [
+      "It was a worthwhile effort even though he was unsure of its success.",
+      "It would set a model for many more restaurants to follow.",
+      "It was a mad gamble few chefs in the fine dining world would risk taking.",
+      "It would prove a right step to take in today's catering business."
+     ],
+     "answer": 0,
+     "evidence": "At the time, Humm acknowledged the move was risky, admitting that \"it wasn't clear if guests",
+     "explain": "答案 A；定位：At the time, Humm acknowledged the move was risky, admitting that \"it wasn't clear if guests"
+    },
+    {
+     "id": "2512-s3-r49",
+     "stem": "What does Michelin's 2022 New York guide say about Eleven Madison Park's decision?",
+     "options": [
+      "It elevates the restaurant's cooking to an art form.",
+      "It proves the validity of ratings awarded by Michelin.",
+      "It shows a daring foresight regarding future fine dining.",
+      "It is an effort to transform the restaurant into a luxury one."
+     ],
+     "answer": 2,
+     "evidence": "Now, this impressive new accomplishment validates Eleven Madison Park's decision to take",
+     "explain": "答案 C；定位：Now, this impressive new accomplishment validates Eleven Madison Park's decision to take"
+    },
+    {
+     "id": "2512-s3-r50",
+     "stem": "What does the awarding of three Michelin stars to Eleven Madison Park indicate?",
+     "options": [
+      "An optimistic vision of vegan foods becoming mainstream.",
+      "A greater responsibility for the culinary world to undertake.",
+      "A strong incentive for more restaurants to offer healthier foods to their customers.",
+      "An explicit recognition of the rising importance of restaurants serving vegan foods."
+     ],
+     "answer": 3,
+     "evidence": "\"Their cooking is elevated to an art form and some of their dishes are destined to become",
+     "explain": "答案 D；定位：\"Their cooking is elevated to an art form and some of their dishes are destined to become"
+    }
+   ]
+  },
+  {
+   "id": "2512-s3-r2",
+   "type": "仔细阅读",
+   "title": "2025年12月·第3套 · Passage Two",
+   "source": "2025年12月·第3套",
+   "minutes": 8,
+   "passage": "With genetic testing becoming increasingly popular, many people are left wondering exactly how accurate it is. Whether you are taking a DNA test to build your extended DNA family tree, or want precise information on inborn health conditions, it is important to understand how accurate genetic tests are, and what information we can rely upon.\n\nHow accurate DNA tests are relies greatly upon the kind of test being taken, on the specific question you ask, and on how complex the genetics behind a trait is. For example, tests for traits that depend on a single gene provide much more reliable results, because you can see whether a disease- causing trait is present.\n\nAncestry tests claim to reveal our genetic identities. But saying you are 30 percent East Asian or American hardly reflects your real ancestry.\n\nWhat about using DNA tests to discover distant family members? There are tools to compare one's DNA with others' to find distant relatives based on their genetic identification. These kinds of applications are generally accurate. It's relatively easy to tell whether two DNA samples belong to close relatives. With distant relatives, results become hazier.\n\nGenetic health tests claim to be able to detect certain hereditary diseases, or other health conditions. While certain rare diseases can be easily identified, most potential health conditions cannot be identified by genetic testing alone. The large majority of our traits and diseases also depend upon non-genetic factors, such as lifestyle, the environment, and many others.\n\nGenetic tests for multi-factorial traits are often very tricky to interpret. Height, for example, depends on hundreds of genes, each contributing a little to the outcome, together with a bunch of environmental factors. A test can look at many genes at once, but it's difficult to predict how they will play together. Then you should also account for non-genetic factors that are not written in the DNA.\n\nTests that offer to find your perfect romantic match and those claiming to predict personality or talents based on your DNA are pure nonsense. At the moment, the scientific bases for these applications are non-existent or incredibly weak.",
+   "questions": [
+    {
+     "id": "2512-s3-r51",
+     "stem": "What does the passage say is of importance regarding genetic tests?",
+     "options": [
+      "Knowing their accuracy.",
+      "Evaluating their applicability.",
+      "Utilizing the information they provide.",
+      "Weighing the consequences they have."
+     ],
+     "answer": 0,
+     "evidence": "Whether you are taking a DNA test to build your extended DNA family tree, or want precise",
+     "explain": "答案 A；定位：Whether you are taking a DNA test to build your extended DNA family tree, or want precise"
+    },
+    {
+     "id": "2512-s3-r52",
+     "stem": "What kind of genetic tests tend to be comparatively reliable?",
+     "options": [
+      "Those complex enough to reveal the genetics behind a trait.",
+      "Those looking for traits responsible for certain diseases.",
+      "Those focusing on the specific questions being asked.",
+      "Those looking for traits determined by a single gene."
+     ],
+     "answer": 3,
+     "evidence": "For example, tests for traits that depend on a single gene provide much more reliable results,",
+     "explain": "答案 D；定位：For example, tests for traits that depend on a single gene provide much more reliable results,"
+    },
+    {
+     "id": "2512-s3-r53",
+     "stem": "What do we learn about genetic health tests from the passage?",
+     "options": [
+      "They are unable to identify certain hereditary diseases by themselves.",
+      "They are generally unable to separate genetic and non-genetic factors.",
+      "They cannot independently identify the majority of potential diseases.",
+      "They cannot tell apart the impact of lifestyle and that of the environment."
+     ],
+     "answer": 2,
+     "evidence": "While certain rare diseases can be easily identified, most potential health conditions cannot be",
+     "explain": "答案 C；定位：While certain rare diseases can be easily identified, most potential health conditions cannot be"
+    },
+    {
+     "id": "2512-s3-r54",
+     "stem": "What makes genetic tests for multi-factorial traits tricky to interpret?",
+     "options": [
+      "The challenge in determining the role of each individual gene.",
+      "The difficulty of foretelling how the various genes will interact.",
+      "The difficulty of telling genetic factors from environmental ones.",
+      "The enormous work to identify the hundreds of genes involved."
+     ],
+     "answer": 1,
+     "evidence": "A test can look at many genes at once, but it's difficult to predict how they will play together.",
+     "explain": "答案 B；定位：A test can look at many genes at once, but it's difficult to predict how they will play together."
+    },
+    {
+     "id": "2512-s3-r55",
+     "stem": "What does the passage say about DNA tests to predict personality or talents?",
+     "options": [
+      "They are solid scientific bases for application.",
+      "They are helpful in finding a romantic match.",
+      "They do not look promising at the moment.",
+      "They do not make any sense at present."
+     ],
+     "answer": 3,
+     "evidence": "Tests that offer to find your perfect romantic match and those claiming to predict personality",
+     "explain": "答案 D；定位：Tests that offer to find your perfect romantic match and those claiming to predict personality"
+    }
+   ]
+  }
+ ],
+ "cloze": {
+  "id": "c2512-s3",
+  "type": "选词填空",
+  "title": "2025年12月·第3套 · Cloze",
+  "source": "2025年12月·第3套",
+  "minutes": 10,
+  "passage": "Earth Day is an annual celebration that honors the achievements of the environmental movement and raises awareness of the need to protect Earth's natural resources for future generations. Earth Day is celebrated on April 22 in the United States and on either April 22 or the day the spring equinox occurs throughout the {{1}} of the world. Environmental activism during the 1960s {{2}} Wisconsin Senator Gaylord Nelson to create a {{3}} celebration uniting the environmental movement. With the help of Denis Hayes, a graduate student at Harvard University, Nelson organized the first Earth Day on April 22, 1970, educating participants in the {{4}} of environmental protection. Attended by 20 million people across the United States, the event {{5}} support for legislation such as the Clean Air Act and the Endangered Species Act. In 1990, Hayes organized a global Earth Day, with more than 200 million participants in 140 countries. Earth Day now brings {{6}} citizens and activists from around the world to raise awareness and take action regarding such environmental {{7}} as global warming and renewable energy. Today, the Earth Day Network, which rallies more than 20,000 {{8}} and organizations in 190 countries, supports the Earth Day mission year-round. This mission is founded on the proposition that all people, regardless of race, gender, income, or {{9}} have a moral right to a healthy, sustainable environment. The Earth Day Network {{10}} this mission through education, public policy, and activism campaigns.",
+  "bank": [
+   {
+    "k": "A",
+    "w": "concerns"
+   },
+   {
+    "k": "B",
+    "w": "expansion"
+   },
+   {
+    "k": "C",
+    "w": "forth"
+   },
+   {
+    "k": "D",
+    "w": "geography"
+   },
+   {
+    "k": "E",
+    "w": "importance"
+   },
+   {
+    "k": "F",
+    "w": "imposed"
+   },
+   {
+    "k": "G",
+    "w": "inspired"
+   },
+   {
+    "k": "H",
+    "w": "national"
+   },
+   {
+    "k": "I",
+    "w": "partners"
+   },
+   {
+    "k": "J",
+    "w": "potential"
+   },
+   {
+    "k": "K",
+    "w": "pursues"
+   },
+   {
+    "k": "L",
+    "w": "rescues"
+   },
+   {
+    "k": "M",
+    "w": "rest"
+   },
+   {
+    "k": "N",
+    "w": "strengthened"
+   },
+   {
+    "k": "O",
+    "w": "together"
+   }
+  ],
+  "blanks": [
+   {
+    "no": 1,
+    "answer": "M",
+    "explain": "答案 M) rest"
+   },
+   {
+    "no": 2,
+    "answer": "G",
+    "explain": "答案 G) inspired"
+   },
+   {
+    "no": 3,
+    "answer": "H",
+    "explain": "答案 H) national"
+   },
+   {
+    "no": 4,
+    "answer": "E",
+    "explain": "答案 E) importance"
+   },
+   {
+    "no": 5,
+    "answer": "N",
+    "explain": "答案 N) strengthened"
+   },
+   {
+    "no": 6,
+    "answer": "O",
+    "explain": "答案 O) together"
+   },
+   {
+    "no": 7,
+    "answer": "A",
+    "explain": "答案 A) concerns"
+   },
+   {
+    "no": 8,
+    "answer": "I",
+    "explain": "答案 I) partners"
+   },
+   {
+    "no": 9,
+    "answer": "D",
+    "explain": "答案 D) geography"
+   },
+   {
+    "no": 10,
+    "answer": "K",
+    "explain": "答案 K) pursues"
+   }
+  ]
+ },
+ "matching": {
+  "id": "m2512-s3",
+  "type": "长篇匹配",
+  "title": "2025年12月·第3套 · Looking for a job after 45",
+  "source": "2025年12月·第3套",
+  "minutes": 15,
+  "paragraphs": [
+   {
+    "k": "A",
+    "text": "Ageism and long-term unemployment are most damaging for those in the second half of their careers. Changing careers is hard. Getting back into work after you've been laid off is even harder. Those over 45 make up the bulk of the long-term unemployed, in America and elsewhere. Hiring managers admit they are reluctant to hire those over 40 or 45, arguing they probably won't be a good \"fit,\" their experience won't be relevant to the workplace, and they'll be unable or unwilling to learn new skills."
+   },
+   {
+    "k": "B",
+    "text": "But the one thing that can really make a difference? More education and training. These are the results from a new study by Generation, a nonprofit founded by former McKinsey consultants. They've just published a global survey on midcareer employment, based on surveys of over 5,000 workers and managers in seven countries."
+   },
+   {
+    "k": "C",
+    "text": "\"Older midcareer workers … make up the bulk of the long-term unemployed in many countries,\" Generation's analysts write in their report. Those over 45 comprise over 40% of the long-term unemployed, for example. And if you're out of work past the age of 45, there's nearly a two in three chance you'll be out of work for over a year, they find. \"Midcareer individuals are finding it harder to get jobs,\" they write. \"People age 45+ face persistent and rising pressure in the global job market. They are unemployed for much longer than the average, and their age is indeed one of the greatest barriers to their finding a job.\""
+   },
+   {
+    "k": "D",
+    "text": "A substantial part of this, they report, is \"widespread ageism\" on the part of hiring managers. Although such managers admit that post-45 hires turn out on average to be just as good as or better than younger workers, they still don't want to hire them. \"Hiring managers have a strong perception bias against 45+ job candidates — they believe that members of this age group have poor skills and low adaptability,\" Generation's analysts report."
+   },
+   {
+    "k": "E",
+    "text": "The survey results are remarkable. Hiring managers are three times as likely to rate job applicants age 35 – 44 as a better \"fit\" than those over 45. They rate the post-45 job seekers lower on average on all three measures — even experience — than those ages 18 to 34. This is true even though nearly nine managers in 10 also said their post-45 workers were as good as or better than younger employees in the same jobs."
+   },
+   {
+    "k": "F",
+    "text": "Their biggest fears about hiring those over 45? Managers said they worry that older hires will be reluctant to try new technologies, and will be unable to learn new skills. Besides, the majority of hiring managers are under 45 — and seem reluctant to hire people older than themselves."
+   },
+   {
+    "k": "G",
+    "text": "But here's the good news. Older workers who've actively engaged in more education and training relevant to their jobs turn this pretty much on its head. Three-quarters of hiring managers said they'd be more likely to hire an over-45 who had relevant education, training or credentials. Among those over 45 who'd successfully switched careers, 74% said training helped them get their new job."
+   },
+   {
+    "k": "H",
+    "text": "\"Midcareer switchers overwhelmingly say that training enabled them to shift to a new career path,\" the analysts write. And when they asked over-45 candidates about their attitudes, they found that \"those who are excited by training are unemployed for less time, receive more job offers, and are more satisfied by the job offers they receive.\""
+   },
+   {
+    "k": "I",
+    "text": "Hiring managers said training was three times more likely to get them to hire applicants over age 45 than, say, government subsidies. What training are we talking about? Obviously it depends on the job. And, yes, managers are most likely to be impressed by industry qualifications you get in school. These things cost money, and time. But these aren't the only things helpful. Those who had successfully changed careers after 45 told Generation that education and training had been a big help — and that included in-person, on-the-job training, \"informal learning,\" and online courses — with or without certification."
+   },
+   {
+    "k": "J",
+    "text": "If they think we're too old to learn new skills after we're 45, just learning some new skills may have an effect on its own. There's a downside to this. The people least interested in retraining are more likely to come from historically disadvantaged communities, more likely to have low incomes, and are more likely to have the least schooling after getting their high-school diploma or earlier. On average, post-45 job switchers with higher incomes participate in 2.5 training programs each. Those with lower incomes: 0.9 programs on average."
+   },
+   {
+    "k": "K",
+    "text": "Many years ago, I wrote about a study which found that employers are much more likely to hire a college graduate who has some work experience in the industry than a college graduate who took the \"right\" degree. A bank is more likely to hire a literature graduate who spent their summers working in their local bank than a finance or economics graduate who spent their summers surfing or traveling around Italy. They've learned through long experience. The person who worked in the bank is more likely ready, willing and able to be part of the team and do the job from day 1."
+   },
+   {
+    "k": "L",
+    "text": "We can rail against \"ageism\" all we like. It gets us nowhere. And it's easy to forget that employers, like everyone else, are under time pressure and are just trying to solve problems. Any and all \"training,\" including inexpensive and informal training, is going to help resolve their worries about hiring someone over 45. And it has never been easier or cheaper to gain instruction in new skills,"
+   },
+   {
+    "k": "M",
+    "text": "Bottom line? Yes, it really can be difficult getting a new job after age 45, let alone changing careers. One of the best things we can do to help ourselves is to go online and learn new, relevant skills. Sadly, the people who most need the help are least likely to take it — which raises a challenge for society as a whole. Not only do we not want to see lives go to waste, but we all benefit if more people are working and fewer are unemployed."
+   }
+  ],
+  "statements": [
+   {
+    "id": "2512-s3-m1",
+    "text": "Hiring managers believe unemployed workers over 45 lack good skills and are less adaptable. Directions: There are 2 passages in this section. Each passage is followed by some questions or unfinished statements. For each of them there are four choices marked A), B), C) and D). You should decide on the best choice and mark the corresponding letter on Answer Sheet 2 with a single line through the centre. Passage One New York's Eleven Madison Park has become the first vegan restaurant to be awarded three Michelin stars. The fine dining establishment received its first three-star Michelin rating in 2011 when the menu was famed for its fancy animal-based dishes. However, last year, the restaurant's co-owner and famous chef, Daniel Humm, made the bold decision to remove meat from the menu, citing our unsustainable food system. While cow milk is still served for tea and coffee, the menu is almost 100 percent vegan. At the time, Humm acknowledged the move was risky, admitting that \"it wasn't clear if guests would come\", but called the gamble \"a risk worth taking.\" \"In view of the climate crisis, I didn't want to open the same restaurant,\" Humm told the Financial Times in an interview. \"If we can show the possibilities of eating plant-based food in this setting, it can open a lot of doors\" for others to follow. Now, this impressive new accomplishment validates Eleven Madison Park's decision to take meat off the menu and embrace plant-based foods, with Michelin's 2022 New York guide branding it 'a bold vision of luxury dining'. \"We took the jump to transform Eleven Madison Park into a plant-based fine dining restaurant knowing in our hearts this is what we believed in,\" stated Humm on Instagram. \"Last night, we were honored to be awarded three Michelin stars for the 11th year in a row. I am so grateful to the team members who contributed through",
+    "answer": "D",
+    "explain": "答案 D 段；定位：Hiring managers have a strong perception bias against 45+ job candidates — they believe that"
+   },
+   {
+    "id": "2512-s3-m2",
+    "text": "Switching to a new career is difficult and getting reemployed after a layoff is even tougher.",
+    "answer": "A",
+    "explain": "答案 A 段"
+   },
+   {
+    "id": "2512-s3-m3",
+    "text": "People from poor neighborhoods tend to have the least interest in retraining.",
+    "answer": "J",
+    "explain": "答案 J 段；定位：The people least interested in retraining are more likely to come from historically"
+   },
+   {
+    "id": "2512-s3-m4",
+    "text": "Hiring managers who are not yet 45 years old seem unwilling to hire people their senior.",
+    "answer": "F",
+    "explain": "答案 F 段；定位：Besides, the majority of hiring managers are under 45 — and seem reluctant to hire people"
+   },
+   {
+    "id": "2512-s3-m5",
+    "text": "Some analysts find age 45+ jobless workers are most likely to be unemployed for more than a year.",
+    "answer": "C",
+    "explain": "答案 C 段；定位：And if you're out of work past the age of 45, there's nearly a two in three chance you'll be out"
+   },
+   {
+    "id": "2512-s3-m6",
+    "text": "People who had succeeded in career change after 45 told a nonprofit organization they owed a great deal to the education and training they had received.",
+    "answer": "I",
+    "explain": "答案 I 段；定位：Those who had successfully changed careers after 45 told Generation that education and"
+   },
+   {
+    "id": "2512-s3-m7",
+    "text": "Older workers who actively pursue more education and training have a good chance of being hired.",
+    "answer": "G",
+    "explain": "答案 G 段；定位：Three-quarters of hiring managers said they'd be more likely to hire an over-45 who had"
+   },
+   {
+    "id": "2512-s3-m8",
+    "text": "A new study finds that more education and training helps midcareer individuals find a new job.",
+    "answer": "B",
+    "explain": "答案 B 段；定位：But the one thing that can really make a difference? More education and training."
+   },
+   {
+    "id": "2512-s3-m9",
+    "text": "Owing to the internet, it is now more convenient than ever to receive training in new skills.",
+    "answer": "L",
+    "explain": "答案 L 段；定位：And it has never been easier or cheaper to gain instruction in new skills, thanks to"
+   },
+   {
+    "id": "2512-s3-m10",
+    "text": "People over 45 stimulated by training suffer shorter periods of unemployment, get more job offers and have greater satisfaction in them.",
+    "answer": "H",
+    "explain": "答案 H 段；定位：And when they asked over-45 candidates about their attitudes, they found that \"those who are"
+   }
+  ]
+ },
+ "translation": {
+  "id": "t2512-s3",
+  "type": "汉译英",
+  "title": "2025年12月·第3套 · 汉译英",
+  "source": "2025年12月·第3套",
+  "minutes": 15,
+  "zh": "中国政府十分重视绿色经济的发展。通过加强森林资源保护、加大污染治理力度等一系列措施，许多地区的生态环境得到了显著改善。绿水青山 (lucid waters and lush mountains) 促进了当地的旅游、健康等产业的发展，创造了可观的经济效益。如今，生态环境与人类社会和谐共存的观念在中国已深入人心。绿色经济的推进不仅能为中国可持续发展做出贡献，也为全球环境保护提供了宝贵经验。",
+  "sentences": [
+   {
+    "zh": "中国政府十分重视绿色经济的发展。",
+    "en": "The Chinese government attaches great importance to the development of the",
+    "tip": ""
+   },
+   {
+    "zh": "通过加强森林资源保护、加大污染治理力度等一系列措施，许多地区的生态环境得到了显著",
+    "en": "Through a series of measures such as strengthening forest resource protection and",
+    "tip": ""
+   },
+   {
+    "zh": "绿水青山 (lucid waters and lush mountains) 促进了当地的旅游、健康等产业的发展，创造了可",
+    "en": "Lucid waters and lush mountains have promoted the development of",
+    "tip": ""
+   },
+   {
+    "zh": "如今，生态环境与人类社会和谐共存的观念在中国已深入人心。",
+    "en": "Today, the idea that ecology and human society can coexist in harmony has taken",
+    "tip": ""
+   },
+   {
+    "zh": "绿色经济的推进不仅能为中国可持续发展做出贡献，也为全球环境保护提供了宝贵经验。",
+    "en": "The promotion of the green economy not only contributes to China's",
+    "tip": ""
+   }
+  ],
+  "keyPoints": []
+ }
+}
