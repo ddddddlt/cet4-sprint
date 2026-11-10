@@ -1752,7 +1752,7 @@ mark.ev.pulse { animation: flash 1.2s ease; }
 }
 .sense-src { font-size: 11.5px; color: #a39d8d; margin-top: 10px; }
 
-.rate-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 26px; }
+.rate-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 26px; }
 .rate-btn {
   display: flex;
   flex-direction: column;
@@ -1770,6 +1770,9 @@ mark.ev.pulse { animation: flash 1.2s ease; }
 .rate-btn.bad:hover { border-color: #e0a396; background: var(--red-soft); }
 .rate-btn.mid:hover { border-color: #e6cf9f; background: var(--amber-soft); }
 .rate-btn.good:hover { border-color: #7dbfa2; background: var(--green-soft); }
+.rate-btn.easy:hover { border-color: #9bb6d6; background: var(--blue-soft); }
+.check-undo { display: flex; justify-content: flex-end; margin-top: 12px; }
+.check-undo .btn[disabled] { opacity: .4; }
 
 .group-break { max-width: 560px; margin: 40px auto; text-align: center; padding: 40px 36px; }
 .gb-badge {
@@ -2449,6 +2452,7 @@ html[data-theme="dark"] .btn-danger { background: #9c5548; color: #f7ede9; }
 }
 
 @media (max-width: 360px) {
+  .rate-row { grid-template-columns: repeat(2, 1fr); }
   .tab-item { font-size: 9px; gap: 2px; padding: 4px 0; }
   .tab-item .ic { width: 17px; height: 17px; }
 }
