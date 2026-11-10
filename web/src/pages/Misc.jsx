@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { AlertTriangle, ArrowUpRight, Check, Monitor, Moon, Save, Sun } from 'lucide-react'
 import { currentMode, setTheme } from '../lib/theme'
+import { createProfile, listProfiles, removeProfile, renameProfile, switchProfile } from '../lib/profiles'
 import { Badge } from '../components/ui/badge'
 import { Button } from '../components/ui/button'
 import { Card, CardContent } from '../components/ui/card'
@@ -62,6 +63,12 @@ export function Mistakes() {
                         <span>错 {e.count} 次</span>
                       </div>
                       {e.explain ? <p className="mt-3 rounded-lg bg-secondary/40 p-3 text-xs leading-relaxed text-muted-foreground">{e.explain}</p> : null}
+                      {e.setId ? (
+                        <a className="mt-3 inline-flex items-center gap-1 text-xs text-primary hover:underline"
+                          href={e.kind === 'listening' ? `#/listening/${e.setId}` : `#/${e.kind}/${e.setId}?review=1&q=${e.qid}`}>
+                          去原题重做 <ArrowUpRight className="h-3.5 w-3.5" />
+                        </a>
+                      ) : null}
                     </CardContent>
                   </Card>
                 ))}
@@ -92,6 +99,8 @@ export function Settings() {
   const [target, setTarget] = useState(50)
   const [saved, setSaved] = useState(false)
   const [theme, setThemeMode] = useState(() => currentMode())
+  const [profiles, setProfiles] = useState(() => listProfiles())
+  const [newName, setNewName] = useState('')
   const importRef = useRef(null)
 
   useEffect(() => {
@@ -142,6 +151,47 @@ export function Settings() {
         <h1 className="font-display text-3xl font-semibold tracking-tight sm:text-4xl">设置</h1>
         <p className="mt-2 text-sm text-muted-foreground">考试日期、称呼与每日抽查量</p>
       </div>
+
+      <Card className="paper-texture mb-4">
+        <CardContent className="p-6">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <h2 className="font-display text-lg font-semibold">学习档案</h2>
+              <p className="mt-1 text-xs text-muted-foreground">同一浏览器下分档，进度互不干扰。切换后页面会重新加载。</p>
+            </div>
+            <Badge variant="secondary" className="font-normal">{profiles.length} 个档案</Badge>
+          </div>
+          <div className="mt-4 space-y-2">
+            {profiles.map((p) => (
+              <div key={p.id} className={`flex items-center gap-3 rounded-lg border px-4 py-3 ${p.active ? 'border-primary/40 bg-secondary/60' : 'bg-card'}`}>
+                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-secondary font-display text-sm text-primary">{p.name.slice(0, 1)}</span>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2 text-sm font-medium">
+                    {p.name}
+                    {p.active ? <Badge variant="default" className="h-5 px-1.5 text-[10px]">当前</Badge> : null}
+                  </div>
+                  <div className="text-[11px] text-muted-foreground">{p.active ? '正在使用' : '点击切换到此档案'}</div>
+                </div>
+                {!p.active ? <Button size="sm" variant="outline" onClick={() => switchProfile(p.id)}>切换</Button> : null}
+                <Button size="sm" variant="ghost" onClick={() => {
+                  const name = window.prompt('档案名称', p.name)
+                  if (name) { renameProfile(p.id, name); setProfiles(listProfiles()) }
+                }}>改名</Button>
+                {!p.active && profiles.length > 1 ? <Button size="sm" variant="ghost" onClick={() => {
+                  if (window.confirm('删除档案「' + p.name + '」？此操作不可撤销。')) {
+                    removeProfile(p.id); setProfiles(listProfiles())
+                  }
+                }}>删除</Button> : null}
+              </div>
+            ))}
+          </div>
+          <div className="mt-4 flex flex-wrap gap-2">
+            <input value={newName} onChange={(e) => setNewName(e.target.value)} maxLength={20} placeholder="新档案名称，如：室友 A" className="h-9 min-w-48 flex-1 rounded-md border bg-card px-3 text-sm" />
+            <Button variant="outline" onClick={() => { if (createProfile(newName)) setNewName('') }}>新建空白档案</Button>
+          </div>
+          {profiles.length > 1 ? <p className="mt-3 rounded-lg bg-amber-50/70 p-3 text-xs text-amber-900">云同步仍只有一个远程进度文件；多档案 + 云同步会互相覆盖，建议每个档案只在本机使用。</p> : null}
+        </CardContent>
+      </Card>
 
       <Card className="paper-texture mb-4">
         <CardContent className="p-6">

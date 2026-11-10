@@ -7,6 +7,34 @@
     <link rel="icon" type="image/png" href="./cet-logo-cropped.png" />
     <script>
       (function () {
+        var MAIN = 'cet4-sprint/v1';
+        var REG = 'cet4-sprint/profiles/v1';
+        var PRE = 'cet4-sprint/profile/';
+        try {
+          var reg = JSON.parse(localStorage.getItem(REG) || 'null');
+          if (!reg || !Array.isArray(reg.items) || !reg.items.length) {
+            var id = 'p-' + Date.now().toString(36);
+            var existing = localStorage.getItem(MAIN);
+            reg = { active: id, items: [{ id: id, name: '我的档案', createdAt: Date.now() }] };
+            localStorage.setItem(PRE + id, existing || '{}');
+            localStorage.setItem(REG, JSON.stringify(reg));
+            if (!existing) localStorage.setItem(MAIN, '{}');
+            return;
+          }
+          var active = reg.items.filter(function (p) { return p.id === reg.active; })[0] || reg.items[0];
+          if (!active) return;
+          if (active.id !== reg.active) {
+            reg.active = active.id;
+            localStorage.setItem(REG, JSON.stringify(reg));
+          }
+          var snapshot = localStorage.getItem(PRE + active.id);
+          if (!localStorage.getItem(MAIN) && snapshot) localStorage.setItem(MAIN, snapshot);
+          if (!snapshot) localStorage.setItem(PRE + active.id, localStorage.getItem(MAIN) || '{}');
+        } catch (e) { /* ignore */ }
+      })();
+    </script>
+    <script>
+      (function () {
         try {
           var raw = localStorage.getItem('cet4-sprint/v1');
           var s = raw ? JSON.parse(raw) : {};
@@ -27,8 +55,8 @@
     <script src="./legacy/word-extras.js"></script>
     <script src="./legacy/papers/bundle.js"></script>
     <script src="./legacy/core.js"></script>
-    <script type="module" crossorigin src="./assets/index-BOcnFbyQ.js"></script>
-    <link rel="stylesheet" crossorigin href="./assets/index-CF0SzR15.css">
+    <script type="module" crossorigin src="./assets/index-B1G9jhOi.js"></script>
+    <link rel="stylesheet" crossorigin href="./assets/index-BSfjCbSB.css">
   </head>
   <body>
     <div id="root"></div>
