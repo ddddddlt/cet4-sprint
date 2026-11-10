@@ -172,6 +172,7 @@ export function Settings() {
   const st = core ? core.getState() : null
   const [examDate, setExamDate] = useState('')
   const [name, setName] = useState('')
+  const [minutes, setMinutes] = useState(30)
   const [target, setTarget] = useState(50)
   const [saved, setSaved] = useState(false)
   const [profiles, setProfiles] = useState(() => listProfiles())
@@ -195,6 +196,7 @@ export function Settings() {
     if (!st) return
     setExamDate(st.settings.examDate || '')
     setName(st.settings.name || '')
+    setMinutes(Math.max(5, Math.min(240, Number(st.settings.dailyMinutes) || 30)))
     setTarget(core.checkTarget())
   }, [st])
 
@@ -303,6 +305,7 @@ export function Settings() {
     if (!st) return
     st.settings.examDate = examDate || st.settings.examDate
     st.settings.name = name
+    st.settings.dailyMinutes = Math.max(5, Math.min(240, Number(minutes) || 30))
     core.setCheckTarget(+target || 50)
     core.save()
     setSaved(true)
@@ -314,10 +317,54 @@ export function Settings() {
       <div className="mb-7">
         <div className="mb-2 text-[11px] uppercase tracking-[0.18em] text-muted-foreground">SETTINGS</div>
         <h1 className="font-display text-3xl font-semibold tracking-tight sm:text-4xl">设置</h1>
-        <p className="mt-2 text-sm text-muted-foreground">考试日期、称呼与每日抽查量</p>
+        <p className="mt-2 text-sm text-muted-foreground">学习计划、档案与云同步</p>
       </div>
 
-      <Card className="mb-4">
+      <div className="grid items-start gap-4 lg:grid-cols-2">
+        <Card className="mb-4">
+          <CardContent className="space-y-4 p-6">
+            <div className="flex flex-wrap items-start justify-between gap-2">
+              <div>
+                <h2 className="font-display text-lg font-semibold">学习计划</h2>
+                <p className="mt-1 text-xs text-muted-foreground">每天学多久，由你决定</p>
+              </div>
+              <Badge variant="outline" className="font-normal">每周 {minutes * 7} 分钟</Badge>
+            </div>
+            <label className="block">
+              <span className="mb-1.5 block text-sm font-medium">考试日期</span>
+              <input type="date" value={examDate} onChange={(e) => setExamDate(e.target.value)} className="h-10 w-full rounded-md border bg-card px-3 text-sm" />
+              <span className="mt-1 block text-xs text-muted-foreground">默认 2026 年 12 月 13 日，以准考证为准</span>
+            </label>
+            <label className="block">
+              <span className="mb-1.5 block text-sm font-medium">昵称（可选）</span>
+              <input type="text" maxLength={12} value={name} onChange={(e) => setName(e.target.value)} placeholder="首页会这样称呼你" className="h-10 w-full rounded-md border bg-card px-3 text-sm" />
+            </label>
+            <div>
+              <span className="mb-1.5 block text-sm font-medium">每天学习时长</span>
+              <div className="flex items-center gap-3">
+                <input type="number" min={5} max={240} value={minutes} onChange={(e) => setMinutes(e.target.value)} className="h-10 w-28 rounded-md border bg-card px-3 text-sm" />
+                <span className="text-xs text-muted-foreground">分钟 / 天</span>
+              </div>
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {[20, 30, 45, 60, 90].map((v) => (
+                  <button key={v} type="button" onClick={() => setMinutes(v)} className={`rounded-md border px-2.5 py-1 text-xs ${Number(minutes) === v ? 'border-primary/50 bg-[var(--accent-soft)] text-primary' : 'text-muted-foreground hover:text-foreground'}`}>{v} 分</button>
+                ))}
+              </div>
+              <span className="mt-2 block text-xs text-muted-foreground">本周目标 = 每天 {Number(minutes) || 0} 分钟 × 7 天 = <span className="text-foreground">{Number(minutes) * 7 || 0} 分钟</span></span>
+            </div>
+            <label className="block">
+              <span className="mb-1.5 block text-sm font-medium">每日抽查量</span>
+              <input type="number" min={10} max={200} value={target} onChange={(e) => setTarget(e.target.value)} className="h-10 w-full rounded-md border bg-card px-3 text-sm" />
+              <span className="mt-1 block text-xs text-muted-foreground">10–200 个，按 10 个一组</span>
+            </label>
+            <div className="flex items-center gap-3">
+              <Button onClick={save}><Save className="h-4 w-4" /> 保存设置</Button>
+              {saved ? <span className="inline-flex items-center gap-1 text-xs text-success"><Check className="h-3.5 w-3.5" /> 已保存</span> : null}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="mb-4">
         <CardContent className="p-6">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div>
@@ -357,7 +404,10 @@ export function Settings() {
           {profiles.length > 1 ? <p className="mt-3 rounded-lg bg-warning-soft p-3 text-xs text-warning">云同步仍只有一个远程进度文件；多档案 + 云同步会互相覆盖，建议每个档案只在本机使用。</p> : null}
         </CardContent>
       </Card>
+      </div>
 
+      <h2 className="t-section mb-3 mt-8">显示与数据</h2>
+      <div className="grid items-start gap-4 lg:grid-cols-2">
       <Card className="mb-4 border-danger-soft">
         <CardContent className="p-6">
           <div className="flex flex-wrap items-start justify-between gap-3">
@@ -405,7 +455,9 @@ export function Settings() {
           </button>
         </CardContent>
       </Card>
+      </div>
 
+      <h2 className="t-section mb-3 mt-8">账号与同步</h2>
       <Card className="mb-4">
         <CardContent className="p-6">
           <div className="flex flex-wrap items-center justify-between gap-2">
@@ -566,31 +618,8 @@ export function Settings() {
         </CardContent>
       </Card>
 
-      <div className="grid gap-4 lg:grid-cols-2">
-        <Card className="">
-          <CardContent className="space-y-5 p-6">
-            <label className="block">
-              <span className="mb-1.5 block text-sm font-medium">考试日期</span>
-              <input type="date" value={examDate} onChange={(e) => setExamDate(e.target.value)} className="h-10 w-full rounded-md border bg-card px-3 text-sm" />
-              <span className="mt-1 block text-xs text-muted-foreground">默认 2026 年 12 月 13 日，以准考证为准</span>
-            </label>
-            <label className="block">
-              <span className="mb-1.5 block text-sm font-medium">昵称（可选）</span>
-              <input type="text" maxLength={12} value={name} onChange={(e) => setName(e.target.value)} placeholder="首页会这样称呼你" className="h-10 w-full rounded-md border bg-card px-3 text-sm" />
-            </label>
-            <label className="block">
-              <span className="mb-1.5 block text-sm font-medium">每日抽查量</span>
-              <input type="number" min={10} max={200} value={target} onChange={(e) => setTarget(e.target.value)} className="h-10 w-full rounded-md border bg-card px-3 text-sm" />
-              <span className="mt-1 block text-xs text-muted-foreground">10–200 个，按 10 个一组</span>
-            </label>
-            <div className="flex items-center gap-3">
-              <Button onClick={save}><Save className="h-4 w-4" /> 保存设置</Button>
-              {saved ? <span className="inline-flex items-center gap-1 text-xs text-success"><Check className="h-3.5 w-3.5" /> 已保存</span> : null}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="">
+        <h2 className="t-section mb-3 mt-8">数据与备份</h2>
+        <Card className="mb-4">
           <CardContent className="p-6">
             <h2 className="font-display text-lg font-semibold">更多</h2>
             <p className="mt-1 text-xs text-muted-foreground">数据导入导出已迁到「更多」，旧版入口已移除。</p>
@@ -606,7 +635,6 @@ export function Settings() {
             </div>
           </CardContent>
         </Card>
-      </div>
     </>
   )
 }

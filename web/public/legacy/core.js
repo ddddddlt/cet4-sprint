@@ -39,6 +39,7 @@ window.App = window.App || {};
         newPerDay: 15,
         reviewCap: 120,
         checkTarget: 50,
+        dailyMinutes: 30,
         name: '',
         theme: 'auto'
       },

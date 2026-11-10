@@ -565,6 +565,8 @@ function Dashboard() {
   const wordbook = core ? core.wordbookCount() : 0
   const streak = core ? core.streak() : 0
   const week = core ? core.weekMinutes() : 0
+  const dailyMinutes = core ? Math.max(5, Math.min(240, Number(core.getState().settings.dailyMinutes) || 30)) : 30
+  const weekGoal = dailyMinutes * 7
   const totalWords = core ? core.allWords().length : 0
   const left = Math.max(0, target - done)
   const minutes = Math.max(3, Math.round(left * 0.35))
@@ -617,10 +619,11 @@ function Dashboard() {
           <Card className="p-0">
             <CardContent className="flex h-full flex-col items-center justify-between gap-3 p-5 text-center">
               <div className="t-eyebrow">THIS WEEK</div>
-              <Ring value={week / 150} />
+              <Ring value={weekGoal ? week / weekGoal : 0} />
               <div>
                 <div className="t-card">本周目标</div>
-                <div className="mt-1 text-xs text-[var(--faint)]">{week} / 150 分钟</div>
+                <div className="mt-1 text-xs text-[var(--faint)]">{week} / {weekGoal} 分钟</div>
+                <div className="mt-0.5 text-[10px] text-[var(--faint)]">每天 {dailyMinutes} 分钟 × 7</div>
               </div>
               <div className="flex items-center gap-1.5 border-t border-white/10 pt-3 text-xs text-[var(--muted)]">
                 <Flame className="h-3.5 w-3.5 text-warning" aria-hidden="true" /> 连续 <span className="t-num text-foreground">{streak}</span> 天
@@ -720,9 +723,9 @@ function Dashboard() {
             <div className="flex-1">
               <div className="t-eyebrow">WEEK</div>
               <div className="mt-2 t-card">本周 {week} 分钟</div>
-              <div className="mt-1 text-xs text-[var(--faint)]">目标 150 分钟</div>
+              <div className="mt-1 text-xs text-[var(--faint)]">目标 {weekGoal} 分钟 · 每天 {dailyMinutes} 分钟</div>
             </div>
-            <Ring value={week / 150} />
+            <Ring value={weekGoal ? week / weekGoal : 0} />
           </CardContent>
         </Card>
         <Recent rows={recent} />
