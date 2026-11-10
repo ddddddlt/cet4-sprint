@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
-import { ArrowLeft, ArrowRight, Languages, PenLine } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Languages, Loader2, PenLine, Sparkles } from 'lucide-react'
 import { Badge } from '../components/ui/badge'
 import { Button } from '../components/ui/button'
 import { Card, CardContent } from '../components/ui/card'
+import { gradeWithAI, saveAiGrade, savedAiGrade } from '../lib/ai'
 
 function useCoreReady() {
   const [ready, setReady] = useState(false)
@@ -20,6 +21,66 @@ function ListHead({ title, description, count }) {
       </div>
       <Badge variant="outline" className="rounded-md font-normal">{count} 套</Badge>
     </div>
+  )
+}
+
+function AiReview({ result, busy, error, onGrade }) {
+  return (
+    <Card className="mt-4 border-primary/20">
+      <CardContent className="p-6">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <div className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">AI REVIEW</div>
+            <h2 className="mt-1 font-display text-lg font-semibold">AI 批改</h2>
+            <p className="mt-1 text-xs text-muted-foreground">DeepSeek · 15 分制 · 只给建议，不替代自评</p>
+          </div>
+          <Button variant="outline" onClick={onGrade} disabled={busy}>
+            {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+            {busy ? '批改中…' : result ? '重新批改' : '开始批改'}
+          </Button>
+        </div>
+        {error ? <p className="mt-4 rounded-lg border border-danger-soft bg-danger-soft px-3 py-2 text-xs text-destructive" aria-live="polite">{error}</p> : null}
+        {result ? (
+          <div className="mt-5" aria-live="polite">
+            <div className="flex items-end gap-3">
+              <span className="font-display text-4xl font-semibold text-primary">{result.score}</span>
+              <span className="pb-1 text-xs text-muted-foreground">/ 15 · {result.band || '已批改'}</span>
+            </div>
+            {result.summary ? <p className="mt-3 text-sm leading-relaxed">{result.summary}</p> : null}
+            {result.strengths?.length ? (
+              <div className="mt-4">
+                <div className="text-xs font-medium text-success">做得好的</div>
+                <ul className="mt-1 list-disc space-y-1 pl-5 text-xs leading-relaxed text-muted-foreground">
+                  {result.strengths.map((x, i) => <li key={i}>{x}</li>)}
+                </ul>
+              </div>
+            ) : null}
+            {result.issues?.length ? (
+              <div className="mt-4">
+                <div className="text-xs font-medium text-warning">需要修改</div>
+                <div className="mt-2 space-y-2">
+                  {result.issues.map((x, i) => (
+                    <div key={i} className="rounded-lg border border-white/10 bg-secondary/30 p-3 text-xs leading-relaxed">
+                      {x.quote ? <div className="text-muted-foreground">「{x.quote}」</div> : null}
+                      <div className="mt-1">{x.problem}</div>
+                      {x.fix ? <div className="mt-1 text-primary">→ {x.fix}</div> : null}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+            {result.suggestions?.length ? (
+              <div className="mt-4">
+                <div className="text-xs font-medium text-primary">下一步</div>
+                <ul className="mt-1 list-disc space-y-1 pl-5 text-xs leading-relaxed text-muted-foreground">
+                  {result.suggestions.map((x, i) => <li key={i}>{x}</li>)}
+                </ul>
+              </div>
+            ) : null}
+          </div>
+        ) : null}
+      </CardContent>
+    </Card>
   )
 }
 
@@ -64,6 +125,9 @@ export function TranslationRunner({ id }) {
   const [texts, setTexts] = useState([])
   const [submitted, setSubmitted] = useState(false)
   const [band, setBand] = useState(null)
+  const [ai, setAi] = useState(null)
+  const [aiBusy, setAiBusy] = useState(false)
+  const [aiError, setAiError] = useState('')
 
   useEffect(() => {
     if (!core || !set) return
@@ -83,6 +147,7 @@ export function TranslationRunner({ id }) {
       setBand(att.score)
       setSubmitted(true)
     }
+    setAi(savedAiGrade('translation:' + set.id))
   }, [id])
 
   if (!set) return <div className="py-20 text-center text-sm text-muted-foreground">题目不存在</div>
@@ -108,10 +173,32 @@ export function TranslationRunner({ id }) {
     core.gradeTranslation(set.id, v)
   }
 
+  async function askAI() {
+    const joined = texts.map((t, i) => (t || '').trim() ? `${i + 1}. ${t.trim()}` : '').filter(Boolean).join('\n')
+    if (!joined) { setAiError('先写点内容再批改'); return }
+    setAiBusy(true)
+    setAiError('')
+    try {
+      const result = await gradeWithAI({
+        kind: 'translation',
+        prompt: set.sentences.map((x) => x.zh).join('\n'),
+        text: joined,
+      })
+      setAi(result)
+      saveAiGrade('translation:' + set.id, result)
+    } catch (e) {
+      setAiError(e.message || 'AI 批改失败')
+    } finally {
+      setAiBusy(false)
+    }
+  }
+
   function redo() {
     setTexts(set.sentences.map(() => ''))
     setSubmitted(false)
     setBand(null)
+    setAi(null)
+    setAiError('')
     core.clearSession('translation', set.id)
   }
 
@@ -174,6 +261,7 @@ export function TranslationRunner({ id }) {
           </CardContent>
         </Card>
       ) : null}
+      {submitted ? <AiReview result={ai} busy={aiBusy} error={aiError} onGrade={askAI} /> : null}
     </div>
   )
 }
@@ -215,9 +303,15 @@ export function WritingRunner({ id }) {
   const [text, setText] = useState('')
   const [submitted, setSubmitted] = useState(false)
   const [elapsed, setElapsed] = useState(0)
+  const [ai, setAi] = useState(null)
+  const [aiBusy, setAiBusy] = useState(false)
+  const [aiError, setAiError] = useState('')
 
   useEffect(() => {
-    if (core && set) setText(core.writingDraft(set.id) || '')
+    if (core && set) {
+      setText(core.writingDraft(set.id) || '')
+      setAi(savedAiGrade('writing:' + set.id))
+    }
   }, [id])
 
   useEffect(() => {
@@ -239,6 +333,27 @@ export function WritingRunner({ id }) {
     core.saveWritingDraft(set.id, text)
     core.recordWriting(set.id, words, elapsed)
     setSubmitted(true)
+  }
+
+  async function askAI() {
+    if (!text.trim()) { setAiError('先写点内容再批改'); return }
+    setAiBusy(true)
+    setAiError('')
+    try {
+      const result = await gradeWithAI({ kind: 'writing', prompt: set.prompt, text })
+      setAi(result)
+      saveAiGrade('writing:' + set.id, result)
+    } catch (e) {
+      setAiError(e.message || 'AI 批改失败')
+    } finally {
+      setAiBusy(false)
+    }
+  }
+
+  function redoWriting() {
+    setSubmitted(false)
+    setAi(null)
+    setAiError('')
   }
 
   return (
@@ -283,11 +398,12 @@ export function WritingRunner({ id }) {
             </details>
             <div className="mt-5 flex gap-2">
               <Button variant="outline" asChild><a href="#/writing">返回列表</a></Button>
-              <Button variant="ghost" onClick={() => setSubmitted(false)}>重写</Button>
+              <Button variant="ghost" onClick={redoWriting}>重写</Button>
             </div>
           </CardContent>
         </Card>
       ) : null}
+      {submitted ? <AiReview result={ai} busy={aiBusy} error={aiError} onGrade={askAI} /> : null}
     </div>
   )
 }
