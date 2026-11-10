@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { AlertTriangle, ArrowLeft, ArrowUpRight, Check, Save } from 'lucide-react'
 import { createProfile, listProfiles, removeProfile, renameProfile, switchProfile } from '../lib/profiles'
 import { getCloudConfig, setCloudConfig, resetCloudConfig, pushCloud, pullCloud, testCloud } from '../lib/cloud'
-import { getSupabaseConfig, saveSupabaseConfig, signIn, signUp, signOut, testSupabase, pushSupabase, pullSupabase } from '../lib/supabase'
+import { getSupabaseConfig, saveSupabaseConfig, signIn, signUp, signOut, testSupabase, pushSupabase, pullSupabase, fetchRemoteSupabase } from '../lib/supabase'
 import { clearToday } from '../lib/reset'
 import { Badge } from '../components/ui/badge'
 import { Button } from '../components/ui/button'
@@ -190,6 +190,8 @@ export function Settings() {
   const [confirmPull, setConfirmPull] = useState(false)
   const [confirmToday, setConfirmToday] = useState(false)
   const [todayMsg, setTodayMsg] = useState('')
+  const [syncDiag, setSyncDiag] = useState(null)
+  const [syncDiagBusy, setSyncDiagBusy] = useState(false)
   const importRef = useRef(null)
 
   useEffect(() => {
@@ -310,6 +312,32 @@ export function Settings() {
     core.save()
     setSaved(true)
     setTimeout(() => setSaved(false), 2000)
+  }
+
+  async function inspectSync() {
+    setSyncDiagBusy(true)
+    setSyncDiag(null)
+    try {
+      const row = await fetchRemoteSupabase()
+      const data = row && row.data ? row.data : {}
+      const countAttempts = (value) => Object.values(value && value.attempts || {}).reduce((n, bucket) => n + Object.keys(bucket || {}).length, 0)
+      setSyncDiag({
+        email: supa.session?.user?.email || '—',
+        updatedAt: row?.updated_at || '—',
+        localWrong: core.wrongQuestions().length,
+        remoteWrong: Object.keys(data.wrong?.questions || {}).length,
+        localAttempts: countAttempts(core.getState()),
+        remoteAttempts: countAttempts(data),
+        lastHash: supa.lastHash || '无',
+        lastPush: supa.lastPush ? new Date(supa.lastPush).toLocaleString() : '—',
+        lastPull: supa.lastPull ? new Date(supa.lastPull).toLocaleString() : '—',
+        lastError: supa.lastError || '',
+      })
+    } catch (err) {
+      setSyncDiag({ error: err.message })
+    } finally {
+      setSyncDiagBusy(false)
+    }
   }
 
   return (
@@ -528,6 +556,27 @@ export function Settings() {
                   自动获取云端更新
                 </label>
               </div>
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                <Button variant="ghost" size="sm" disabled={syncDiagBusy} onClick={inspectSync}>{syncDiagBusy ? '检查中…' : '同步诊断'}</Button>
+                <span className="text-[11px] text-muted-foreground">对比本机与云端的错题、练习数量</span>
+              </div>
+              {syncDiag ? (
+                <div className="mt-2 rounded-lg border border-white/10 bg-black/20 p-3 text-[11px] leading-relaxed text-muted-foreground">
+                  {syncDiag.error ? <p className="text-danger">{syncDiag.error}</p> : (
+                    <>
+                      <div className="grid gap-1 sm:grid-cols-2">
+                        <span>账号：{syncDiag.email}</span>
+                        <span>云端时间：{syncDiag.updatedAt}</span>
+                        <span>本机错题：{syncDiag.localWrong} · 云端错题：{syncDiag.remoteWrong}</span>
+                        <span>本机练习：{syncDiag.localAttempts} · 云端练习：{syncDiag.remoteAttempts}</span>
+                        <span>上次上传：{syncDiag.lastPush}</span>
+                        <span>上次恢复：{syncDiag.lastPull}</span>
+                      </div>
+                      {syncDiag.lastError ? <p className="mt-1 text-warning">{syncDiag.lastError}</p> : null}
+                    </>
+                  )}
+                </div>
+              ) : null}
               {!supa.lastHash ? <p className="mt-2 rounded-lg bg-warning-soft p-2 text-[11px] text-warning">首次连接：先手动「上传到 Supabase」或「从 Supabase 恢复」一次；完成后自动更新才会启用。</p> : null}
               <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-[var(--faint)]">
                 {supa.lastPush ? <span>上次上传 {new Date(supa.lastPush).toLocaleString()}</span> : null}
