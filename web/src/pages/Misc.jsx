@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { AlertTriangle, ArrowUpRight, Check, Save } from 'lucide-react'
 import { createProfile, listProfiles, removeProfile, renameProfile, switchProfile } from '../lib/profiles'
-import { getCloudConfig, setCloudConfig, pushCloud, pullCloud, testCloud } from '../lib/cloud'
+import { getCloudConfig, setCloudConfig, resetCloudConfig, pushCloud, pullCloud, testCloud } from '../lib/cloud'
 import { Badge } from '../components/ui/badge'
 import { Button } from '../components/ui/button'
 import { Card, CardContent } from '../components/ui/card'
@@ -263,8 +263,11 @@ export function Settings() {
               <input value={cloud.path} onChange={(e) => setCloud({ ...cloud, path: e.target.value.trim() })} placeholder="sync/progress.json" className="h-10 w-full rounded-md border bg-card px-3 text-sm" />
             </label>
             <label className="block sm:col-span-2">
-              <span className="mb-1 block text-xs text-muted-foreground">Fine-grained GitHub Token（只存在本机）</span>
-              <input type="password" value={cloud.token} onChange={(e) => setCloud({ ...cloud, token: e.target.value.trim() })} placeholder="github_pat_..." autoComplete="off" className="h-10 w-full rounded-md border bg-card px-3 text-sm" />
+              <span className="mb-1 flex items-center justify-between text-xs text-muted-foreground">
+                <span>Fine-grained GitHub Token（只存在本机）</span>
+                <button type="button" className="text-primary hover:underline" onClick={() => setCloud({ ...cloud, token: '' })}>清空 Token</button>
+              </span>
+              <input type="password" value={cloud.token} onChange={(e) => setCloud({ ...cloud, token: e.target.value.trim() })} onFocus={(e) => e.target.select()} placeholder="github_pat_..." autoComplete="off" className="h-10 w-full rounded-md border bg-card px-3 text-sm" />
             </label>
           </div>
           <label className="mt-4 flex items-center gap-2 text-sm">
@@ -273,6 +276,13 @@ export function Settings() {
           </label>
           <div className="mt-4 flex flex-wrap gap-2">
             <Button variant="outline" disabled={cloudBusy} onClick={() => { saveCloud(); setCloudMsg('配置已保存') }}>保存配置</Button>
+            <Button variant="ghost" disabled={cloudBusy} onClick={() => {
+              if (!window.confirm('清空当前档案的本机云同步配置？不会删除云端文件。')) return
+              resetCloudConfig()
+              const fresh = getCloudConfig()
+              setCloud(fresh)
+              setCloudMsg('已清空本机云同步配置，请重新填写')
+            }}>重置配置</Button>
             <Button variant="outline" disabled={cloudBusy} onClick={() => { saveCloud(); runCloud('测试连接', async () => {
               const r = await testCloud(cloud)
               return r.exists ? '连接成功，云端已有进度' : '连接成功，云端暂无文件（首次上传会创建）'

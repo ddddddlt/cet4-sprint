@@ -24,6 +24,10 @@ export function setCloudConfig(patch) {
   return cfg
 }
 
+export function resetCloudConfig() {
+  try { localStorage.removeItem(key()) } catch (e) { /* ignore */ }
+}
+
 export function hashState(text) {
   let h = 5381
   for (let i = 0; i < text.length; i++) h = ((h << 5) + h + text.charCodeAt(i)) | 0
