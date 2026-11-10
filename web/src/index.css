@@ -195,9 +195,9 @@
   }
 
   .glass-tab {
-    background: rgba(10, 11, 17, .78);
-    -webkit-backdrop-filter: blur(22px) saturate(140%);
-    backdrop-filter: blur(22px) saturate(140%);
+    background: rgba(10, 11, 17, .64);
+    -webkit-backdrop-filter: blur(26px) saturate(170%);
+    backdrop-filter: blur(26px) saturate(170%);
     border: 1px solid var(--glass-line);
     border-radius: var(--r-card);
     box-shadow: var(--glass-inset);
@@ -507,15 +507,16 @@
     overflow: hidden;
     border-radius: inherit;
     background:
-      radial-gradient(120% 170% at 18% -30%, rgba(255, 255, 255, .38), transparent 55%),
-      radial-gradient(90% 120% at 82% 130%, rgba(111, 92, 255, .16), transparent 62%),
-      linear-gradient(180deg, rgba(255, 255, 255, .19), rgba(255, 255, 255, .05));
-    -webkit-backdrop-filter: blur(22px) saturate(190%) brightness(1.12);
-    backdrop-filter: blur(22px) saturate(190%) brightness(1.12);
+      radial-gradient(120% 170% at 18% -30%, rgba(255, 255, 255, .24), transparent 58%),
+      radial-gradient(90% 120% at 82% 130%, rgba(111, 92, 255, .10), transparent 64%),
+      linear-gradient(180deg, rgba(255, 255, 255, .095), rgba(255, 255, 255, .022));
+    -webkit-backdrop-filter: blur(28px) saturate(210%) brightness(1.16);
+    backdrop-filter: blur(28px) saturate(210%) brightness(1.16);
     box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, .55),
-      inset 0 -1px 0 rgba(255, 255, 255, .08),
-      0 10px 28px rgba(0, 0, 0, .28);
+      inset 0 1px 0 rgba(255, 255, 255, .50),
+      inset 0 0 24px rgba(255, 255, 255, .035),
+      inset 0 -1px 0 rgba(255, 255, 255, .06),
+      0 10px 30px rgba(0, 0, 0, .24);
     transform-origin: var(--goo-origin, center);
     transition: transform 220ms var(--ease), opacity 180ms var(--ease);
   }
@@ -551,8 +552,8 @@
     inset: -1px;
     border-radius: inherit;
     background:
-      radial-gradient(58% 100% at 30% 8%, rgba(255, 255, 255, .24), transparent 62%),
-      linear-gradient(115deg, transparent 22%, rgba(255, 255, 255, .13) 46%, transparent 70%);
+      radial-gradient(58% 100% at 30% 8%, rgba(255, 255, 255, .18), transparent 64%),
+      linear-gradient(115deg, transparent 22%, rgba(255, 255, 255, .10) 46%, transparent 72%);
     opacity: .75;
     pointer-events: none;
   }
