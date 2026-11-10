@@ -353,10 +353,10 @@ export default function DrillRunner({ mode }) {
             <h1 className="font-display text-2xl font-semibold">{meta.name} · 本轮完成</h1>
           </div>
         </div>
-        <Card className="paper-texture">
+        <Card className="">
           <CardContent className="p-7 sm:p-9">
             <div className="flex items-end gap-3">
-              <div className="font-display text-6xl font-semibold text-primary">{rate}<span className="text-2xl">%</span></div>
+              <div className="font-display text-[42px] font-semibold text-primary">{rate}<span className="text-2xl">%</span></div>
               <div className="pb-2 text-sm text-muted-foreground">{correctCount} / {total} 题</div>
             </div>
             <Progress value={rate} className="mt-5 h-2" />
@@ -399,7 +399,7 @@ export default function DrillRunner({ mode }) {
         </div>
       </div>
 
-      <Card className="paper-texture">
+      <Card className="">
         <CardContent className="p-7 sm:p-9">
           {!answered ? (
             <>
@@ -464,7 +464,7 @@ export default function DrillRunner({ mode }) {
             </>
           ) : (
             <div>
-              <div className={cn('mb-4 flex items-center gap-2 font-display text-xl font-semibold', isCorrect ? 'text-emerald-700' : 'text-rose-700')}>
+              <div aria-live="polite" className={cn('mb-4 flex items-center gap-2 font-display text-xl font-semibold', isCorrect ? 'text-success' : 'text-danger')}>
                 {isCorrect ? <Check className="h-5 w-5" /> : <X className="h-5 w-5" />}
                 {isCorrect ? '答对了' : '答错了'}
               </div>
@@ -473,7 +473,7 @@ export default function DrillRunner({ mode }) {
                 <div className="mb-4 text-sm">
                   正确拼写：
                   <span className="ml-1 font-display text-lg">
-                    {diffParts(userAnswer, current.answerText).map((p, i) => p.mark ? <mark key={i} className="rounded bg-amber-100 px-0.5">{p.text}</mark> : <span key={i}>{p.text}</span>)}
+                    {diffParts(userAnswer, current.answerText).map((p, i) => p.mark ? <mark key={i} className="rounded bg-warning-soft px-0.5">{p.text}</mark> : <span key={i}>{p.text}</span>)}
                   </span>
                 </div>
               ) : null}

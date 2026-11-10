@@ -1,6 +1,5 @@
 /** @type {import('tailwindcss').Config} */
 export default {
-  darkMode: ['class'],
   content: ['./index.html', './src/**/*.{js,jsx}'],
   theme: {
     extend: {
@@ -34,15 +33,25 @@ export default {
           DEFAULT: 'hsl(var(--card))',
           foreground: 'hsl(var(--card-foreground))',
         },
+        success: 'var(--success)',
+        warning: 'var(--warning)',
+        danger: 'var(--destructive)',
       },
       borderRadius: {
-        lg: 'var(--radius)',
-        md: 'calc(var(--radius) - 2px)',
-        sm: 'calc(var(--radius) - 4px)',
+        '2xl': '20px',
+        xl: '12px',
+        lg: '12px',
+        md: '8px',
+        sm: '8px',
+      },
+      maxWidth: {
+        content: '720px',
+        shell: '1044px',
       },
       fontFamily: {
-        sans: ['ui-sans-serif', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Noto Sans SC', 'sans-serif'],
-        display: ['ui-serif', 'Georgia', 'Songti SC', 'Noto Serif SC', 'serif'],
+        sans: ['Inter', 'PingFang SC', 'Microsoft YaHei', 'system-ui', 'sans-serif'],
+        display: ['Instrument Serif', 'Noto Serif SC', 'Songti SC', 'Georgia', 'serif'],
+        mono: ['Geist Mono', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'monospace'],
       },
     },
   },

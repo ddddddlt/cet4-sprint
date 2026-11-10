@@ -53,7 +53,7 @@ export function ReadingList() {
                 const att = core ? core.attempt('reading', set.id) : null
                 const total = set.questions?.length || set.statements?.length || set.blanks?.length || 0
                 return (
-                  <a key={set.id} href={`#/${group.route}/${set.id}`} className="paper-texture group rounded-xl border bg-card p-5 transition-colors hover:border-primary/25">
+                  <a key={set.id} href={`#/${group.route}/${set.id}`} className="glass-card group p-5 transition-colors hover:border-white/20">
                     <div className="flex items-center justify-between gap-2">
                       <Badge variant="secondary" className="font-normal">{set.type}</Badge>
                       <Badge variant={att ? 'default' : 'muted'} className="font-normal">{att ? `最好 ${att.best}/${att.total}` : '未做'}</Badge>
@@ -90,9 +90,9 @@ function RunnerTop({ title, back = '#/reading', meta }) {
 function Passage({ text }) {
   const paragraphs = String(text || '').split(/\n{2,}/)
   return (
-    <Card className="paper-texture">
+    <Card className="">
       <CardContent className="p-6 sm:p-8">
-        <div className="space-y-4 font-display text-[15px] leading-relaxed text-foreground/90">
+        <div className="space-y-4 font-display text-sm leading-relaxed text-foreground/90">
           {paragraphs.map((p, i) => <p key={i}>{p}</p>)}
         </div>
       </CardContent>
@@ -106,7 +106,7 @@ function resultLine(q, submitted, wrongIds) {
   return (
     <div className="mt-3 rounded-lg border border-border/70 bg-secondary/40 p-3 text-xs">
       <div className="flex items-center gap-1.5 font-medium">
-        {ok ? <Check className="h-3.5 w-3.5 text-emerald-700" /> : <X className="h-3.5 w-3.5 text-rose-700" />}
+        {ok ? <Check className="h-3.5 w-3.5 text-success" /> : <X className="h-3.5 w-3.5 text-danger" />}
         {ok ? '回答正确' : '回答错误'}
       </div>
       <p className="mt-1 text-muted-foreground">{q.explain}</p>
@@ -194,10 +194,10 @@ export function ReadingRunner({ id, reviewQ }) {
   return (
     <div>
       <RunnerTop title={set.title} meta={`${set.type} · ${set.questions.length} 题 · ${Math.floor(elapsed / 60)}:${String(elapsed % 60).padStart(2, '0')}`} />
-      {reviewQ ? <div className="mb-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-2.5 text-xs text-amber-900">错题回顾：已定位到第 {set.questions.findIndex((q) => q.id === reviewQ) + 1} 题，答对后会从错题本移除。</div> : null}
+      {reviewQ ? <div className="mb-3 rounded-lg border border-warning-soft bg-warning-soft px-4 py-2.5 text-xs text-warning">错题回顾：已定位到第 {set.questions.findIndex((q) => q.id === reviewQ) + 1} 题，答对后会从错题本移除。</div> : null}
       {resumed && !submitted ? <div className="mb-3 flex items-center justify-between rounded-lg border bg-card px-4 py-2.5 text-xs"><span className="text-muted-foreground">继续上次练习 · 已作答 {answered} 题</span><button type="button" className="text-primary" onClick={restart}>重新开始</button></div> : null}
       {submitted ? (
-        <Card className="paper-texture mb-4">
+        <Card className="mb-4">
           <CardContent className="flex flex-wrap items-center justify-between gap-4 p-5">
             <div>
               <div className="font-display text-2xl font-semibold">答对 {score} / {set.questions.length}</div>
@@ -212,11 +212,11 @@ export function ReadingRunner({ id, reviewQ }) {
         <Passage text={set.passage} />
         <div className="space-y-3">
           {set.questions.map((q, qi) => (
-            <Card key={q.id} id={'q-' + q.id} className={cn('paper-texture', reviewQ === q.id && 'ring-2 ring-primary/40')}>
+            <Card key={q.id} id={'q-' + q.id} className={cn('', reviewQ === q.id && 'ring-2 ring-primary/40')}>
               <CardContent className="p-5">
                 <div className="flex gap-2">
                   <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-secondary text-xs text-muted-foreground">{qi + 1}</span>
-                  <p className="font-display text-[15px] font-medium leading-relaxed">{q.stem}</p>
+                  <p className="font-display text-sm font-medium leading-relaxed">{q.stem}</p>
                 </div>
                 <div className="mt-4 space-y-2">
                   {q.options.map((opt, i) => {
@@ -233,8 +233,8 @@ export function ReadingRunner({ id, reviewQ }) {
                           'flex w-full items-start gap-2.5 rounded-lg border px-3 py-2.5 text-left text-sm transition-colors',
                           !submitted && 'hover:border-primary/30 hover:bg-secondary/40',
                           selected && !submitted && 'border-primary/40 bg-secondary/60',
-                          correct && 'border-emerald-300 bg-emerald-50 text-emerald-900',
-                          wrong && 'border-rose-300 bg-rose-50 text-rose-900',
+                          correct && 'border-success-soft bg-success-soft text-success',
+                          wrong && 'border-danger-soft bg-danger-soft text-danger',
                         )}
                       >
                         <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded bg-secondary text-[11px] text-muted-foreground">{['A', 'B', 'C', 'D'][i]}</span>
@@ -314,10 +314,10 @@ export function ClozeRunner({ id }) {
     <div>
       <RunnerTop title={set.title} meta={`选词填空 · ${set.blanks.length} 空`} />
       {resumed && !submitted ? <div className="mb-3 rounded-lg border bg-card px-4 py-2.5 text-xs text-muted-foreground">已恢复上次作答 · 已填 {Object.keys(answers).length} 空</div> : null}
-      {submitted ? <div className="mb-4 rounded-xl border bg-card p-4 font-display text-lg">答对 {score} / {set.blanks.length} <a className="ml-3 text-xs text-primary underline" href="#/reading">返回列表</a></div> : null}
+      {submitted ? <div aria-live="polite" className="glass-card mb-4 p-4 font-display text-lg">答对 {score} / {set.blanks.length} <a className="ml-3 text-xs text-primary underline" href="#/reading">返回列表</a></div> : null}
       <div className="grid gap-4">
-        <Card className="paper-texture">
-          <CardContent className="p-6 font-display text-[15px] leading-[2.2]">
+        <Card className="">
+          <CardContent className="p-6 font-display text-sm leading-[2.2]">
             {parts.map((p, i) => {
               const m = /^\{\{(\d+)\}\}$/.exec(p)
               if (!m) return <span key={i}>{p}</span>
@@ -335,8 +335,8 @@ export function ClozeRunner({ id }) {
                   className={cn('mx-1 inline-flex min-w-16 items-center justify-center rounded-md border-b-2 px-2 py-1 text-sm',
                     active === no && 'border-primary bg-secondary',
                     !active && !submitted && 'border-border bg-secondary/50',
-                    ok && 'border-emerald-400 bg-emerald-50',
-                    submitted && !ok && 'border-rose-400 bg-rose-50')}
+                    ok && 'border-success-soft bg-success-soft',
+                    submitted && !ok && 'border-danger-soft bg-danger-soft')}
                 >
                   {bank ? bank.w : no}
                 </button>
@@ -345,13 +345,13 @@ export function ClozeRunner({ id }) {
           </CardContent>
         </Card>
       </div>
-      <Card className="paper-texture mt-4">
+      <Card className="mt-4">
         <CardContent className="p-5">
           <div className="mb-2 text-xs text-muted-foreground">备选词</div>
           <div className="flex flex-wrap gap-2">
             {set.bank.map((w) => (
               <button key={w.k} type="button" disabled={submitted} onClick={() => pick(w.k)} className={cn('rounded-md border bg-card px-3 py-2 text-left text-sm', Object.values(answers).includes(w.k) && 'opacity-40')}>
-                <strong className="font-display">{w.w}</strong> <span className="text-[10px] text-muted-foreground">{w.pos}</span>
+                <strong className="font-display">{w.w}</strong> <span className="text-[11px] text-muted-foreground">{w.pos}</span>
               </button>
             ))}
           </div>
@@ -401,10 +401,10 @@ export function MatchingRunner({ id }) {
     <div>
       <RunnerTop title={set.title} meta={`长篇匹配 · ${set.statements.length} 题`} />
       {resumed && !submitted ? <div className="mb-3 rounded-lg border bg-card px-4 py-2.5 text-xs text-muted-foreground">已恢复上次作答 · 已选 {Object.keys(answers).length} 题</div> : null}
-      {submitted ? <div className="mb-4 rounded-xl border bg-card p-4 font-display text-lg">答对 {score} / {set.statements.length} <a className="ml-3 text-xs text-primary underline" href="#/reading">返回列表</a></div> : null}
+      {submitted ? <div aria-live="polite" className="glass-card mb-4 p-4 font-display text-lg">答对 {score} / {set.statements.length} <a className="ml-3 text-xs text-primary underline" href="#/reading">返回列表</a></div> : null}
       <div className="grid gap-4 lg:grid-cols-[1.05fr_.95fr]">
-        <Card className="paper-texture">
-          <CardContent className="space-y-4 p-6 font-display text-[15px] leading-relaxed">
+        <Card className="">
+          <CardContent className="space-y-4 p-6 font-display text-sm leading-relaxed">
             {set.paragraphs.map((p) => (
               <div key={p.k} className="flex gap-3">
                 <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-secondary text-xs text-muted-foreground">{p.k}</span>
@@ -418,7 +418,7 @@ export function MatchingRunner({ id }) {
             const value = answers[st.id] || ''
             const ok = submitted && value === st.answer
             return (
-              <div key={st.id} className={cn('rounded-lg border bg-card p-4', submitted && (ok ? 'border-emerald-300 bg-emerald-50/60' : 'border-rose-300 bg-rose-50/60'))}>
+              <div key={st.id} className={cn('rounded-lg border bg-card p-4', submitted && (ok ? 'border-success-soft bg-success-soft' : 'border-danger-soft bg-danger-soft'))}>
                 <div className="flex gap-2">
                   <span className="text-xs text-muted-foreground">{i + 1}</span>
                   <p className="text-sm leading-relaxed">{st.text}</p>

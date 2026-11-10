@@ -60,9 +60,9 @@ export default function Wordbook() {
     const rate = total ? Math.round(((session.stats[2] + session.stats[3] + session.stats[4]) / total) * 100) : 0
     return (
       <div className="mx-auto max-w-xl">
-        <Card className="paper-texture">
+        <Card className="">
           <CardContent className="p-8 text-center">
-            <div className="font-display text-5xl font-semibold text-primary">{rate}%</div>
+            <div className="font-display text-[42px] font-semibold text-primary">{rate}%</div>
             <p className="mt-2 text-xs uppercase tracking-[0.18em] text-muted-foreground">本轮记得率</p>
             <h2 className="mt-6 font-display text-2xl font-semibold">单词本复习完成</h2>
             <p className="mt-2 text-sm text-muted-foreground">本轮 {total} 个词 · 忘了的词仍在单词本里</p>
@@ -89,12 +89,12 @@ export default function Wordbook() {
             <Progress value={(session.idx / session.ids.length) * 100} className="h-1.5" />
           </div>
         </div>
-        <Card className="paper-texture">
+        <Card className="">
           <CardContent className="p-7 sm:p-10">
             {!session.flipped ? (
               <div className="text-center">
                 <Badge variant="secondary" className="mb-6 font-normal">先自己说一遍意思</Badge>
-                <h1 className="font-display text-5xl font-semibold tracking-tight">{current.w}</h1>
+                <h1 className="font-display text-[42px] font-semibold tracking-tight">{current.w}</h1>
                 <div className="mt-4 flex items-center justify-center gap-3 text-sm text-muted-foreground">
                   <span>{current.ph}</span>
                   <button type="button" onClick={() => speak(current.w)} className="rounded-full p-1.5 hover:bg-secondary" aria-label="朗读">
@@ -116,7 +116,7 @@ export default function Wordbook() {
                 </div>
                 <div className="mt-6 space-y-2">
                   {senses.map((s, i) => (
-                    <div key={i} className="flex gap-3 text-[15px] leading-relaxed">
+                    <div key={i} className="flex gap-3 text-sm leading-relaxed">
                       <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-secondary text-[11px] text-muted-foreground">{i + 1}</span>
                       <span>{s}</span>
                     </div>
@@ -130,10 +130,10 @@ export default function Wordbook() {
                 ) : null}
                 <div className="mt-8 grid grid-cols-2 gap-2 sm:grid-cols-4">
                   {[
-                    { g: 1, label: '忘了', cls: 'border-rose-200 bg-rose-50/70 text-rose-800 hover:bg-rose-100' },
-                    { g: 2, label: '模糊', cls: 'border-amber-200 bg-amber-50/70 text-amber-900 hover:bg-amber-100' },
-                    { g: 3, label: '记得', cls: 'border-emerald-200 bg-emerald-50/70 text-emerald-900 hover:bg-emerald-100' },
-                    { g: 4, label: '简单', cls: 'border-sky-200 bg-sky-50/70 text-sky-900 hover:bg-sky-100' },
+                    { g: 1, label: '忘了', cls: 'border-danger-soft bg-danger-soft text-danger hover:bg-danger-soft' },
+                    { g: 2, label: '模糊', cls: 'border-warning-soft bg-warning-soft text-warning hover:bg-warning-soft' },
+                    { g: 3, label: '记得', cls: 'border-success-soft bg-success-soft text-success hover:bg-success-soft' },
+                    { g: 4, label: '简单', cls: 'border-[rgba(111,92,255,.32)] bg-[rgba(111,92,255,.12)] text-primary hover:bg-[rgba(111,92,255,.12)]' },
                   ].map((b) => (
                     <button key={b.g} type="button" onClick={() => grade(b.g)} className={`rounded-lg border px-3 py-3 text-left transition-colors ${b.cls}`}>
                       <span className="block font-display text-base font-semibold">{b.label}</span>
@@ -164,7 +164,7 @@ export default function Wordbook() {
       </div>
 
       {list.length ? (
-        <Card className="paper-texture overflow-hidden">
+        <Card className="overflow-hidden">
           <CardContent className="p-0">
             {list.map((item, i) => (
               <div
@@ -189,7 +189,7 @@ export default function Wordbook() {
           </CardContent>
         </Card>
       ) : (
-        <Card className="paper-texture">
+        <Card className="">
           <CardContent className="flex flex-col items-center py-16 text-center">
             <Bookmark className="h-8 w-8 text-muted-foreground/50" />
             <h2 className="mt-4 font-display text-lg font-semibold">单词本还是空的</h2>

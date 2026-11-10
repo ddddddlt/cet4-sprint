@@ -128,9 +128,9 @@ export default function Vocab() {
     const rate = answered ? Math.round(((session.stats[2] + session.stats[3] + session.stats[4]) / answered) * 100) : 0
     return (
       <div className="mx-auto max-w-xl">
-        <Card className="paper-texture">
+        <Card className="">
           <CardContent className="p-8 text-center">
-            <div className="font-display text-5xl font-semibold text-primary">{rate}%</div>
+            <div className="font-display text-[42px] font-semibold text-primary">{rate}%</div>
             <p className="mt-2 text-xs uppercase tracking-[0.18em] text-muted-foreground">本轮记得率</p>
             <h2 className="mt-6 font-display text-2xl font-semibold">本轮抽查完成</h2>
             <p className="mt-2 text-sm text-muted-foreground">完成 {done} / {target}</p>
@@ -162,12 +162,12 @@ export default function Vocab() {
           </div>
         </div>
 
-        <Card className="paper-texture">
+        <Card className="">
           <CardContent className="p-7 sm:p-10">
             {!session.flipped ? (
               <div className="text-center">
                 <Badge variant="secondary" className="mb-6 font-normal">先自己说一遍意思</Badge>
-                <h1 className="font-display text-5xl font-semibold tracking-tight sm:text-6xl">{word.w}</h1>
+                <h1 className="font-display text-[42px] font-semibold tracking-tight sm:text-[42px]">{word.w}</h1>
                 <div className="mt-4 flex items-center justify-center gap-3 text-sm text-muted-foreground">
                   <span>{word.ph}</span>
                   <button type="button" onClick={() => speak(word.w)} className="rounded-full p-1.5 hover:bg-secondary" aria-label="朗读">
@@ -205,7 +205,7 @@ export default function Vocab() {
                 </div>
                 <div className="mt-6 space-y-2">
                   {senses.map((s, i) => (
-                    <div key={i} className="flex gap-3 text-[15px] leading-relaxed">
+                    <div key={i} className="flex gap-3 text-sm leading-relaxed">
                       <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-secondary text-[11px] text-muted-foreground">{i + 1}</span>
                       <span>{s}</span>
                     </div>
@@ -219,10 +219,10 @@ export default function Vocab() {
                 ) : null}
                 <div className="mt-8 grid grid-cols-2 gap-2 sm:grid-cols-4">
                   {[
-                    { g: 1, label: '忘记', hint: '1', cls: 'border-rose-200 bg-rose-50/70 text-rose-800 hover:bg-rose-100' },
-                    { g: 2, label: '模糊', hint: '2', cls: 'border-amber-200 bg-amber-50/70 text-amber-900 hover:bg-amber-100' },
-                    { g: 3, label: '认识', hint: '3', cls: 'border-emerald-200 bg-emerald-50/70 text-emerald-900 hover:bg-emerald-100' },
-                    { g: 4, label: '简单', hint: '4', cls: 'border-sky-200 bg-sky-50/70 text-sky-900 hover:bg-sky-100' },
+                    { g: 1, label: '忘记', hint: '1', cls: 'border-danger-soft bg-danger-soft text-danger hover:bg-danger-soft' },
+                    { g: 2, label: '模糊', hint: '2', cls: 'border-warning-soft bg-warning-soft text-warning hover:bg-warning-soft' },
+                    { g: 3, label: '认识', hint: '3', cls: 'border-success-soft bg-success-soft text-success hover:bg-success-soft' },
+                    { g: 4, label: '简单', hint: '4', cls: 'border-[rgba(111,92,255,.32)] bg-[rgba(111,92,255,.12)] text-primary hover:bg-[rgba(111,92,255,.12)]' },
                   ].map((b) => (
                     <button
                       key={b.g}
@@ -261,7 +261,7 @@ export default function Vocab() {
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2">
-        <a href="#/wordbook" className="paper-texture group flex items-center gap-4 rounded-xl border bg-card p-5 transition-colors hover:border-primary/25">
+        <a href="#/wordbook" className="glass-card group flex items-center gap-4 p-5 transition-colors hover:border-white/20">
           <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-secondary text-primary"><Bookmark className="h-5 w-5" /></span>
           <span className="min-w-0 flex-1">
             <span className="block font-display text-base font-semibold">单词本</span>
@@ -270,7 +270,7 @@ export default function Vocab() {
           <span className="text-xs text-muted-foreground">{wordbook} 词</span>
           <ArrowRight className="h-4 w-4 text-muted-foreground" />
         </a>
-        <a href="#/drill" className="paper-texture group flex items-center gap-4 rounded-xl border bg-card p-5 transition-colors hover:border-primary/25">
+        <a href="#/drill" className="glass-card group flex items-center gap-4 p-5 transition-colors hover:border-white/20">
           <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-secondary text-primary"><Layers className="h-5 w-5" /></span>
           <span className="min-w-0 flex-1">
             <span className="block font-display text-base font-semibold">词汇深练</span>
@@ -281,7 +281,7 @@ export default function Vocab() {
         </a>
       </div>
 
-      <Card className="paper-texture mt-4">
+      <Card className="mt-4">
         <CardContent className="p-7 sm:p-9">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>

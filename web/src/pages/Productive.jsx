@@ -34,7 +34,7 @@ export function TranslationList() {
         {sets.map((set) => {
           const att = core ? core.attempt('translation', set.id) : null
           return (
-            <a key={set.id} href={`#/translation/${set.id}`} className="paper-texture group rounded-xl border bg-card p-5 transition-colors hover:border-primary/25">
+            <a key={set.id} href={`#/translation/${set.id}`} className="glass-card group p-5 transition-colors hover:border-white/20">
               <div className="flex items-center justify-between">
                 <Badge variant="secondary" className="font-normal">汉译英</Badge>
                 <Badge variant={att?.graded ? 'default' : 'muted'} className="font-normal">{att?.graded ? `自评 ${att.score}/15` : '未做'}</Badge>
@@ -128,23 +128,23 @@ export function TranslationRunner({ id }) {
 
       <div className="space-y-3">
         {set.sentences.map((s, i) => (
-          <Card key={i} className="paper-texture">
+          <Card key={i} className="">
             <CardContent className="p-5 sm:p-6">
               <div className="mb-3 flex gap-2">
                 <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-secondary text-xs text-muted-foreground">{i + 1}</span>
-                <p className="font-display text-[15px] leading-relaxed">{s.zh}</p>
+                <p className="font-display text-sm leading-relaxed">{s.zh}</p>
               </div>
               <textarea
                 value={texts[i] || ''}
                 onChange={(e) => saveAt(i, e.target.value)}
                 disabled={submitted}
                 placeholder="输入这一句的英文译文…"
-                className="min-h-24 w-full resize-y rounded-lg border bg-card p-4 font-display text-[15px] leading-relaxed outline-none focus:ring-2 focus:ring-ring"
+                className="min-h-24 w-full resize-y rounded-lg border bg-card p-4 font-display text-sm leading-relaxed outline-none focus:ring-2 focus:ring-ring"
               />
               {submitted ? (
                 <div className="mt-3 rounded-lg border border-border/70 bg-secondary/40 p-4">
                   <div className="text-[11px] text-muted-foreground">参考译文</div>
-                  <p className="mt-1 font-display text-[15px] leading-relaxed">{s.en}</p>
+                  <p className="mt-1 font-display text-sm leading-relaxed">{s.en}</p>
                   {s.tip ? <p className="mt-1.5 text-xs text-muted-foreground">{s.tip}</p> : null}
                 </div>
               ) : null}
@@ -154,7 +154,7 @@ export function TranslationRunner({ id }) {
       </div>
 
       {submitted ? (
-        <Card className="paper-texture mt-4">
+        <Card className="mt-4">
           <CardContent className="p-6">
             <h2 className="font-display text-lg font-semibold">自评档位</h2>
             <p className="mt-1 text-xs text-muted-foreground">参考译文不是唯一答案，选择后会计入今日记录</p>
@@ -189,7 +189,7 @@ export function WritingList() {
         {sets.map((set) => {
           const att = core ? core.attempt('writing', set.id) : null
           return (
-            <a key={set.id} href={`#/writing/${set.id}`} className="paper-texture group rounded-xl border bg-card p-5 transition-colors hover:border-primary/25">
+            <a key={set.id} href={`#/writing/${set.id}`} className="glass-card group p-5 transition-colors hover:border-white/20">
               <div className="flex items-center justify-between">
                 <Badge variant="secondary" className="font-normal">{set.source}</Badge>
                 <Badge variant={att ? 'default' : 'muted'} className="font-normal">{att ? `已完成 · ${att.words} 词` : '未开始'}</Badge>
@@ -251,32 +251,32 @@ export function WritingRunner({ id }) {
         </div>
       </div>
       <div className="grid gap-4 lg:grid-cols-[.9fr_1.1fr]">
-        <Card className="paper-texture">
+        <Card className="">
           <CardContent className="p-6">
             <div className="mb-2 text-xs text-muted-foreground">WRITING TASK</div>
-            <p className="font-display text-[15px] leading-loose">{set.prompt}</p>
+            <p className="font-display text-sm leading-loose">{set.prompt}</p>
           </CardContent>
         </Card>
-        <Card className="paper-texture">
+        <Card className="">
           <CardContent className="p-6">
             <div className="mb-2 flex justify-between text-xs text-muted-foreground">
               <span>你的作文</span><span>{words} 词</span>
             </div>
             <textarea value={text} onChange={(e) => save(e.target.value)} disabled={submitted}
               placeholder="Write your essay here…"
-              className="min-h-64 w-full resize-y rounded-lg border bg-card p-4 font-display text-[15px] leading-relaxed outline-none focus:ring-2 focus:ring-ring" />
+              className="min-h-64 w-full resize-y rounded-lg border bg-card p-4 font-display text-sm leading-relaxed outline-none focus:ring-2 focus:ring-ring" />
             {!submitted ? <div className="mt-4 flex justify-end"><Button onClick={submit}>完成并对照</Button></div> : null}
           </CardContent>
         </Card>
       </div>
       {submitted ? (
-        <Card className="paper-texture mt-4">
+        <Card className="mt-4">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <h2 className="font-display text-lg font-semibold">参考范文</h2>
               <Badge variant="secondary">{set.words} 词</Badge>
             </div>
-            <p className="mt-4 whitespace-pre-wrap font-display text-[15px] leading-loose">{set.sample}</p>
+            <p className="mt-4 whitespace-pre-wrap font-display text-sm leading-loose">{set.sample}</p>
             <details className="mt-4">
               <summary className="cursor-pointer text-sm text-primary">查看中文译文</summary>
               <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{set.sampleZh}</p>

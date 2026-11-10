@@ -36,7 +36,7 @@ export function ListeningList() {
         {sets.map((set) => {
           const att = core ? core.attempt('listening', set.id) : null
           return (
-            <a key={set.id} href={`#/listening/${set.id}`} className="paper-texture group rounded-xl border bg-card p-5 transition-colors hover:border-primary/25">
+            <a key={set.id} href={`#/listening/${set.id}`} className="glass-card group p-5 transition-colors hover:border-white/20">
               <div className="flex items-center justify-between">
                 <Badge variant="secondary" className="font-normal">{set.type}</Badge>
                 <Badge variant={att ? 'default' : 'muted'} className="font-normal">{att ? `最好 ${att.best}/${att.total}` : '未做'}</Badge>
@@ -126,12 +126,12 @@ export function ListeningRunner({ id }) {
 
       {resumed && !submitted ? <div className="mb-3 rounded-lg border bg-card px-4 py-2.5 text-xs text-muted-foreground">已恢复上次作答 · 已答 {Object.keys(answers).length} 题</div> : null}
       {submitted ? (
-        <div className="mb-4 rounded-xl border bg-card p-4 font-display text-lg">答对 {score} / {set.questions.length} <a className="ml-3 text-xs text-primary underline" href="#/listening">返回列表</a></div>
+        <div aria-live="polite" className="glass-card mb-4 p-4 font-display text-lg">答对 {score} / {set.questions.length} <a className="ml-3 text-xs text-primary underline" href="#/listening">返回列表</a></div>
       ) : null}
 
       <div className="grid gap-4 lg:grid-cols-[.8fr_1.2fr]">
         <div className="space-y-3">
-          <Card className="paper-texture">
+          <Card className="">
             <CardContent className="p-5">
               <div className="flex items-center gap-2">
                 <Button size="icon" onClick={togglePlay} aria-label={playing ? '停止' : '播放'}>
@@ -149,7 +149,7 @@ export function ListeningRunner({ id }) {
                 <Button variant="ghost" size="sm" onClick={() => setShowText((v) => !v)}>{showText ? '隐藏原文' : '显示原文'}</Button>
               </div>
               {showText ? (
-                <div className="mt-4 max-h-64 overflow-auto whitespace-pre-wrap border-t pt-4 font-display text-[13px] leading-relaxed text-muted-foreground">{transcript}</div>
+                <div className="mt-4 max-h-64 overflow-auto whitespace-pre-wrap border-t pt-4 font-display text-sm leading-relaxed text-muted-foreground">{transcript}</div>
               ) : null}
             </CardContent>
           </Card>
@@ -157,11 +157,11 @@ export function ListeningRunner({ id }) {
 
         <div className="space-y-3">
           {set.questions.map((q, qi) => (
-            <Card key={q.id} className="paper-texture">
+            <Card key={q.id} className="">
               <CardContent className="p-5">
                 <div className="flex gap-2">
                   <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-secondary text-xs text-muted-foreground">{qi + 1}</span>
-                  <p className="font-display text-[15px] font-medium leading-relaxed">{q.stem}</p>
+                  <p className="font-display text-sm font-medium leading-relaxed">{q.stem}</p>
                 </div>
                 <div className="mt-4 space-y-2">
                   {q.options.map((opt, i) => {
@@ -173,8 +173,8 @@ export function ListeningRunner({ id }) {
                         className={cn('flex w-full items-start gap-2.5 rounded-lg border px-3 py-2.5 text-left text-sm transition-colors',
                           !submitted && 'hover:border-primary/30 hover:bg-secondary/40',
                           selected && !submitted && 'border-primary/40 bg-secondary/60',
-                          correct && 'border-emerald-300 bg-emerald-50 text-emerald-900',
-                          wrong && 'border-rose-300 bg-rose-50 text-rose-900')}>
+                          correct && 'border-success-soft bg-success-soft text-success',
+                          wrong && 'border-danger-soft bg-danger-soft text-danger')}>
                         <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded bg-secondary text-[11px] text-muted-foreground">{['A', 'B', 'C', 'D'][i]}</span>
                         <span>{opt}</span>
                       </button>
@@ -184,7 +184,7 @@ export function ListeningRunner({ id }) {
                 {submitted ? (
                   <div className="mt-3 rounded-lg border bg-secondary/40 p-3 text-xs">
                     <div className="flex items-center gap-1.5 font-medium">
-                      {answers[q.id] === q.answer ? <Check className="h-3.5 w-3.5 text-emerald-700" /> : <X className="h-3.5 w-3.5 text-rose-700" />}
+                      {answers[q.id] === q.answer ? <Check className="h-3.5 w-3.5 text-success" /> : <X className="h-3.5 w-3.5 text-danger" />}
                       {answers[q.id] === q.answer ? '正确' : '错误'}
                     </div>
                     <p className="mt-1 text-muted-foreground">{q.explain}</p>
