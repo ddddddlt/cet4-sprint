@@ -31,6 +31,10 @@ function saveProfileMeta(patch) {
   return next
 }
 
+export function syncHashVersionOK(hash) {
+  return typeof hash === 'string' && hash.startsWith('v2:')
+}
+
 export function getSupabaseConfig() {
   const meta = readProfileMeta()
   return {
@@ -58,9 +62,17 @@ export function saveSupabaseConfig(patch) {
   return getSupabaseConfig()
 }
 
+function stableStringify(value) {
+  if (Array.isArray(value)) return '[' + value.map(stableStringify).join(',') + ']'
+  if (value && typeof value === 'object') {
+    return '{' + Object.keys(value).sort().map((key) => JSON.stringify(key) + ':' + stableStringify(value[key])).join(',') + '}'
+  }
+  return JSON.stringify(value)
+}
+
 export function canonicalHash(value) {
   const obj = typeof value === 'string' ? JSON.parse(value) : value
-  return hashState(JSON.stringify(obj))
+  return 'v2:' + hashState(stableStringify(obj))
 }
 
 function base() {

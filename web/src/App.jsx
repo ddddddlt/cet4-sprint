@@ -249,6 +249,14 @@ function Shell({ route, children, pageAnim = 'page-lateral' }) {
         const localHash = canonicalHash(core.exportJSON())
         const remote = await fetchRemoteSupabase()
         const remoteHash = remote ? canonicalHash(remote.data) : ''
+        if (cfg.lastHash && !String(cfg.lastHash).startsWith('v2:')) {
+          if (remoteHash && remoteHash === localHash) {
+            saveSupabaseConfig({ lastHash: localHash, lastError: '' })
+            return
+          }
+          saveSupabaseConfig({ lastHash: '', lastError: '同步算法已更新，请手动上传或从云端恢复一次' })
+          return
+        }
         const localDirty = localHash !== cfg.lastHash
         const remoteChanged = !!remote && remoteHash !== cfg.lastHash
         if (localDirty && remoteChanged) {
