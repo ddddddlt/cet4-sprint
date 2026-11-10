@@ -255,6 +255,10 @@ export function Settings() {
               <input value={cloud.repo} onChange={(e) => setCloud({ ...cloud, repo: e.target.value.trim() })} placeholder="你的用户名/cet4-progress" className="h-10 w-full rounded-md border bg-card px-3 text-sm" />
             </label>
             <label className="block">
+              <span className="mb-1 block text-xs text-muted-foreground">分支</span>
+              <input value={cloud.branch || 'main'} onChange={(e) => setCloud({ ...cloud, branch: e.target.value.trim() })} placeholder="main" className="h-10 w-full rounded-md border bg-card px-3 text-sm" />
+            </label>
+            <label className="block">
               <span className="mb-1 block text-xs text-muted-foreground">文件路径</span>
               <input value={cloud.path} onChange={(e) => setCloud({ ...cloud, path: e.target.value.trim() })} placeholder="sync/progress.json" className="h-10 w-full rounded-md border bg-card px-3 text-sm" />
             </label>
@@ -286,7 +290,7 @@ export function Settings() {
             }) }}>从云端恢复</Button>
           </div>
           <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-muted-foreground">
-            <span>{cloudMsg || '每个档案使用不同仓库，不要把同一个 Token 填到两个档案。'}</span>
+            <span>{cloudMsg || '私有仓库必须在 Token 的 Repository access 中勾选；分支默认 main。'}</span>
             {cloud.lastPush ? <span>上次上传 {new Date(cloud.lastPush).toLocaleString()}</span> : null}
             {cloud.lastPull ? <span>上次恢复 {new Date(cloud.lastPull).toLocaleString()}</span> : null}
           </div>

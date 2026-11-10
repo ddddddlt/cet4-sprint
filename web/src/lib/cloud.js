@@ -12,9 +12,9 @@ function key() {
 export function getCloudConfig() {
   try {
     const cfg = JSON.parse(localStorage.getItem(key()) || '{}') || {}
-    return { repo: '', path: DEFAULT_PATH, token: '', auto: false, ...cfg }
+    return { repo: '', path: DEFAULT_PATH, branch: 'main', token: '', auto: false, ...cfg }
   } catch (e) {
-    return { repo: '', path: DEFAULT_PATH, token: '', auto: false }
+    return { repo: '', path: DEFAULT_PATH, branch: 'main', token: '', auto: false }
   }
 }
 
@@ -31,10 +31,33 @@ export function hashState(text) {
 }
 
 function prepare(cfg) {
-  if (!cfg.repo || !/^[^/\s]+\/[^/\s]+$/.test(cfg.repo)) throw new Error('仓库格式应为 owner/repo')
-  if (!cfg.path) cfg.path = DEFAULT_PATH
+  cfg.repo = String(cfg.repo || '')
+    .trim()
+    .replace(/^https?:\/\/github\.com\//i, '')
+    .replace(/\.git$/i, '')
+    .replace(/\/+$/, '')
+  cfg.path = String(cfg.path || DEFAULT_PATH).trim().replace(/^\/+/, '') || DEFAULT_PATH
+  cfg.branch = String(cfg.branch || 'main').trim() || 'main'
+  cfg.token = String(cfg.token || '').trim()
+  if (!/^[^/\s]+\/[^/\s]+$/.test(cfg.repo)) throw new Error('仓库格式应为 owner/repo，例如 ddddddlt/cet4-progress-a')
   if (!cfg.token) throw new Error('请先填写 GitHub Token')
   return cfg
+}
+
+async function checkRepo(cfg) {
+  const res = await fetch(`${API}/repos/${cfg.repo}`, { headers: headers(cfg) })
+  if (res.status === 404) throw new Error(`仓库 ${cfg.repo} 不存在，或当前 Token 无权访问这个私有仓库`)
+  if (res.status === 401 || res.status === 403) throw new Error('Token 无效，或没有该仓库的访问权限')
+  if (!res.ok) throw new Error('仓库检查失败（HTTP ' + res.status + '）')
+  return res.json()
+}
+
+async function checkBranch(cfg) {
+  const res = await fetch(`${API}/repos/${cfg.repo}/branches/${encodeURIComponent(cfg.branch)}`, { headers: headers(cfg) })
+  if (res.status === 404) throw new Error(`仓库 ${cfg.repo} 里没有分支 "${cfg.branch}"，请填写仓库的默认分支`)
+  if (res.status === 401 || res.status === 403) throw new Error('Token 没有读取该仓库分支的权限')
+  if (!res.ok) throw new Error('分支检查失败（HTTP ' + res.status + '）')
+  return res.json()
 }
 
 function headers(cfg) {
@@ -65,9 +88,13 @@ function b64decode(text) {
 
 export async function remoteRead(cfg) {
   prepare(cfg)
-  const url = `${API}/repos/${cfg.repo}/contents/${encodePath(cfg.path)}?ref=main&t=${Date.now()}`
+  const url = `${API}/repos/${cfg.repo}/contents/${encodePath(cfg.path)}?ref=${encodeURIComponent(cfg.branch)}&t=${Date.now()}`
   const res = await fetch(url, { headers: headers(cfg) })
-  if (res.status === 404) return null
+  if (res.status === 404) {
+    await checkRepo(cfg)
+    await checkBranch(cfg)
+    return null
+  }
   if (res.status === 401 || res.status === 403) throw new Error('Token 无效，或没有该仓库 Contents 读写权限')
   if (!res.ok) throw new Error('读取失败（HTTP ' + res.status + '）')
   const data = await res.json()
@@ -89,7 +116,7 @@ export async function pushCloud(core, cfg, options = {}) {
   const body = {
     message: 'cet4 progress ' + new Date().toISOString(),
     content: b64encode(JSON.stringify(payload)),
-    branch: 'main',
+    branch: cfg.branch,
   }
   if (remote && remote.sha) body.sha = remote.sha
   const res = await fetch(`${API}/repos/${cfg.repo}/contents/${encodePath(cfg.path)}`, {
@@ -99,7 +126,11 @@ export async function pushCloud(core, cfg, options = {}) {
   })
   if (!res.ok) {
     const text = await res.text().catch(() => '')
-    throw new Error('上传失败（HTTP ' + res.status + '）' + (text ? ' ' + text.slice(0, 120) : ''))
+    if (res.status === 404) {
+      try { await checkRepo(cfg); await checkBranch(cfg) } catch (e) { throw e }
+      throw new Error('上传失败（HTTP 404）：仓库和分支存在，但 Contents API 不可写。请确认 Token 的 Contents 权限为 Read and write')
+    }
+    throw new Error('上传失败（HTTP ' + res.status + '）' + (text ? ' ' + text.slice(0, 160) : ''))
   }
   setCloudConfig({ lastPush: payload.savedAt, lastError: '', lastHash: hashState(core.exportJSON()) })
   return payload
