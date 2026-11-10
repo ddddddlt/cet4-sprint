@@ -40,6 +40,7 @@ function prepare(cfg) {
     .replace(/^https?:\/\/github\.com\//i, '')
     .replace(/\.git$/i, '')
     .replace(/\/+$/, '')
+    .toLowerCase()
   cfg.path = String(cfg.path || DEFAULT_PATH).trim().replace(/^\/+/, '') || DEFAULT_PATH
   cfg.branch = String(cfg.branch || 'main').trim() || 'main'
   cfg.token = String(cfg.token || '').trim()
