@@ -518,13 +518,35 @@ function Heatmap({ heat }) {
 
 function recentRows(core) {
   const st = core.getState()
-  const map = { reading: '阅读', listening: '听力', translation: '翻译', writing: '写作' }
+  const catalogs = [
+    { kind: 'reading', route: 'reading', label: '阅读', items: window.CET4_READING || [] },
+    { kind: 'reading', route: 'cloze', label: '选词', items: window.CET4_CLOZE || [] },
+    { kind: 'reading', route: 'matching', label: '匹配', items: window.CET4_MATCHING || [] },
+    { kind: 'listening', route: 'listening', label: '听力', items: window.CET4_LISTENING || [] },
+    { kind: 'translation', route: 'translation', label: '翻译', items: window.CET4_TRANSLATION || [] },
+    { kind: 'writing', route: 'writing', label: '写作', items: window.CET4_WRITING || [] },
+  ]
   const rows = []
   Object.keys(st.attempts || {}).forEach((kind) => {
     const bucket = st.attempts[kind] || {}
     Object.keys(bucket).forEach((id) => {
       const a = bucket[id]
-      if (a && a.at) rows.push({ kind, id, at: a.at, best: a.best || a.score || 0, total: a.total || 0, words: a.words || 0 })
+      if (!a || !a.at) return
+      const catalog = catalogs.find((c) => c.kind === kind && c.items.some((x) => x.id === id))
+      const item = catalog && catalog.items.find((x) => x.id === id)
+      rows.push({
+        key: kind + ':' + id,
+        kind,
+        id,
+        at: a.at,
+        best: a.best || a.score || 0,
+        total: a.total || 0,
+        words: a.words || 0,
+        label: catalog ? catalog.label : '练习',
+        route: catalog ? catalog.route : kind,
+        title: item ? (item.title || item.topic || id) : id,
+        href: '#/' + (catalog ? catalog.route : kind) + '/' + id,
+      })
     })
   })
   return rows.sort((a, b) => b.at - a.at).slice(0, 3)
@@ -710,7 +732,6 @@ function Dashboard() {
 }
 
 function Recent({ rows }) {
-  const kindLabel = { reading: '阅读', listening: '听力', translation: '翻译', writing: '写作' }
   return (
     <Card className="p-0">
       <CardContent className="p-5">
@@ -721,9 +742,9 @@ function Recent({ rows }) {
         {rows.length ? (
           <div className="space-y-1">
             {rows.map((r) => (
-              <a key={r.kind + r.id} href={r.kind === 'reading' ? '#/reading' : '#' + '/' + r.kind} className="flex min-h-10 items-center gap-3 rounded-lg px-2 text-xs text-muted-foreground hover:bg-white/[.05] hover:text-foreground">
-                <span className="w-8 text-[var(--faint)]">{kindLabel[r.kind]}</span>
-                <span className="min-w-0 flex-1 truncate">{r.id}</span>
+              <a key={r.key} href={r.href} className="flex min-h-10 items-center gap-3 rounded-lg px-2 text-xs text-muted-foreground hover:bg-white/[.05] hover:text-foreground">
+                <span className="w-8 shrink-0 text-[var(--faint)]">{r.label}</span>
+                <span className="min-w-0 flex-1 truncate">{r.title}</span>
                 <span className="t-num text-[11px]">{r.total ? Math.round((r.best / r.total) * 100) + '%' : r.words + ' 词'}</span>
                 <ChevronRight className="h-3.5 w-3.5 opacity-40" aria-hidden="true" />
               </a>
