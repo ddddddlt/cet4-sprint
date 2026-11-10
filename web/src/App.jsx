@@ -463,6 +463,7 @@ function Dashboard() {
   const mistakes = core ? core.wrongQuestions().length : 0
   const hour = new Date().getHours()
   const greeting = hour < 6 ? '夜深了' : hour < 11 ? '早上好' : hour < 14 ? '中午好' : hour < 18 ? '下午好' : '晚上好'
+  const nickname = core ? String(core.getState().settings.name || '').trim() : ''
   const dateLabel = new Date().toLocaleDateString('zh-CN', { month: 'long', day: 'numeric', weekday: 'long' })
   const dayNo = Math.max(1, (exam.elapsed || 0) + 1)
   const remaining = Math.max(0, totalWords - mastered - due)
@@ -477,7 +478,7 @@ function Dashboard() {
       <div className="min-w-0 space-y-6">
         <header>
           <div className="t-eyebrow mb-2">{dateLabel} · DAY {dayNo}</div>
-          <h1 className="t-greeting">你好，今天还有 <span className="t-num text-[var(--accent)]">{left}</span> 个词</h1>
+          <h1 className="t-greeting">{greeting}，{nickname ? `${nickname}，今天` : '今天'}还有 <span className="t-num text-[var(--accent)]">{left}</span> 个词</h1>
           <p className="t-meta mt-2">距离考试 {days} 天 · 按今天的节奏走，过线并不难。</p>
         </header>
 
