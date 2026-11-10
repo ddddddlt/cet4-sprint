@@ -88,7 +88,7 @@ function Shell({ route, children }) {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <aside className="fixed inset-y-0 left-0 z-40 hidden w-60 flex-col border-r border-border/80 bg-[hsl(214_30%_94%)] px-4 py-6 lg:flex">
+      <aside className="paper-texture fixed inset-y-0 left-0 z-40 hidden w-60 flex-col border-r border-border/80 bg-[hsl(42_26%_93%)] px-4 py-6 lg:flex">
         <a href="#/" className="flex items-center gap-3 px-2">
           <img src="./cet-logo-cropped.png" alt="CET" className="h-7 w-14 object-contain" />
           <span>
@@ -159,7 +159,7 @@ function Shell({ route, children }) {
         <main className="mx-auto w-full max-w-6xl px-4 pb-28 pt-6 sm:px-8 sm:pt-8 lg:pb-12">{children}</main>
       </div>
 
-      <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-border/80 bg-card/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-md lg:hidden">
+      <nav className="paper-texture fixed inset-x-0 bottom-0 z-40 border-t border-border/80 bg-card/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-md lg:hidden">
         <div className="mx-auto flex max-w-md items-stretch px-2">
           {[
             { key: 'home', label: '首页', icon: Home, href: '#/' },
@@ -215,7 +215,7 @@ function Dashboard() {
 
   return (
     <>
-      <section className="relative overflow-hidden rounded-2xl border border-border/80 bg-[linear-gradient(135deg,hsl(210_38%_97%),hsl(214_32%_96%)_55%,hsl(219_44%_92%))] p-6 shadow-sm sm:p-9">
+      <section className="paper-texture relative overflow-hidden rounded-2xl border border-border/80 bg-[linear-gradient(135deg,hsl(42_40%_96%),hsl(42_30%_98%)_55%,hsl(214_30%_93%))] p-6 shadow-sm sm:p-9">
         <div className="pointer-events-none absolute -right-16 -top-24 h-64 w-64 rounded-full bg-[radial-gradient(circle,hsl(219_60%_40%/0.10),transparent_70%)]" />
         <Badge variant="outline" className="mb-5 rounded-md border-primary/15 bg-card/60 text-primary">
           <Sparkles className="mr-1.5 h-3.5 w-3.5" /> 今日冲刺
