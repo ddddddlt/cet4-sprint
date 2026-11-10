@@ -108,6 +108,21 @@ html[data-theme="dark"] :focus-visible { outline-color: #8fe0c6; }
 .set-wrong { display: inline-flex; align-items: center; gap: 4px; color: var(--muted); }
 .set-wrong .dot { background: var(--amber); }
 .q-history { margin-top: 8px; font-size: 11.5px; color: var(--muted); }
+.session-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+.session-banner strong { display: block; font-family: var(--font-display); font-size: 16px; }
+.session-banner span { color: var(--muted); font-size: 12px; }
+.sb-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.set-flash { outline: 2px solid var(--brand-2); outline-offset: 3px; }
+@media (max-width: 640px) {
+  .session-banner { flex-direction: column; align-items: flex-start; }
+}
+
 .filter-bar { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
 .filter-bar .chip { cursor: pointer; }
 .filter-bar .chip.on { border-color: var(--brand-2); color: var(--brand); background: var(--brand-soft); }

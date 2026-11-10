@@ -155,12 +155,52 @@ window.App = window.App || {};
 
   var viewEl = null;
   var current = null;
+  var lastView = null;
+  var lastPath = null;
+  var lastParams = null;
+  var LIST_VIEWS = { reading: 1, listening: 1, translation: 1, writing: 1, wordbook: 1 };
+  var RUNNER_VIEWS = { readingRunner: 1, clozeRunner: 1, matchingRunner: 1, listeningRunner: 1 };
+
+  function storageGet(key) {
+    try { return window.sessionStorage.getItem(key); } catch (e) { return null; }
+  }
+  function storageSet(key, val) {
+    try { window.sessionStorage.setItem(key, val); } catch (e) { /* ignore */ }
+  }
+
+  function highlightSet(setId) {
+    if (!setId) return;
+    var card = document.querySelector('.set-card[data-set-id="' + setId + '"]');
+    if (!card) return;
+    if (card.hidden) {
+      card.hidden = false;
+      var group = card.closest('.reading-group');
+      if (group) group.hidden = false;
+    }
+    card.classList.add('set-flash');
+    setTimeout(function () { card.classList.remove('set-flash'); }, 1500);
+  }
 
   function render() {
     var p = parseHash();
     var route = resolve(p);
     var fn = (A.views && A.views[route.view]) || A.views.notFound;
     var ctx = { params: route.params || {}, query: p.query, path: p.path };
+    var mainEl = document.querySelector('.main');
+    var prevScroll = {
+      main: mainEl ? mainEl.scrollTop : 0,
+      win: window.scrollY || document.documentElement.scrollTop || 0
+    };
+    var backToSet = null;
+    var restoreScroll = null;
+
+    if (lastView && LIST_VIEWS[lastView] && lastPath) {
+      storageSet('scroll:' + lastPath, JSON.stringify(prevScroll));
+    }
+    if (lastView && RUNNER_VIEWS[lastView] && LIST_VIEWS[route.view]) {
+      backToSet = lastParams && lastParams.id;
+      restoreScroll = storageGet('scroll:' + p.path);
+    }
 
     if (current && typeof current.destroy === 'function') {
       try { current.destroy(); } catch (e) { /* ignore */ }
@@ -175,8 +215,26 @@ window.App = window.App || {};
     refreshNav();
     document.title = (TITLES[route.view] || '四级冲刺') + ' · 四级冲刺';
     window.scrollTo(0, 0);
-    var mainEl = document.querySelector('.main');
     if (mainEl) mainEl.scrollTop = 0;
+
+    if (restoreScroll) {
+      requestAnimationFrame(function () {
+        var sc = null;
+        try { sc = JSON.parse(restoreScroll); } catch (e) { sc = null; }
+        if (sc) {
+          if (mainEl && mainEl.scrollHeight > mainEl.clientHeight + 4 && getComputedStyle(mainEl).overflowY !== 'visible') {
+            mainEl.scrollTop = sc.main || 0;
+          } else {
+            window.scrollTo(0, sc.win || 0);
+          }
+        }
+        highlightSet(backToSet);
+      });
+    }
+
+    lastView = route.view;
+    lastPath = p.path;
+    lastParams = route.params;
 
     var pageName = TITLES[route.view] || '页面';
     if (viewEl) {

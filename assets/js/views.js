@@ -214,10 +214,23 @@ window.App = window.App || {};
     return A.core.wrongQuestions().some(function (e) { return e.setId === setId; });
   }
 
-  function setStatusHtml(kind, setId) {
+  function setStatusHtml(kind, set) {
+    var setId = set.id;
     var sum = A.core.attemptSummary(kind, setId);
+    var runner = kind;
+    var total = 0;
+    if (kind === 'reading') {
+      if (set.blanks && set.blanks.length) { runner = 'cloze'; total = set.blanks.length; }
+      else if (set.statements && set.statements.length) { runner = 'matching'; total = set.statements.length; }
+      else if (set.questions) total = set.questions.length;
+    } else if (kind === 'listening' && set.questions) {
+      total = set.questions.length;
+    }
+    var sess = kind === 'translation' ? null : A.core.getSession(runner, setId);
     var out = '<div class="set-status">';
-    if (!sum.done) {
+    if (sess && total && sess.idx >= 0 && sess.idx < total) {
+      out += '<span>继续（第 ' + (sess.idx + 1) + '/' + total + ' 题）</span>';
+    } else if (!sum.done) {
       out += '<span class="muted">未做</span>';
     } else {
       out += '<span>已做 ' + sum.times + ' 次 · 最近 ' + esc(attemptWhen(sum.lastAt)) + ' · 最好 ' + sum.best + ' / ' + sum.total + '</span>';
@@ -239,6 +252,7 @@ window.App = window.App || {};
   function bindSetFilter(root) {
     var bar = root.querySelector('[data-set-filter]');
     if (!bar) return;
+    var filterKey = 'set-filter:' + (location.hash || '').replace(/^#\/?/, '').split('?')[0];
 
     function apply(mode) {
       root.querySelectorAll('.set-card[data-done]').forEach(function (card) {
@@ -262,9 +276,31 @@ window.App = window.App || {};
     bar.addEventListener('click', function (e) {
       var b = e.target && e.target.closest ? e.target.closest('[data-filter]') : null;
       if (!b) return;
-      apply(b.getAttribute('data-filter'));
+      var mode = b.getAttribute('data-filter');
+      apply(mode);
+      try { window.sessionStorage.setItem(filterKey, mode); } catch (err) { /* ignore */ }
     });
-    apply('all');
+    var savedMode = null;
+    try { savedMode = window.sessionStorage.getItem(filterKey); } catch (err) { /* ignore */ }
+    apply(savedMode === 'todo' || savedMode === 'done' ? savedMode : 'all');
+  }
+
+  function sessionWhen(ts) {
+    var d = new Date(ts || Date.now());
+    return (d.getMonth() + 1 < 10 ? '0' : '') + (d.getMonth() + 1) + '-' +
+      (d.getDate() < 10 ? '0' : '') + d.getDate() + ' ' +
+      (d.getHours() < 10 ? '0' : '') + d.getHours() + ':' +
+      (d.getMinutes() < 10 ? '0' : '') + d.getMinutes();
+  }
+
+  function sessionBannerHtml(sess, total) {
+    var no = Math.min(total, (sess.idx || 0) + 1);
+    return '<section class="card session-banner">' +
+      '<div><strong>上次做到第 ' + no + ' 题</strong><span>' + sessionWhen(sess.updatedAt) + '</span></div>' +
+      '<div class="sb-actions">' +
+      '<button class="btn btn-primary" data-session-continue>继续</button>' +
+      '<button class="btn btn-ghost" data-session-restart>重新开始</button>' +
+      '</div></section>';
   }
 
   function historyHtml(stat) {
@@ -1194,7 +1230,7 @@ window.App = window.App || {};
         '<div class="set-top"><span class="chip chip-type">' + esc(set.type) + '</span></div>' +
         '<h3>' + esc(set.title) + '</h3>' +
         '<p class="set-intro">' + esc(set.topic || set.intro || '') + '</p>' +
-        setStatusHtml('reading', set.id) +
+        setStatusHtml('reading', set) +
         '<div class="set-meta">' + metaHtml + '<span class="dot">' + esc(set.level) + '</span></div>' +
         '<a class="btn btn-soft" href="#/' + route + '/' + set.id + '">' + (sum.done ? '再做一遍' : '开始练习') + icon('arrowRight') + '</a>' +
         '</article>';
@@ -1256,6 +1292,21 @@ window.App = window.App || {};
     var elapsed = 0;
     var result = null;
     var history = {};
+    var sessionPending = null;
+    var sessionTimer = null;
+
+    if (!review) {
+      var savedSession = A.core.getSession('reading', set.id);
+      if (savedSession) {
+        var validSession = savedSession.idx >= 0 && savedSession.idx < set.questions.length;
+        Object.keys(savedSession.answers || {}).forEach(function (k) {
+          var found = set.questions.some(function (q) { return q.id === k; });
+          if (!found) validSession = false;
+        });
+        if (validSession) sessionPending = savedSession;
+        else { A.core.clearSession('reading', set.id); ui.toast('上次的作答记录无效，已从头开始'); }
+      }
+    }
 
     function showAnswer() { return submitted || review; }
 
@@ -1411,24 +1462,90 @@ window.App = window.App || {};
     }
 
     function shell() {
+      var body = sessionPending
+        ? sessionBannerHtml(sessionPending, set.questions.length)
+        : '<div class="reading-grid">' +
+          '<article class="passage card" id="passage" lang="en">' + passageHtml() + '</article>' +
+          '<div class="questions">' + questionHtml() + '</div>' +
+          '</div>';
       return '<div class="runner">' +
         '<div class="runner-top">' +
-        '<a class="back-link" href="' + (review ? '#/mistakes' : '#/reading') + '">' + icon('arrowLeft') + (review ? '错题本' : '阅读') + '</a>' +
+        '<a class="back-link"' + (review ? '' : ' data-quit') + ' href="' + (review ? '#/mistakes' : '#/reading') + '">' + icon('arrowLeft') + (review ? '错题本' : '阅读') + '</a>' +
         '<h1 class="runner-title">' + esc(set.title) + '</h1>' +
         '<span class="chip chip-type">' + esc(review ? '错题回顾' : set.type) + '</span>' +
         '<div class="runner-right">' +
         (review ? '' : '<span class="timer" id="timer">' + icon('clock') + ui.mmss(elapsed) + '</span>') +
-        (submitted || review ? '' : '<button class="btn btn-primary" data-submit>交卷</button>') +
+        (submitted || review || sessionPending ? '' : '<button class="btn btn-primary" data-submit>交卷</button>') +
         '</div></div>' +
         reviewBanner() +
         resultBanner() +
-        '<div class="reading-grid">' +
-        '<article class="passage card" id="passage" lang="en">' + passageHtml() + '</article>' +
-        '<div class="questions">' + questionHtml() + '</div>' +
-        '</div></div>';
+        body + '</div>';
+    }
+
+    function nextIdx() {
+      for (var i = 0; i < set.questions.length; i++) {
+        if (answers[set.questions[i].id] === undefined) return i;
+      }
+      return set.questions.length - 1;
+    }
+
+    function persistSession() {
+      if (submitted || review) return;
+      A.core.saveSession('reading', set.id, { idx: nextIdx(), answers: answers, startedAt: startedAt });
+    }
+
+    function scheduleSession() {
+      if (submitted || review) return;
+      if (sessionTimer) clearTimeout(sessionTimer);
+      sessionTimer = setTimeout(persistSession, 500);
+    }
+
+    function askQuit(root, href) {
+      var m = ui.modal({
+        title: '退出本套练习？',
+        body: '<p>已答内容可以保存，下次进入继续。</p>' +
+          '<button class="btn btn-ghost" data-session-discard>放弃本次</button>',
+        cancelText: '取消',
+        okText: '保存并退出',
+        onOk: function () { persistSession(); location.hash = href; }
+      });
+      m.root.querySelector('[data-session-discard]').addEventListener('click', function () {
+        A.core.clearSession('reading', set.id);
+        m.close();
+        location.hash = href;
+      });
     }
 
     function bind(root) {
+      var quit = root.querySelector('[data-quit]');
+      if (quit) quit.addEventListener('click', function (e) {
+        e.preventDefault();
+        askQuit(root, quit.getAttribute('href'));
+      });
+      var cont = root.querySelector('[data-session-continue]');
+      if (cont) cont.addEventListener('click', function () {
+        answers = sessionPending.answers || {};
+        sessionPending = null;
+        startedAt = Date.now();
+        elapsed = 0;
+        A.core.saveSession('reading', set.id, { idx: nextIdx(), answers: answers, startedAt: startedAt });
+        render(root);
+        startTimer(root);
+        setTimeout(function () {
+          var card = root.querySelectorAll('.qcard')[Math.min(nextIdx(), set.questions.length - 1)];
+          if (card) scrollToTarget(card, true);
+        }, 80);
+      });
+      var restart = root.querySelector('[data-session-restart]');
+      if (restart) restart.addEventListener('click', function () {
+        A.core.clearSession('reading', set.id);
+        sessionPending = null;
+        answers = {};
+        startedAt = Date.now();
+        elapsed = 0;
+        render(root);
+        startTimer(root);
+      });
       if (!showAnswer()) {
         root.querySelectorAll('.opt').forEach(function (b) {
           b.addEventListener('click', function () {
@@ -1436,6 +1553,7 @@ window.App = window.App || {};
             root.querySelectorAll('.opt[data-q="' + b.getAttribute('data-q') + '"]').forEach(function (x) { x.classList.remove('sel'); });
             b.classList.add('sel');
             updateSubmitState(root);
+            scheduleSession();
           });
         });
       } else {
@@ -1505,6 +1623,7 @@ window.App = window.App || {};
       elapsed = Math.round((Date.now() - startedAt) / 1000);
       if (interval) { clearInterval(interval); interval = null; }
       A.core.recordSet('reading', set.id, score, set.questions.length);
+      A.core.clearSession('reading', set.id);
       result = { score: score, total: set.questions.length };
       submitted = true;
       render(root);
@@ -1548,7 +1667,10 @@ window.App = window.App || {};
           setTimeout(function () { jumpToQ(root, target, true); }, 250);
         }
       },
-      destroy: function () { if (interval) { clearInterval(interval); interval = null; } }
+      destroy: function () {
+        if (interval) { clearInterval(interval); interval = null; }
+        if (sessionTimer) { clearTimeout(sessionTimer); sessionTimer = null; }
+      }
     };
   };
 
@@ -1567,6 +1689,19 @@ window.App = window.App || {};
     var elapsed = 0;
     var activeBlank = null;
     var history = {};
+    var sessionPending = null;
+    var sessionTimer = null;
+
+    var savedSession = A.core.getSession('cloze', set.id);
+    if (savedSession) {
+      var validSession = savedSession.idx >= 0 && savedSession.idx < set.blanks.length;
+      Object.keys(savedSession.answers || {}).forEach(function (k) {
+        var found = set.blanks.some(function (b) { return String(b.no) === k; });
+        if (!found) validSession = false;
+      });
+      if (validSession) sessionPending = savedSession;
+      else { A.core.clearSession('cloze', set.id); ui.toast('上次的作答记录无效，已从头开始'); }
+    }
 
     function bankItem(k) {
       for (var i = 0; i < set.bank.length; i++) if (set.bank[i].k === k) return set.bank[i];
@@ -1620,7 +1755,7 @@ window.App = window.App || {};
 
     function topBar() {
       return '<div class="runner-top">' +
-        '<a class="back-link" href="#/reading">' + icon('arrowLeft') + '阅读</a>' +
+        '<a class="back-link" data-quit href="#/reading">' + icon('arrowLeft') + '阅读</a>' +
         '<h1 class="runner-title">' + esc(set.title) + '</h1>' +
         '<span class="chip chip-type">选词填空</span>' +
         '<div class="runner-right">' +
@@ -1714,6 +1849,7 @@ window.App = window.App || {};
       var prog = root.querySelector('#progress');
       if (prog) prog.textContent = filledCount() + ' / ' + set.blanks.length;
       bindAnswer();
+      scheduleSession();
     }
 
     function trySubmit() {
@@ -1749,6 +1885,7 @@ window.App = window.App || {};
       elapsed = Math.round((Date.now() - startedAt) / 1000);
       if (interval) { clearInterval(interval); interval = null; }
       A.core.recordSet('reading', set.id, score, set.blanks.length, elapsed);
+      A.core.clearSession('cloze', set.id);
       submitted = true;
       render();
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -1765,9 +1902,82 @@ window.App = window.App || {};
       startTimer();
     }
 
+    function nextIdx() {
+      for (var i = 0; i < set.blanks.length; i++) {
+        if (answers[set.blanks[i].no] === undefined) return i;
+      }
+      return set.blanks.length - 1;
+    }
+
+    function persistSession() {
+      if (submitted) return;
+      A.core.saveSession('cloze', set.id, { idx: nextIdx(), answers: answers, startedAt: startedAt });
+    }
+
+    function scheduleSession() {
+      if (submitted) return;
+      if (sessionTimer) clearTimeout(sessionTimer);
+      sessionTimer = setTimeout(persistSession, 500);
+    }
+
+    function askQuit(href) {
+      var m = ui.modal({
+        title: '退出本套练习？',
+        body: '<p>已答内容可以保存，下次进入继续。</p>' +
+          '<button class="btn btn-ghost" data-session-discard>放弃本次</button>',
+        cancelText: '取消',
+        okText: '保存并退出',
+        onOk: function () { persistSession(); location.hash = href; }
+      });
+      m.root.querySelector('[data-session-discard]').addEventListener('click', function () {
+        A.core.clearSession('cloze', set.id);
+        m.close();
+        location.hash = href;
+      });
+    }
+
+    function bindSession() {
+      var quit = root.querySelector('[data-quit]');
+      if (quit) quit.addEventListener('click', function (e) {
+        e.preventDefault();
+        askQuit(quit.getAttribute('href'));
+      });
+      var cont = root.querySelector('[data-session-continue]');
+      if (cont) cont.addEventListener('click', function () {
+        answers = sessionPending.answers || {};
+        sessionPending = null;
+        startedAt = Date.now();
+        elapsed = 0;
+        A.core.saveSession('cloze', set.id, { idx: nextIdx(), answers: answers, startedAt: startedAt });
+        render();
+        startTimer();
+        setTimeout(function () {
+          var blanks = root.querySelectorAll('.cloze-blank');
+          if (blanks[nextIdx()]) blanks[nextIdx()].scrollIntoView({ block: 'center' });
+        }, 80);
+      });
+      var restart = root.querySelector('[data-session-restart]');
+      if (restart) restart.addEventListener('click', function () {
+        A.core.clearSession('cloze', set.id);
+        sessionPending = null;
+        answers = {};
+        activeBlank = null;
+        startedAt = Date.now();
+        elapsed = 0;
+        render();
+        startTimer();
+      });
+    }
+
     function render() {
-      root.innerHTML = storageBanner() + (submitted ? resultShell() : answerShell());
+      if (sessionPending) {
+        root.innerHTML = storageBanner() + '<div class="runner">' + topBar() +
+          sessionBannerHtml(sessionPending, set.blanks.length) + '</div>';
+      } else {
+        root.innerHTML = storageBanner() + (submitted ? resultShell() : answerShell());
+      }
       bindAnswer();
+      bindSession();
       bindWordPopover(root);
       var sb = root.querySelector('[data-submit]');
       if (sb) sb.addEventListener('click', trySubmit);
@@ -1790,7 +2000,10 @@ window.App = window.App || {};
     return {
       html: '',
       mount: function (r) { root = r; render(); startTimer(); },
-      destroy: function () { if (interval) { clearInterval(interval); interval = null; } }
+      destroy: function () {
+        if (interval) { clearInterval(interval); interval = null; }
+        if (sessionTimer) { clearTimeout(sessionTimer); sessionTimer = null; }
+      }
     };
   };
 
@@ -1808,6 +2021,19 @@ window.App = window.App || {};
     var startedAt = Date.now();
     var elapsed = 0;
     var history = {};
+    var sessionPending = null;
+    var sessionTimer = null;
+
+    var savedSession = A.core.getSession('matching', set.id);
+    if (savedSession) {
+      var validSession = savedSession.idx >= 0 && savedSession.idx < set.statements.length;
+      Object.keys(savedSession.answers || {}).forEach(function (k) {
+        var found = set.statements.some(function (st) { return st.id === k; });
+        if (!found) validSession = false;
+      });
+      if (validSession) sessionPending = savedSession;
+      else { A.core.clearSession('matching', set.id); ui.toast('上次的作答记录无效，已从头开始'); }
+    }
 
     function letters() { return set.paragraphs.map(function (p) { return p.k; }); }
     function paraText(k) {
@@ -1849,7 +2075,7 @@ window.App = window.App || {};
 
     function topBar() {
       return '<div class="runner-top">' +
-        '<a class="back-link" href="#/reading">' + icon('arrowLeft') + '阅读</a>' +
+        '<a class="back-link" data-quit href="#/reading">' + icon('arrowLeft') + '阅读</a>' +
         '<h1 class="runner-title">' + esc(set.title) + '</h1>' +
         '<span class="chip chip-type">长篇匹配</span>' +
         '<div class="runner-right">' +
@@ -1886,6 +2112,7 @@ window.App = window.App || {};
           answers[sel.getAttribute('data-select')] = sel.value;
           var prog = root.querySelector('#progress');
           if (prog) prog.textContent = filledCount() + ' / ' + set.statements.length;
+          scheduleSession();
         });
       });
       root.querySelectorAll('.stmt-text').forEach(function (p) {
@@ -1941,6 +2168,7 @@ window.App = window.App || {};
       elapsed = Math.round((Date.now() - startedAt) / 1000);
       if (interval) { clearInterval(interval); interval = null; }
       A.core.recordSet('reading', set.id, score, set.statements.length, elapsed);
+      A.core.clearSession('matching', set.id);
       submitted = true;
       render();
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -1956,9 +2184,81 @@ window.App = window.App || {};
       startTimer();
     }
 
+    function nextIdx() {
+      for (var i = 0; i < set.statements.length; i++) {
+        if (answers[set.statements[i].id] === undefined) return i;
+      }
+      return set.statements.length - 1;
+    }
+
+    function persistSession() {
+      if (submitted) return;
+      A.core.saveSession('matching', set.id, { idx: nextIdx(), answers: answers, startedAt: startedAt });
+    }
+
+    function scheduleSession() {
+      if (submitted) return;
+      if (sessionTimer) clearTimeout(sessionTimer);
+      sessionTimer = setTimeout(persistSession, 500);
+    }
+
+    function askQuit(href) {
+      var m = ui.modal({
+        title: '退出本套练习？',
+        body: '<p>已答内容可以保存，下次进入继续。</p>' +
+          '<button class="btn btn-ghost" data-session-discard>放弃本次</button>',
+        cancelText: '取消',
+        okText: '保存并退出',
+        onOk: function () { persistSession(); location.hash = href; }
+      });
+      m.root.querySelector('[data-session-discard]').addEventListener('click', function () {
+        A.core.clearSession('matching', set.id);
+        m.close();
+        location.hash = href;
+      });
+    }
+
+    function bindSession() {
+      var quit = root.querySelector('[data-quit]');
+      if (quit) quit.addEventListener('click', function (e) {
+        e.preventDefault();
+        askQuit(quit.getAttribute('href'));
+      });
+      var cont = root.querySelector('[data-session-continue]');
+      if (cont) cont.addEventListener('click', function () {
+        answers = sessionPending.answers || {};
+        sessionPending = null;
+        startedAt = Date.now();
+        elapsed = 0;
+        A.core.saveSession('matching', set.id, { idx: nextIdx(), answers: answers, startedAt: startedAt });
+        render();
+        startTimer();
+        setTimeout(function () {
+          var rows = root.querySelectorAll('.stmt');
+          if (rows[nextIdx()]) rows[nextIdx()].scrollIntoView({ block: 'center' });
+        }, 80);
+      });
+      var restart = root.querySelector('[data-session-restart]');
+      if (restart) restart.addEventListener('click', function () {
+        A.core.clearSession('matching', set.id);
+        sessionPending = null;
+        answers = {};
+        startedAt = Date.now();
+        elapsed = 0;
+        render();
+        startTimer();
+      });
+    }
+
     function render() {
-      root.innerHTML = storageBanner() + shell();
+      if (sessionPending) {
+        root.innerHTML = storageBanner() + '<div class="runner">' + topBar() +
+          sessionBannerHtml(sessionPending, set.statements.length) + '</div>';
+      } else {
+        root.innerHTML = storageBanner() + shell();
+      }
       bind();
+      bindSession();
       bindWordPopover(root);
       var t = root.querySelector('#timer');
       if (t) t.innerHTML = icon('clock') + ui.mmss(elapsed);
@@ -1977,7 +2277,10 @@ window.App = window.App || {};
     return {
       html: '',
       mount: function (r) { root = r; render(); startTimer(); },
-      destroy: function () { if (interval) { clearInterval(interval); interval = null; } }
+      destroy: function () {
+        if (interval) { clearInterval(interval); interval = null; }
+        if (sessionTimer) { clearTimeout(sessionTimer); sessionTimer = null; }
+      }
     };
   };
 
@@ -1990,7 +2293,7 @@ window.App = window.App || {};
         '<div class="set-top"><span class="chip chip-type">' + esc(set.type) + '</span></div>' +
         '<h3>' + esc(set.title) + '</h3>' +
         '<p class="set-intro">' + esc(set.intro) + '</p>' +
-        setStatusHtml('listening', set.id) +
+        setStatusHtml('listening', set) +
         '<div class="set-meta"><span>' + icon('headphones') + set.questions.length + ' 题</span>' +
         '<span>' + icon('clock') + '约 ' + Math.ceil(set.seconds / 60) + ' 分钟</span>' +
         '<span class="dot">' + esc(set.level) + '</span></div>' +
@@ -2024,6 +2327,19 @@ window.App = window.App || {};
     var showText = false;
     var playing = false;
     var history = {};
+    var sessionPending = null;
+    var sessionTimer = null;
+
+    var savedSession = A.core.getSession('listening', set.id);
+    if (savedSession) {
+      var validSession = savedSession.idx >= 0 && savedSession.idx < set.questions.length;
+      Object.keys(savedSession.answers || {}).forEach(function (k) {
+        var found = set.questions.some(function (q) { return q.id === k; });
+        if (!found) validSession = false;
+      });
+      if (validSession) sessionPending = savedSession;
+      else { A.core.clearSession('listening', set.id); ui.toast('上次的作答记录无效，已从头开始'); }
+    }
 
     function clean(text) {
       return text.replace(/^[MW]:\s*/gm, '').trim();
@@ -2082,17 +2398,9 @@ window.App = window.App || {};
     }
 
     function shell() {
-      return '<div class="runner">' +
-        '<div class="runner-top">' +
-        '<a class="back-link" href="#/listening">' + icon('arrowLeft') + '听力</a>' +
-        '<h1 class="runner-title">' + esc(set.title) + '</h1>' +
-        '<span class="chip chip-type">' + esc(set.type) + '</span>' +
-        '<div class="runner-right">' +
-        '<span class="timer" id="timer">' + icon('clock') + ui.mmss(elapsed) + '</span>' +
-        (submitted ? '' : '<button class="btn btn-primary" data-submit>交卷</button>') +
-        '</div></div>' +
-        resultBanner() +
-        '<div class="listening-layout">' +
+      var layout = sessionPending
+        ? sessionBannerHtml(sessionPending, set.questions.length)
+        : '<div class="listening-layout">' +
         '<aside class="listening-side">' +
         '<div class="player card">' +
         '<button class="play-btn" id="play" aria-label="播放">' + icon('play') + '</button>' +
@@ -2107,11 +2415,90 @@ window.App = window.App || {};
         '<div class="tr-head">' + icon('file') + '<span>原文精听 · 点击句子逐句播放</span></div>' +
         transcriptHtml() + '</div>' +
         '</aside>' +
-        '<div class="questions">' + questionHtml() + '</div>' +
-        '</div></div>';
+          '<div class="questions">' + questionHtml() + '</div>' +
+          '</div>';
+
+      return '<div class="runner">' +
+        '<div class="runner-top">' +
+        '<a class="back-link" data-quit href="#/listening">' + icon('arrowLeft') + '听力</a>' +
+        '<h1 class="runner-title">' + esc(set.title) + '</h1>' +
+        '<span class="chip chip-type">' + esc(set.type) + '</span>' +
+        '<div class="runner-right">' +
+        '<span class="timer" id="timer">' + icon('clock') + ui.mmss(elapsed) + '</span>' +
+        (submitted || sessionPending ? '' : '<button class="btn btn-primary" data-submit>交卷</button>') +
+        '</div></div>' +
+        resultBanner() +
+        layout + '</div>';
+    }
+
+    function nextIdx() {
+      for (var i = 0; i < set.questions.length; i++) {
+        if (answers[set.questions[i].id] === undefined) return i;
+      }
+      return set.questions.length - 1;
+    }
+
+    function persistSession() {
+      if (submitted) return;
+      A.core.saveSession('listening', set.id, { idx: nextIdx(), answers: answers, startedAt: startedAt });
+    }
+
+    function scheduleSession() {
+      if (submitted) return;
+      if (sessionTimer) clearTimeout(sessionTimer);
+      sessionTimer = setTimeout(persistSession, 500);
+    }
+
+    function askQuit(href) {
+      var m = ui.modal({
+        title: '退出本套练习？',
+        body: '<p>已答内容可以保存，下次进入继续。</p>' +
+          '<button class="btn btn-ghost" data-session-discard>放弃本次</button>',
+        cancelText: '取消',
+        okText: '保存并退出',
+        onOk: function () { persistSession(); location.hash = href; }
+      });
+      m.root.querySelector('[data-session-discard]').addEventListener('click', function () {
+        A.core.clearSession('listening', set.id);
+        m.close();
+        location.hash = href;
+      });
+    }
+
+    function bindSession(root) {
+      var quit = root.querySelector('[data-quit]');
+      if (quit) quit.addEventListener('click', function (e) {
+        e.preventDefault();
+        askQuit(quit.getAttribute('href'));
+      });
+      var cont = root.querySelector('[data-session-continue]');
+      if (cont) cont.addEventListener('click', function () {
+        answers = sessionPending.answers || {};
+        sessionPending = null;
+        startedAt = Date.now();
+        elapsed = 0;
+        A.core.saveSession('listening', set.id, { idx: nextIdx(), answers: answers, startedAt: startedAt });
+        render(root);
+        startTimer(root);
+        setTimeout(function () {
+          var cards = root.querySelectorAll('.qcard');
+          if (cards[nextIdx()]) cards[nextIdx()].scrollIntoView({ block: 'center' });
+        }, 80);
+      });
+      var restart = root.querySelector('[data-session-restart]');
+      if (restart) restart.addEventListener('click', function () {
+        A.core.clearSession('listening', set.id);
+        sessionPending = null;
+        answers = {};
+        startedAt = Date.now();
+        elapsed = 0;
+        render(root);
+        startTimer(root);
+      });
     }
 
     function bind(root) {
+      bindSession(root);
       if (!submitted) {
         root.querySelectorAll('.opt').forEach(function (b) {
           b.addEventListener('click', function () {
@@ -2120,6 +2507,7 @@ window.App = window.App || {};
             b.classList.add('sel');
             var btn = root.querySelector('[data-submit]');
             if (btn) btn.textContent = Object.keys(answers).length + ' / ' + set.questions.length + ' · 交卷';
+            scheduleSession();
           });
         });
       }
@@ -2201,6 +2589,7 @@ window.App = window.App || {};
       elapsed = Math.round((Date.now() - startedAt) / 1000);
       if (interval) { clearInterval(interval); interval = null; }
       A.core.recordSet('listening', set.id, score, set.questions.length);
+      A.core.clearSession('listening', set.id);
       result = { score: score, total: set.questions.length };
       submitted = true;
       render(root);
@@ -2242,6 +2631,7 @@ window.App = window.App || {};
       },
       destroy: function () {
         if (interval) { clearInterval(interval); interval = null; }
+        if (sessionTimer) { clearTimeout(sessionTimer); sessionTimer = null; }
         ui.tts.cancel();
         playing = false;
       }
@@ -2258,7 +2648,7 @@ window.App = window.App || {};
         '<div class="set-top"><span class="chip chip-type">汉译英</span></div>' +
         '<h3>' + esc(set.title) + '</h3>' +
         '<p class="set-intro">' + esc(set.topic) + ' · 约 ' + zhCount + ' 字</p>' +
-        setStatusHtml('translation', set.id) +
+        setStatusHtml('translation', set) +
         '<div class="set-meta"><span>' + icon('languages') + set.sentences.length + ' 句</span>' +
         '<span>' + icon('clock') + '约 ' + set.minutes + ' 分钟</span>' +
         '<span class="dot">' + esc(set.level) + '</span></div>' +

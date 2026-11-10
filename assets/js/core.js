@@ -46,6 +46,7 @@ window.App = window.App || {};
       daily: {},
       attempts: { reading: {}, listening: {}, translation: {} },
       qstats: {},
+      sessions: {},
       wrong: { words: {}, questions: {} },
       drafts: { translation: {} },
       custom: [],
@@ -69,6 +70,7 @@ window.App = window.App || {};
     s.attempts = s.attempts || { reading: {}, listening: {}, translation: {} };
     s.attempts.translation = s.attempts.translation || {};
     s.qstats = s.qstats || {};
+    s.sessions = s.sessions || {};
     s.wrong = s.wrong || { words: {}, questions: {} };
     s.wrong.words = s.wrong.words || {};
     s.wrong.questions = s.wrong.questions || {};
@@ -724,6 +726,46 @@ window.App = window.App || {};
     return (state.attempts[kind] || {})[setId] || null;
   }
 
+  function saveSession(runner, setId, data) {
+    var key = runner + ':' + setId;
+    var now = Date.now();
+    state.sessions[key] = {
+      runner: runner,
+      setId: setId,
+      idx: data && data.idx || 0,
+      answers: JSON.parse(JSON.stringify((data && data.answers) || {})),
+      startedAt: data && data.startedAt || now,
+      updatedAt: now
+    };
+    var keys = Object.keys(state.sessions);
+    if (keys.length > 10) {
+      keys.sort(function (a, b) {
+        return (state.sessions[a].updatedAt || 0) - (state.sessions[b].updatedAt || 0);
+      });
+      while (keys.length > 10) delete state.sessions[keys.shift()];
+    }
+    save();
+    return state.sessions[key];
+  }
+
+  function getSession(runner, setId) {
+    var s = state.sessions[runner + ':' + setId];
+    if (!s) return null;
+    return {
+      runner: s.runner,
+      setId: s.setId,
+      idx: s.idx,
+      answers: JSON.parse(JSON.stringify(s.answers || {})),
+      startedAt: s.startedAt,
+      updatedAt: s.updatedAt
+    };
+  }
+
+  function clearSession(runner, setId) {
+    delete state.sessions[runner + ':' + setId];
+    save();
+  }
+
   function recordQuestion(qid, ok) {
     var q = state.qstats[qid] || { n: 0, ok: 0, last: 0, lastOk: false };
     q.n += 1;
@@ -984,6 +1026,9 @@ window.App = window.App || {};
     wrongQuestions: wrongQuestions,
     attempt: attempt,
     attemptSummary: attemptSummary,
+    saveSession: saveSession,
+    getSession: getSession,
+    clearSession: clearSession,
     recordQuestion: recordQuestion,
     questionStat: questionStat,
     // 自定义
