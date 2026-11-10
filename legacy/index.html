@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>四级冲刺 · CET-4 Sprint</title>
+  <meta name="description" content="面向大学英语四级的学习复习网站：间隔重复背单词、阅读与听力专项练习、错题本、打卡与学习热力图。">
+  <meta name="theme-color" content="#12655a">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%2312655a'/%3E%3Ctext x='32' y='45' font-size='38' font-family='Georgia,serif' fill='%23ffd79a' text-anchor='middle'%3E%E5%9B%9B%3C/text%3E%3C/svg%3E">
+  <script>
+    (function () {
+      try {
+        var s = JSON.parse(localStorage.getItem('cet4-sprint/v1') || '{}');
+        var m = (s.settings || {}).theme || 'auto';
+        var d = m === 'dark' || (m === 'auto' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+        document.documentElement.setAttribute('data-theme', d ? 'dark' : 'light');
+      } catch (e) { /* ignore */ }
+    })();
+  </script>
+  <link rel="stylesheet" href="../assets/css/app.css">
+</head>
+<body>
+  <div id="app"></div>
+  <div id="toast-root" aria-live="polite"></div>
+  <div id="modal-root"></div>
+
+  <script src="../assets/js/data/words-core.js"></script>
+  <script src="../assets/js/data/word-extras.js"></script>
+  <script src="../assets/js/data/freq.js"></script>
+  <script src="../assets/js/data/content.js"></script>
+  <script src="../assets/js/data/reading-extra.js"></script>
+  <script src="../assets/js/data/translation.js"></script>
+  <script src="../assets/js/data/writing.js"></script>
+  <script src="../assets/js/data/papers/bundle.js"></script>
+  <script src="../assets/js/core.js"></script>
+  <script src="../assets/js/ui.js"></script>
+  <script src="../assets/js/views.js"></script>
+  <script src="../assets/js/app.js"></script>
+</body>
+</html>

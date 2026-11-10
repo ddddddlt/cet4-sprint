@@ -311,5 +311,5 @@ export default function Vocab() {
 
 function legacyUrl(hash) {
   const base = window.location.pathname.replace(/v2\/?$/, '')
-  return (base.endsWith('/') ? base : base + '/') + hash
+  return (base.endsWith('/') ? base : base + '/') + 'legacy/' + hash
 }

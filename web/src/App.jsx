@@ -2,6 +2,10 @@ import { useEffect, useMemo, useState } from 'react'
 import Vocab from './pages/Vocab'
 import Wordbook from './pages/Wordbook'
 import DrillRunner from './pages/DrillRunner'
+import { ReadingList, ReadingRunner, ClozeRunner, MatchingRunner } from './pages/Reading'
+import { ListeningList, ListeningRunner } from './pages/Listening'
+import { TranslationList, TranslationRunner, WritingList, WritingRunner } from './pages/Productive'
+import { Mistakes, Settings as SettingsPage } from './pages/Misc'
 import {
   AlertTriangle,
   ArrowUpRight,
@@ -60,7 +64,7 @@ function legacyBase() {
 
 function legacyUrl(hash) {
   const base = legacyBase()
-  return (base.endsWith('/') ? base : base + '/') + hash
+  return (base.endsWith('/') ? base : base + '/') + 'legacy/' + hash
 }
 
 function useHashRoute() {
@@ -85,8 +89,12 @@ function useCore() {
 }
 
 function Shell({ route, children }) {
-  const tabKey = route.startsWith('#/practice')
+  const tabKey = route.startsWith('#/practice') || route.startsWith('#/reading') || route.startsWith('#/cloze') || route.startsWith('#/matching') || route.startsWith('#/listening') || route.startsWith('#/translation') || route.startsWith('#/writing')
     ? 'practice'
+    : route.startsWith('#/mistakes')
+      ? 'mistakes'
+      : route.startsWith('#/settings')
+        ? 'settings'
     : route.startsWith('#/drill')
       ? 'drill'
       : route.startsWith('#/vocab')
@@ -94,7 +102,7 @@ function Shell({ route, children }) {
         : route.startsWith('#/wordbook')
           ? 'wordbook'
           : 'home'
-  const title = route.startsWith('#/practice') ? '题目练习' : route.startsWith('#/drill') ? '词汇深练' : route.startsWith('#/vocab') ? '抽查单词' : route.startsWith('#/wordbook') ? '单词本' : '首页'
+  const title = route.startsWith('#/reading') || route.startsWith('#/cloze') || route.startsWith('#/matching') ? '阅读理解' : route.startsWith('#/listening') ? '听力' : route.startsWith('#/translation') ? '翻译' : route.startsWith('#/writing') ? '写作' : route.startsWith('#/practice') ? '题目练习' : route.startsWith('#/drill') ? '词汇深练' : route.startsWith('#/vocab') ? '抽查单词' : route.startsWith('#/wordbook') ? '单词本' : route.startsWith('#/mistakes') ? '错题本' : route.startsWith('#/settings') ? '设置' : '首页'
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -128,12 +136,12 @@ function Shell({ route, children }) {
           {MORE.map((item) => (
             <a
               key={item.key}
-              href={item.key === 'wordbook' ? item.href : legacyUrl(item.href)}
+              href={item.href}
               className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-card hover:text-foreground"
             >
               <item.icon className="h-4 w-4" />
               {item.label}
-              {item.key === 'wordbook' ? null : <ArrowUpRight className="ml-auto h-3.5 w-3.5 opacity-40" />}
+              {null}
             </a>
           ))}
         </nav>
@@ -143,7 +151,7 @@ function Shell({ route, children }) {
             <CalendarDays className="h-3.5 w-3.5" /> 12 月 13 日
           </div>
           <p className="font-display text-lg font-semibold">每天 20 分钟</p>
-          <p className="mt-1 text-xs leading-relaxed text-muted-foreground">先过线，再冲高分。v2 预览只覆盖首页、练习与深练。</p>
+          <p className="mt-1 text-xs leading-relaxed text-muted-foreground">先过线，再冲高分。练习、词汇与错题已迁移；深色模式与云同步请用旧版。</p>
         </div>
       </aside>
 
@@ -159,7 +167,7 @@ function Shell({ route, children }) {
             <span className="text-foreground">{title}</span>
           </div>
           <div className="ml-auto flex items-center gap-2">
-            <Badge variant="secondary" className="rounded-md font-normal">v2 预览</Badge>
+            <Badge variant="secondary" className="rounded-md font-normal">新版</Badge>
             <a href={legacyUrl('#/')} className="text-xs text-muted-foreground underline-offset-4 hover:text-foreground hover:underline">
               返回旧版
             </a>
@@ -175,8 +183,8 @@ function Shell({ route, children }) {
             { key: 'home', label: '首页', icon: Home, href: '#/' },
             { key: 'vocab', label: '抽查', icon: BookMarked, href: '#/vocab' },
             { key: 'practice', label: '练习', icon: Layers, href: '#/practice' },
-            { key: 'mistakes', label: '错题本', icon: AlertTriangle, href: legacyUrl('#/mistakes') },
-            { key: 'settings', label: '设置', icon: Settings, href: legacyUrl('#/settings') },
+            { key: 'mistakes', label: '错题本', icon: AlertTriangle, href: '#/mistakes' },
+            { key: 'settings', label: '设置', icon: Settings, href: '#/settings' },
           ].map((item) => (
             <a
               key={item.key}
@@ -288,9 +296,9 @@ function Dashboard() {
         </div>
         <div className="grid gap-3 sm:grid-cols-3">
           {[
-            { title: '阅读理解', desc: '仔细阅读 / 匹配 / 选词', icon: BookOpen, href: '#/practice', meta: '41 套' },
+            { title: '阅读理解', desc: '仔细阅读 / 匹配 / 选词', icon: BookOpen, href: '#/reading', meta: '41 套' },
             { title: '词汇深练', desc: '拼写 / 听写 / 词义 / 搭配', icon: Sparkles, href: '#/drill', meta: '5 种模式' },
-            { title: '错题回顾', desc: '清理未掌握的题', icon: AlertTriangle, href: legacyUrl('#/mistakes'), meta: '旧版' },
+            { title: '错题回顾', desc: '清理未掌握的题', icon: AlertTriangle, href: '#/mistakes', meta: '按套题' },
           ].map((c) => (
             <a key={c.title} href={c.href} className="group rounded-xl border border-border/70 bg-card/60 p-5 transition-colors hover:bg-card">
               <div className="flex items-center justify-between">
@@ -332,7 +340,7 @@ function Practice() {
       <PageHead
         eyebrow="PRACTICE"
         title="题目练习"
-        description="按题型进入，练习记录自动保存。v2 暂时作为设计预览，具体做题仍可回到旧版。"
+        description="按题型进入，练习记录自动保存。"
         action={<Badge variant="secondary" className="rounded-md font-normal">4 个题型</Badge>}
       />
       <div className="grid gap-4 sm:grid-cols-2">
@@ -357,7 +365,7 @@ function Practice() {
               </div>
               <Progress value={item.total ? (item.done / item.total) * 100 : 0} className="h-1.5" />
               <Button variant="outline" className="mt-5 w-full justify-between" asChild>
-                <a href={item.key === 'wordbook' ? item.href : legacyUrl(item.href)}>
+                <a href={item.href}>
                   打开{item.name}练习
                   <ArrowUpRight className="h-4 w-4 opacity-60" />
                 </a>
@@ -447,13 +455,26 @@ export default function App() {
   const route = useHashRoute()
   useEffect(() => {
     window.scrollTo(0, 0)
-    const name = route.startsWith('#/practice') ? '题目练习' : route.startsWith('#/drill') ? '词汇深练' : route.startsWith('#/vocab') ? '抽查单词' : route.startsWith('#/wordbook') ? '单词本' : '首页'
-    document.title = name + ' · 四级冲刺 v2'
+    const name = route.startsWith('#/reading') || route.startsWith('#/cloze') || route.startsWith('#/matching') ? '阅读理解' : route.startsWith('#/listening') ? '听力' : route.startsWith('#/translation') ? '翻译' : route.startsWith('#/writing') ? '写作' : route.startsWith('#/practice') ? '题目练习' : route.startsWith('#/drill') ? '词汇深练' : route.startsWith('#/vocab') ? '抽查单词' : route.startsWith('#/wordbook') ? '单词本' : route.startsWith('#/mistakes') ? '错题本' : route.startsWith('#/settings') ? '设置' : '首页'
+    document.title = name + ' · 四级冲刺'
   }, [route])
 
   let page
-  const drillMode = route.startsWith('#/drill/') ? route.split('?')[0].replace('#/drill/', '') : null
-  if (route.startsWith('#/practice')) page = <Practice />
+  const clean = route.split('?')[0]
+  const drillMode = clean.startsWith('#/drill/') ? clean.replace('#/drill/', '') : null
+  if (clean === '#/reading') page = <ReadingList />
+  else if (clean.startsWith('#/reading/')) page = <ReadingRunner id={clean.replace('#/reading/', '')} />
+  else if (clean.startsWith('#/cloze/')) page = <ClozeRunner id={clean.replace('#/cloze/', '')} />
+  else if (clean.startsWith('#/matching/')) page = <MatchingRunner id={clean.replace('#/matching/', '')} />
+  else if (clean === '#/listening') page = <ListeningList />
+  else if (clean.startsWith('#/listening/')) page = <ListeningRunner id={clean.replace('#/listening/', '')} />
+  else if (clean === '#/translation') page = <TranslationList />
+  else if (clean.startsWith('#/translation/')) page = <TranslationRunner id={clean.replace('#/translation/', '')} />
+  else if (clean === '#/writing') page = <WritingList />
+  else if (clean.startsWith('#/writing/')) page = <WritingRunner id={clean.replace('#/writing/', '')} />
+  else if (clean === '#/mistakes') page = <Mistakes />
+  else if (clean === '#/settings') page = <SettingsPage />
+  else if (route.startsWith('#/practice')) page = <Practice />
   else if (drillMode) page = <DrillRunner key={drillMode} mode={drillMode} />
   else if (route.startsWith('#/drill')) page = <Drill />
   else if (route.startsWith('#/vocab')) page = <Vocab />
