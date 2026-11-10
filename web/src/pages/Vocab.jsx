@@ -283,7 +283,7 @@ export default function Vocab() {
                 <Sparkles className="mr-1.5 h-3.5 w-3.5" /> 今日抽查
               </Badge>
               <h2 className="font-display text-2xl font-semibold">{done >= target ? '今天的抽查完成了' : `还有 ${target - done} 个单词等你`}</h2>
-              <p className="mt-2 max-w-xl text-sm leading-relaxed text-muted-foreground">先自己说出释义，再翻面自评。记得的拉长复习间隔，模糊和忘记的会自动回到队列。</p>
+              <p className="mt-2 max-w-xl text-sm leading-relaxed text-muted-foreground">先自己说出释义，再翻面自评。忘记/模糊会自动进入单词本「不熟」，认识/简单进入「熟记」，本轮不再重复出现。</p>
             </div>
             <div className="font-display text-4xl font-semibold text-primary">{done}<span className="text-base font-normal text-muted-foreground"> / {target}</span></div>
           </div>
@@ -295,7 +295,6 @@ export default function Vocab() {
           <div className="mt-6 flex flex-wrap gap-2">
             <Button onClick={start}><Sparkles className="h-4 w-4" /> {done ? '继续抽查' : '开始抽查'}</Button>
             <Button variant="outline" onClick={() => { core.addCheckGroup(10); setTick((x) => x + 1) }}><Plus className="h-4 w-4" /> +10 个</Button>
-            <Button variant="ghost" asChild><a href={legacyUrl('#/vocab')}>旧版抽查</a></Button>
           </div>
         </CardContent>
       </Card>
@@ -303,7 +302,3 @@ export default function Vocab() {
   )
 }
 
-function legacyUrl(hash) {
-  const base = window.location.pathname.replace(/v2\/?$/, '')
-  return (base.endsWith('/') ? base : base + '/') + 'legacy/' + hash
-}

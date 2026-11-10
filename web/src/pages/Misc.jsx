@@ -8,10 +8,6 @@ import { Badge } from '../components/ui/badge'
 import { Button } from '../components/ui/button'
 import { Card, CardContent } from '../components/ui/card'
 
-function legacyUrl(hash) {
-  const base = window.location.pathname.replace(/v2\/?$/, '')
-  return (base.endsWith('/') ? base : base + '/') + 'legacy/' + hash
-}
 
 function useCoreReady() {
   const [ready, setReady] = useState(false)
@@ -519,19 +515,16 @@ export function Settings() {
         <Card className="">
           <CardContent className="p-6">
             <h2 className="font-display text-lg font-semibold">更多</h2>
-            <p className="mt-1 text-xs text-muted-foreground">数据导入导出已迁到 v2；旧版设置里的云同步是单文件，不建议两人同时使用。</p>
+            <p className="mt-1 text-xs text-muted-foreground">数据导入导出已迁到「更多」，旧版入口已移除。</p>
             <div className="mt-5 space-y-2">
               <div className="flex gap-2">
                 <Button variant="outline" className="flex-1" onClick={exportData}>导出 JSON</Button>
                 <Button variant="outline" className="flex-1" onClick={() => importRef.current?.click()}>导入 JSON</Button>
                 <input ref={importRef} type="file" accept="application/json,.json" className="hidden" onChange={importData} />
               </div>
-              <a href={legacyUrl('#/settings')} className="flex items-center justify-between rounded-lg border bg-card px-4 py-3 text-sm hover:bg-secondary/40">
-                打开旧版设置 <ArrowUpRight className="h-4 w-4 opacity-50" />
-              </a>
             </div>
             <div className="mt-6 rounded-lg bg-secondary/40 p-4 text-xs leading-relaxed text-muted-foreground">
-              支持浅色、深色与跟随系统。浅色为暖白纸张，深色为深蓝夜间纸面。
+              当前为深色极光主题；学习档案与云同步配置仅保存在本机浏览器和你的 Supabase 账号。
             </div>
           </CardContent>
         </Card>

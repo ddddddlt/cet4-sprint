@@ -80,15 +80,6 @@ const MODES = [
   { key: 'root', name: '词根词缀', desc: '辨认同族词', icon: Sparkles },
 ]
 
-function legacyBase() {
-  return window.location.pathname.replace(/v2\/?$/, '')
-}
-
-function legacyUrl(hash) {
-  const base = legacyBase()
-  return (base.endsWith('/') ? base : base + '/') + 'legacy/' + hash
-}
-
 function useHashRoute() {
   const [route, setRoute] = useState(() => window.location.hash || '#/')
   useEffect(() => {
