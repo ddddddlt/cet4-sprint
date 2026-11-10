@@ -559,6 +559,30 @@ window.App = window.App || {};
     return { days: days, wasNew: wasNew, left: Math.max(0, checkTarget() - rec.checkDone) };
   }
 
+  /* ---------------- 抽查快照（撤销用） ---------------- */
+  function checkSnapshot(id) {
+    var key = dateKey(Date.now());
+    var hasWrong = Object.prototype.hasOwnProperty.call(state.wrong.words, id);
+    return {
+      card: state.cards[id] ? JSON.parse(JSON.stringify(state.cards[id])) : null,
+      daily: state.daily[key] ? JSON.parse(JSON.stringify(state.daily[key])) : null,
+      dailyKey: key,
+      wrong: hasWrong ? JSON.parse(JSON.stringify(state.wrong.words[id])) : undefined
+    };
+  }
+
+  function restoreCheck(id, snap) {
+    if (!snap) return false;
+    if (snap.card === null) delete state.cards[id];
+    else state.cards[id] = JSON.parse(JSON.stringify(snap.card));
+    if (snap.daily === null) delete state.daily[snap.dailyKey];
+    else state.daily[snap.dailyKey] = JSON.parse(JSON.stringify(snap.daily));
+    if (snap.wrong === undefined) delete state.wrong.words[id];
+    else state.wrong.words[id] = JSON.parse(JSON.stringify(snap.wrong));
+    save();
+    return true;
+  }
+
   /* ---------------- 单词本 ---------------- */
   function wordbookHas(id) {
     return !!state.wordbook[id];
@@ -913,6 +937,8 @@ window.App = window.App || {};
     addCheckGroup: addCheckGroup,
     buildCheckQueue: buildCheckQueue,
     reviewWord: reviewWord,
+    checkSnapshot: checkSnapshot,
+    restoreCheck: restoreCheck,
     wordbookHas: wordbookHas,
     wordbookAdd: wordbookAdd,
     wordbookRemove: wordbookRemove,
