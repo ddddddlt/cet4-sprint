@@ -723,6 +723,10 @@ window.App = window.App || {};
     function grade(g, r) {
       var s = checkSession;
       if (!s || s.finished || s.idx >= s.ids.length) return;
+      if (!s.flipped) {
+        ui.toast('先点「显示释义」，再自评');
+        return;
+      }
       var id = s.ids[s.idx];
       var wasRetry = !!s.retrySeen[id];
       var snap = A.core.checkSnapshot(id);
@@ -849,6 +853,7 @@ window.App = window.App || {};
           }
           if (!s.finished && /^[1-4]$/.test(e.key)) {
             e.preventDefault();
+            if (!s.flipped) { ui.toast('先点「显示释义」，再自评'); return; }
             grade(+e.key, r);
           }
         };
