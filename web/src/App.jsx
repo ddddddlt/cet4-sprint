@@ -206,6 +206,8 @@ function SearchPalette({ open, onClose }) {
 
 function Shell({ route, children, pageAnim = 'page-lateral' }) {
   const [searchOpen, setSearchOpen] = useState(false)
+  const [tabbarHidden, setTabbarHidden] = useState(false)
+  const lastScrollRef = useRef(0)
   const navRef = useRef(null)
   const sideIndicatorRef = useRef(null)
   const sideItemsRef = useRef(new Map())
@@ -289,6 +291,29 @@ function Shell({ route, children, pageAnim = 'page-lateral' }) {
     const first = setTimeout(tick, 2500)
     return () => { clearInterval(timer); clearTimeout(first) }
   }, [])
+
+  useEffect(() => {
+    const onScroll = () => {
+      const y = Math.max(0, window.scrollY)
+      const last = lastScrollRef.current
+      if (y <= 20) setTabbarHidden(false)
+      else if (y > last + 6) setTabbarHidden(true)
+      else if (y < last - 6) setTabbarHidden(false)
+      lastScrollRef.current = y
+    }
+    lastScrollRef.current = window.scrollY
+    document.addEventListener('scroll', onScroll, { passive: true, capture: true })
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => {
+      document.removeEventListener('scroll', onScroll, { capture: true })
+      window.removeEventListener('scroll', onScroll)
+    }
+  }, [])
+
+  useEffect(() => {
+    setTabbarHidden(false)
+    lastScrollRef.current = window.scrollY
+  }, [route])
 
   useEffect(() => {
     try {
@@ -451,7 +476,7 @@ function Shell({ route, children, pageAnim = 'page-lateral' }) {
         </main>
       </div>
 
-      <nav data-tabbar className="glass-tab fixed inset-x-3 bottom-[calc(12px+env(safe-area-inset-bottom))] z-40 mx-auto max-w-[520px] md:max-w-[620px] lg:hidden" aria-label="主导航">
+      <nav data-tabbar data-hidden={tabbarHidden} inert={tabbarHidden ? '' : undefined} onFocusCapture={() => setTabbarHidden(false)} className="mobile-tabbar glass-tab fixed inset-x-3 bottom-[calc(12px+env(safe-area-inset-bottom))] z-40 mx-auto max-w-[520px] md:max-w-[620px] lg:hidden" aria-label="主导航">
         <div className="relative flex items-stretch p-1">
           {tabIndex >= 0 ? <span className="tab-liquid" style={{ transform: `translateX(${tabIndex * 100}%)`, width: `calc((100% - 8px) / ${BOTTOM.length})` }} aria-hidden="true" /> : null}
           {BOTTOM.map((item) => (

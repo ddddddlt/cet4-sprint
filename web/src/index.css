@@ -477,6 +477,17 @@
     transition-duration: 90ms;
   }
 
+  .mobile-tabbar {
+    transition: transform 240ms var(--ease), opacity 200ms var(--ease);
+    will-change: transform;
+  }
+
+  .mobile-tabbar[data-hidden="true"] {
+    transform: translate3d(0, calc(100% + 24px), 0);
+    opacity: 0;
+    pointer-events: none;
+  }
+
   .tab-liquid {
     position: absolute;
     top: 4px;
@@ -720,6 +731,16 @@
     animation: none !important;
   }
 
+  .reduce-motion .mobile-tabbar {
+    transition: none !important;
+  }
+
+  .reduce-motion .mobile-tabbar[data-hidden="true"] {
+    transform: none !important;
+    opacity: 0;
+    visibility: hidden;
+  }
+
   .reduce-motion .side-indicator::after,
   .reduce-motion .breadcrumb-title {
     animation: none !important;
@@ -750,6 +771,12 @@
       animation-iteration-count: 1 !important;
       transition-duration: .001ms !important;
       scroll-behavior: auto !important;
+    }
+
+    .mobile-tabbar[data-hidden="true"] {
+      transform: none !important;
+      opacity: 0;
+      visibility: hidden;
     }
   }
 }
