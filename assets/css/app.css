@@ -980,7 +980,8 @@ h1, h2, h3, h4, p { margin: 0; }
 .set-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 .set-card h3 { font-size: 19px; letter-spacing: -.01em; font-family: var(--font-display); }
 .set-intro { font-size: 12.5px; color: var(--muted); }
-.set-meta { display: flex; align-items: center; gap: 16px; font-size: 12px; color: var(--muted); padding-top: 4px; }
+.set-meta { flex-wrap: wrap; display: flex; align-items: center; gap: 16px; font-size: 12px; color: var(--muted); padding-top: 4px;   white-space: nowrap;
+}
 .set-meta span { display: inline-flex; align-items: center; gap: 5px; }
 .set-meta .ic { width: 14px; height: 14px; }
 .set-card .btn { margin-top: auto; align-self: flex-start; }
@@ -1000,6 +1001,16 @@ h1, h2, h3, h4, p { margin: 0; }
   backdrop-filter: blur(12px);
 }
 html[data-theme="dark"] .runner-top { background: rgba(17, 22, 20, .92); }
+.runner-top::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: -24px;
+  height: 24px;
+  background: inherit;
+  backdrop-filter: blur(12px);
+}
 .back-link { display: inline-flex; align-items: center; gap: 5px; font-size: 13px; color: var(--muted); padding: 6px 2px; }
 .back-link:hover { color: var(--brand); }
 .back-link .ic { width: 15px; height: 15px; }
@@ -2087,6 +2098,33 @@ textarea.input { resize: vertical; line-height: 1.6; font-family: inherit; }
 .modal-foot { display: flex; justify-content: flex-end; gap: 10px; padding: 18px 20px; }
 
 /* ==========================================================================
+   写作
+   ========================================================================== */
+.writing-grid { display: grid; grid-template-columns: 1.02fr .98fr; gap: 18px; align-items: start; }
+.writing-prompt { position: sticky; top: 84px; }
+.wp-text { font-size: 15.5px; line-height: 1.85; color: var(--ink-2); }
+.wp-meta { display: flex; align-items: center; gap: 6px; margin-top: 16px; color: var(--muted); font-size: 12.5px; }
+.wp-meta .ic { width: 14px; height: 14px; }
+.writing-editor textarea {
+  min-height: 360px;
+  width: 100%;
+  resize: vertical;
+  line-height: 1.9;
+  font-size: 15px;
+  font-family: var(--font-display);
+}
+.we-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; font-size: 12.5px; color: var(--muted); }
+.we-actions { display: flex; justify-content: flex-end; margin-top: 12px; }
+.writing-sample { margin-top: 18px; scroll-margin-top: 150px; }
+.ws-head { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.ws-head h2 { font-size: 18px; }
+.ws-en { font-family: var(--font-display); font-size: 15.5px; line-height: 1.95; white-space: pre-wrap; color: var(--ink); }
+.ws-zh { margin-top: 10px; color: var(--ink-2); line-height: 1.8; font-size: 14px; }
+.writing-sample details { margin-top: 14px; }
+.writing-sample summary { cursor: pointer; color: var(--brand); font-size: 13px; }
+.ws-actions { display: flex; gap: 10px; margin-top: 18px; flex-wrap: wrap; }
+
+/* ==========================================================================
    深色模式组件覆盖
    ========================================================================== */
 html[data-theme="dark"] ::selection { background: #2b4a3f; }
@@ -2380,6 +2418,9 @@ html[data-theme="dark"] .btn-danger { background: #9c5548; color: #f7ede9; }
   .qcard { padding: 16px; border-radius: 16px; }
   .runner-top { padding: 8px 0; margin-bottom: 10px; }
   .reading-grid { gap: 16px; }
+  .writing-grid { grid-template-columns: 1fr; }
+  .writing-prompt { position: static; }
+  .writing-editor textarea { min-height: 280px; }
   .grade-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .mistake-group { flex-direction: column; align-items: flex-start; gap: 10px; }
   .tr-nums { gap: 22px; }
@@ -2405,6 +2446,11 @@ html[data-theme="dark"] .btn-danger { background: #9c5548; color: #f7ede9; }
   .tab-item { font-size: 9.5px; margin: 0 1px; }
   .page-head h1 { font-size: 22px; }
   .brand-text strong { font-size: 14px; }
+}
+
+@media (max-width: 360px) {
+  .tab-item { font-size: 9px; gap: 2px; padding: 4px 0; }
+  .tab-item .ic { width: 17px; height: 17px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
