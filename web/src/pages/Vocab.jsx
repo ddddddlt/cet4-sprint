@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { ArrowLeft, ArrowRight, Bookmark, Check, Eye, Layers, Plus, RotateCcw, Sparkles, Volume2, X } from 'lucide-react'
 import { Badge } from '../components/ui/badge'
 import { Button } from '../components/ui/button'
@@ -20,8 +20,6 @@ export default function Vocab() {
   const [ready, setReady] = useState(false)
   const [tick, setTick] = useState(0)
   const [session, setSession] = useState(null)
-  const retryRef = useRef(new Set())
-  const retrySeenRef = useRef(new Set())
 
   useEffect(() => {
     if (core) {
@@ -42,45 +40,34 @@ export default function Vocab() {
   const word = currentId ? core.getWord(currentId) : null
   const senses = word ? core.sensesOf(word) : []
 
-  useEffect(() => {
-    if (session && currentId && retryRef.current.has(currentId)) retrySeenRef.current.add(currentId)
-  }, [session?.idx, currentId])
-
   function start() {
     const ids = core.buildCheckQueue()
     if (!ids.length) {
       setTick((x) => x + 1)
       return
     }
-    retryRef.current = new Set()
-    retrySeenRef.current = new Set()
     setSession({ ids, idx: 0, stats: { 1: 0, 2: 0, 3: 0, 4: 0 }, flipped: false, undo: null })
   }
 
   function grade(g) {
     if (!session || !session.flipped) return
     const id = session.ids[session.idx]
-    const wasRetry = retrySeenRef.current.has(id)
     const snap = core.checkSnapshot(id)
-    const retryBefore = new Set(retryRef.current)
-    const seenBefore = new Set(retrySeenRef.current)
-    core.reviewWord(id, g, wasRetry ? { daily: false } : undefined)
-    let ids = session.ids.slice()
-    let insertedAt = -1
-    if (g <= 2 && !wasRetry && !retryRef.current.has(id)) {
-      retryRef.current.add(id)
-      insertedAt = Math.min(ids.length, session.idx + 3)
-      ids.splice(insertedAt, 0, id)
+    const wbBefore = core.wordbookHas(id) ? JSON.parse(JSON.stringify(core.getState().wordbook[id])) : null
+    core.reviewWord(id, g)
+    core.wordbookAdd(id, g <= 2 ? 'check-fail' : 'check-known')
+    const entry = core.getState().wordbook[id]
+    if (entry) {
+      entry.category = g <= 2 ? 'learning' : 'known'
+      core.save()
     }
-    const stats = { ...session.stats }
-    if (!wasRetry) stats[g] += 1
+    const stats = { ...session.stats, [g]: session.stats[g] + 1 }
     setSession({
       ...session,
-      ids,
       idx: session.idx + 1,
       flipped: false,
       stats,
-      undo: { id, snap, idx: session.idx, insertedAt, stats: { ...session.stats }, retry: retryBefore, retrySeen: seenBefore },
+      undo: { id, snap, idx: session.idx, stats: { ...session.stats }, wbBefore },
     })
     setTick((x) => x + 1)
   }
@@ -89,11 +76,13 @@ export default function Vocab() {
     if (!session || !session.undo) return
     const u = session.undo
     core.restoreCheck(u.id, u.snap)
-    let ids = session.ids.slice()
-    if (u.insertedAt >= 0) ids.splice(u.insertedAt, 1)
-    retryRef.current = u.retry
-    retrySeenRef.current = u.retrySeen
-    setSession({ ...session, ids, idx: u.idx, flipped: true, stats: u.stats, undo: null })
+    if (u.wbBefore) {
+      core.getState().wordbook[u.id] = u.wbBefore
+      core.save()
+    } else {
+      core.wordbookRemove(u.id)
+    }
+    setSession({ ...session, idx: u.idx, flipped: true, stats: u.stats, undo: null })
     setTick((x) => x + 1)
   }
 
@@ -176,7 +165,12 @@ export default function Vocab() {
                 </div>
                 <button
                   type="button"
-                  onClick={() => { core.wordbookAdd(word.id, 'manual'); setTick((x) => x + 1) }}
+                  onClick={() => {
+                    core.wordbookAdd(word.id, 'manual')
+                    const entry = core.getState().wordbook[word.id]
+                    if (entry) { entry.category = 'learning'; core.save() }
+                    setTick((x) => x + 1)
+                  }}
                   className="mt-5 inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground"
                 >
                   <Bookmark className="h-3.5 w-3.5" /> {core.wordbookHas(word.id) ? '已在单词本' : '加入单词本'}
