@@ -4,6 +4,7 @@ import { Badge } from '../components/ui/badge'
 import { Button } from '../components/ui/button'
 import { Card, CardContent } from '../components/ui/card'
 import { gradeWithAI, saveAiGrade, savedAiGrade } from '../lib/ai'
+import { restartPractice } from '../lib/practice'
 
 function useCoreReady() {
   const [ready, setReady] = useState(false)
@@ -94,19 +95,27 @@ export function TranslationList() {
       <div className="grid gap-3 sm:grid-cols-2">
         {sets.map((set) => {
           const att = core ? core.attempt('translation', set.id) : null
+          const draft = core ? core.getDraft(set.id) : ''
+          const progress = !!draft || !!att
+          const href = `#/translation/${set.id}`
           return (
-            <a key={set.id} href={`#/translation/${set.id}`} className="glass-card group p-5 transition-colors hover:border-white/20">
-              <div className="flex items-center justify-between">
-                <Badge variant="secondary" className="font-normal">汉译英</Badge>
-                <Badge variant={att?.graded ? 'default' : 'muted'} className="font-normal">{att?.graded ? `自评 ${att.score}/15` : '未做'}</Badge>
-              </div>
-              <h3 className="mt-4 font-display text-lg font-semibold">{set.title}</h3>
-              <p className="mt-1 text-xs text-muted-foreground">{set.topic} · 约 {set.sentences.length} 句</p>
-              <div className="mt-4 flex items-center justify-between text-xs text-muted-foreground">
+            <div key={set.id} className="glass-card group p-5 transition-colors hover:border-white/20">
+              <a href={href} className="block">
+                <div className="flex items-center justify-between">
+                  <Badge variant="secondary" className="font-normal">汉译英</Badge>
+                  <Badge variant={att?.graded ? 'default' : 'muted'} className="font-normal">{att?.graded ? `自评 ${att.score}/15` : '未做'}</Badge>
+                </div>
+                <h3 className="mt-4 font-display text-lg font-semibold">{set.title}</h3>
+                <p className="mt-1 text-xs text-muted-foreground">{set.topic} · 约 {set.sentences.length} 句</p>
+              </a>
+              <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-xs text-muted-foreground">
                 <span>{set.minutes} 分钟</span>
-                <span className="inline-flex items-center gap-1 text-primary">开始 <ArrowRight className="h-3.5 w-3.5" /></span>
+                <div className="flex items-center gap-2">
+                  {progress ? <a href={href} className="inline-flex min-h-9 items-center gap-1 rounded-lg border border-primary/30 bg-[var(--accent-soft)] px-3 text-primary">继续练习 <ArrowRight className="h-3.5 w-3.5" /></a> : <a href={href} className="inline-flex min-h-9 items-center gap-1 rounded-lg border border-primary/30 bg-[var(--accent-soft)] px-3 text-primary">开始练习 <ArrowRight className="h-3.5 w-3.5" /></a>}
+                  {progress ? <button type="button" onClick={() => { restartPractice(core, 'translation', set.id); window.location.hash = href }} className="inline-flex min-h-9 items-center rounded-lg px-2 text-muted-foreground hover:text-foreground">重新练习</button> : null}
+                </div>
               </div>
-            </a>
+            </div>
           )
         })}
       </div>
@@ -276,19 +285,27 @@ export function WritingList() {
       <div className="grid gap-3 sm:grid-cols-2">
         {sets.map((set) => {
           const att = core ? core.attempt('writing', set.id) : null
+          const draft = core ? core.writingDraft(set.id) : ''
+          const progress = !!draft || !!att
+          const href = `#/writing/${set.id}`
           return (
-            <a key={set.id} href={`#/writing/${set.id}`} className="glass-card group p-5 transition-colors hover:border-white/20">
-              <div className="flex items-center justify-between">
-                <Badge variant="secondary" className="font-normal">{set.source}</Badge>
-                <Badge variant={att ? 'default' : 'muted'} className="font-normal">{att ? `已完成 · ${att.words} 词` : '未开始'}</Badge>
-              </div>
-              <h3 className="mt-4 font-display text-lg font-semibold">{set.topic}</h3>
-              <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{set.prompt}</p>
-              <div className="mt-4 flex items-center justify-between text-xs text-muted-foreground">
+            <div key={set.id} className="glass-card group p-5 transition-colors hover:border-white/20">
+              <a href={href} className="block">
+                <div className="flex items-center justify-between">
+                  <Badge variant="secondary" className="font-normal">{set.source}</Badge>
+                  <Badge variant={att ? 'default' : 'muted'} className="font-normal">{att ? `已完成 · ${att.words} 词` : '未开始'}</Badge>
+                </div>
+                <h3 className="mt-4 font-display text-lg font-semibold">{set.topic}</h3>
+                <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{set.prompt}</p>
+              </a>
+              <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-xs text-muted-foreground">
                 <span>{set.minutes} 分钟 · {set.minWords}–{set.maxWords} 词</span>
-                <span className="inline-flex items-center gap-1 text-primary">开始 <ArrowRight className="h-3.5 w-3.5" /></span>
+                <div className="flex items-center gap-2">
+                  {progress ? <a href={href} className="inline-flex min-h-9 items-center gap-1 rounded-lg border border-primary/30 bg-[var(--accent-soft)] px-3 text-primary">继续练习 <ArrowRight className="h-3.5 w-3.5" /></a> : <a href={href} className="inline-flex min-h-9 items-center gap-1 rounded-lg border border-primary/30 bg-[var(--accent-soft)] px-3 text-primary">开始练习 <ArrowRight className="h-3.5 w-3.5" /></a>}
+                  {progress ? <button type="button" onClick={() => { restartPractice(core, 'writing', set.id); window.location.hash = href }} className="inline-flex min-h-9 items-center rounded-lg px-2 text-muted-foreground hover:text-foreground">重新练习</button> : null}
+                </div>
               </div>
-            </a>
+            </div>
           )
         })}
       </div>

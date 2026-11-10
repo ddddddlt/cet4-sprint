@@ -5,6 +5,7 @@ import { Button } from '../components/ui/button'
 import { Card, CardContent } from '../components/ui/card'
 import { Progress } from '../components/ui/progress'
 import { cn } from '../lib/utils'
+import { restartPractice } from '../lib/practice'
 
 function useCoreReady() {
   const [ready, setReady] = useState(false)
@@ -51,20 +52,28 @@ export function ReadingList() {
             <div className="grid gap-3 sm:grid-cols-2">
               {group.data.map((set) => {
                 const att = core ? core.attempt('reading', set.id) : null
+                const saved = core ? core.getSession(group.route, set.id) : null
                 const total = set.questions?.length || set.statements?.length || set.blanks?.length || 0
+                const href = `#/${group.route}/${set.id}`
                 return (
-                  <a key={set.id} href={`#/${group.route}/${set.id}`} className="glass-card group p-5 transition-colors hover:border-white/20">
-                    <div className="flex items-center justify-between gap-2">
-                      <Badge variant="secondary" className="font-normal">{set.type}</Badge>
-                      <Badge variant={att ? 'default' : 'muted'} className="font-normal">{att ? `最好 ${att.best}/${att.total}` : '未做'}</Badge>
-                    </div>
-                    <h3 className="mt-4 font-display text-lg font-semibold leading-snug">{set.title}</h3>
-                    <p className="mt-1 text-xs text-muted-foreground">{set.topic || set.intro || ''}</p>
-                    <div className="mt-4 flex items-center justify-between text-xs text-muted-foreground">
+                  <div key={set.id} className="glass-card group p-5 transition-colors hover:border-white/20">
+                    <a href={href} className="block">
+                      <div className="flex items-center justify-between gap-2">
+                        <Badge variant="secondary" className="font-normal">{set.type}</Badge>
+                        <Badge variant={saved ? 'outline' : att ? 'default' : 'muted'} className="font-normal">{saved ? '进行中' : att ? `最好 ${att.best}/${att.total}` : '未做'}</Badge>
+                      </div>
+                      <h3 className="mt-4 font-display text-lg font-semibold leading-snug">{set.title}</h3>
+                      <p className="mt-1 text-xs text-muted-foreground">{set.topic || set.intro || ''}</p>
+                    </a>
+                    <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-xs text-muted-foreground">
                       <span>{total} 题 · 约 {set.minutes} 分钟</span>
-                      <span className="inline-flex items-center gap-1 text-primary">开始 <ArrowRight className="h-3.5 w-3.5" /></span>
+                      <div className="flex items-center gap-2">
+                        {saved ? <a href={href} className="inline-flex min-h-9 items-center gap-1 rounded-lg border border-primary/30 bg-[var(--accent-soft)] px-3 text-primary">继续练习 <ArrowRight className="h-3.5 w-3.5" /></a> : null}
+                        {!saved && !att ? <a href={href} className="inline-flex min-h-9 items-center gap-1 rounded-lg border border-primary/30 bg-[var(--accent-soft)] px-3 text-primary">开始练习 <ArrowRight className="h-3.5 w-3.5" /></a> : null}
+                        {saved || att ? <button type="button" onClick={() => { restartPractice(core, group.route, set.id); window.location.hash = href }} className="inline-flex min-h-9 items-center rounded-lg px-2 text-muted-foreground hover:text-foreground">重新练习</button> : null}
+                      </div>
                     </div>
-                  </a>
+                  </div>
                 )
               })}
             </div>

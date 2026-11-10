@@ -52,23 +52,31 @@ export function ExamList() {
           const state = loadExam(exam.id)
           const score = state?.result?.score
           const running = state && !state.submitted
+          const href = `#/exam/${index}`
           return (
-            <a key={exam.id} href={`#/exam/${index}`} className="glass-card group flex flex-col p-5 transition-colors hover:border-white/20">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <Badge variant="secondary">{paper.source?.year || '—'} · {paper.source?.month || '—'} 月</Badge>
-                  <h2 className="mt-3 font-display text-xl leading-tight">{paperLabel(paper, index)}</h2>
+            <div key={exam.id} className="glass-card group flex flex-col p-5 transition-colors hover:border-white/20">
+              <a href={href} className="block">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <Badge variant="secondary">{paper.source?.year || '—'} · {paper.source?.month || '—'} 月</Badge>
+                    <h2 className="mt-3 font-display text-xl leading-tight">{paperLabel(paper, index)}</h2>
+                  </div>
+                  <Badge variant={state?.submitted ? 'default' : running ? 'outline' : 'muted'}>
+                    {state?.submitted ? `${score} / ${state.result.total}` : running ? '进行中' : '未开始'}
+                  </Badge>
                 </div>
-                <Badge variant={state?.submitted ? 'default' : running ? 'outline' : 'muted'}>
-                  {state?.submitted ? `${score} / ${state.result.total}` : running ? '进行中' : '未开始'}
-                </Badge>
-              </div>
-              <p className="t-meta mt-2">写作 1 · 客观题 30 · 翻译 1 · 125 分钟</p>
-              <div className="mt-5 flex items-center justify-between text-xs text-[var(--faint)]">
+                <p className="t-meta mt-2">写作 1 · 客观题 30 · 翻译 1 · 125 分钟</p>
+              </a>
+              <div className="mt-5 flex flex-wrap items-center justify-between gap-3 text-xs text-[var(--faint)]">
                 <span>{state?.submitted ? '已完成，可查看解析' : running ? '继续上次作答' : '按考试节奏完成整套'}</span>
-                <span className="inline-flex items-center gap-1 text-primary">{running ? '继续' : '进入'} <ArrowRight className="h-3.5 w-3.5" /></span>
+                <div className="flex items-center gap-2">
+                  {running ? <a href={href} className="inline-flex min-h-9 items-center gap-1 rounded-lg border border-primary/30 bg-[var(--accent-soft)] px-3 text-primary">继续练习 <ArrowRight className="h-3.5 w-3.5" /></a> : null}
+                  {state?.submitted ? <a href={href} className="inline-flex min-h-9 items-center gap-1 rounded-lg border border-primary/30 bg-[var(--accent-soft)] px-3 text-primary">查看结果 <ArrowRight className="h-3.5 w-3.5" /></a> : null}
+                  {!state ? <a href={href} className="inline-flex min-h-9 items-center gap-1 rounded-lg border border-primary/30 bg-[var(--accent-soft)] px-3 text-primary">开始模考 <ArrowRight className="h-3.5 w-3.5" /></a> : null}
+                  {state ? <button type="button" onClick={() => { clearExam(exam.id); window.location.hash = href }} className="inline-flex min-h-9 items-center rounded-lg px-2 text-muted-foreground hover:text-foreground">重新练习</button> : null}
+                </div>
               </div>
-            </a>
+            </div>
           )
         })}
       </div>
