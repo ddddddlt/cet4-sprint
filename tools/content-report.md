@@ -1,6 +1,6 @@
 # 题库内容校验报告
 
-生成时间：2026-11-10 18:47
+生成时间：2026-11-10 18:48
 
 ## 题量
 
@@ -19,7 +19,7 @@
 
 **改前 → 改后**：套卷 9 → 9；阅读 20 篇 / 100 题 → 20 篇 / 100 题；选词 11 → 11；匹配 10 → 10；翻译 13 → 13；听力 2 → 2；写作 18 → 18；词库 1500 → 1500。
 
-**error：0 条，warning：126 条**
+**error：0 条，warning：120 条**
 
 ## 错误（error）
 
@@ -147,12 +147,6 @@
 - `m2606-s2/M` · paragraph · 结尾疑似截断 · `This type of study can't say exactly what kind of exercise is best, or how much is needed—…`
 - `t2506-s3` · sentences[2].en · 英文句子以逗号结尾 · `Within such a living circle, there are facilities such as convenience stores, pa…`
 - `t2606-s3` · sentences[3].en · 英文句子以逗号结尾 · `Chinese people follow the tradition of reciprocity (mutually exchanging courtesi…`
-- `wr-2512-1` · prompt · 结尾疑似截断 · `Suppose the student union of your university is collecting opinions on improving its work …`
-- `wr-2506-2` · prompt · 结尾疑似截断 · `Suppose your university is conducting a survey to collect students' opinions on the approp…`
-- `wr-2606-2` · prompt · 结尾疑似截断 · `Suppose your university newspaper is inviting submissions from the students for its coming…`
-- `w2506-s2` · prompt · 结尾疑似截断 · `Suppose your university is conducting a survey to collect students' opinions on the approp…`
-- `w2512-s1` · prompt · 结尾疑似截断 · `Suppose the student union of your university is collecting opinions on improving its work …`
-- `w2606-s2` · prompt · 结尾疑似截断 · `Suppose your university newspaper is inviting submissions from the students for its coming…`
 
 ## 手动修复记录
 
