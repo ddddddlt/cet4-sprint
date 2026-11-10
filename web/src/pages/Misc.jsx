@@ -3,6 +3,7 @@ import { AlertTriangle, ArrowUpRight, Check, Save } from 'lucide-react'
 import { createProfile, listProfiles, removeProfile, renameProfile, switchProfile } from '../lib/profiles'
 import { getCloudConfig, setCloudConfig, resetCloudConfig, pushCloud, pullCloud, testCloud } from '../lib/cloud'
 import { getSupabaseConfig, saveSupabaseConfig, signIn, signUp, signOut, testSupabase, pushSupabase, pullSupabase } from '../lib/supabase'
+import { clearToday } from '../lib/reset'
 import { Badge } from '../components/ui/badge'
 import { Button } from '../components/ui/button'
 import { Card, CardContent } from '../components/ui/card'
@@ -112,6 +113,8 @@ export function Settings() {
   const [supaBusy, setSupaBusy] = useState(false)
   const [supaMsg, setSupaMsg] = useState('')
   const [confirmPull, setConfirmPull] = useState(false)
+  const [confirmToday, setConfirmToday] = useState(false)
+  const [todayMsg, setTodayMsg] = useState('')
   const importRef = useRef(null)
 
   useEffect(() => {
@@ -278,6 +281,32 @@ export function Settings() {
             <Button variant="outline" onClick={() => { if (createProfile(newName)) setNewName('') }}>新建空白档案</Button>
           </div>
           {profiles.length > 1 ? <p className="mt-3 rounded-lg bg-warning-soft p-3 text-xs text-warning">云同步仍只有一个远程进度文件；多档案 + 云同步会互相覆盖，建议每个档案只在本机使用。</p> : null}
+        </CardContent>
+      </Card>
+
+      <Card className="mb-4 border-danger-soft">
+        <CardContent className="p-6">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h2 className="font-display text-lg font-semibold">清空今天的学习记录</h2>
+              <p className="mt-1 max-w-[560px] text-xs leading-relaxed text-muted-foreground">删除今天的抽查数、热力图记录、答题记录、今天新增的单词本和错题。不会回滚已经写入的 SRS 记忆，也不会删除历史记录。</p>
+            </div>
+            <Badge variant="outline" className="font-normal">不可撤销</Badge>
+          </div>
+          <div className="mt-4 flex flex-wrap items-center gap-3">
+            <Button variant="destructive" onClick={() => {
+              if (!confirmToday) {
+                setConfirmToday(true)
+                setTodayMsg('再点一次确认：只清空今天，历史进度保留')
+                return
+              }
+              const result = clearToday(core)
+              setConfirmToday(false)
+              setTodayMsg('已清空今天：单词本 ' + result.wordbook + ' 个、错题 ' + result.wrong + ' 个、答题 ' + result.attempts + ' 条')
+              setTimeout(() => window.location.reload(), 800)
+            }}>{confirmToday ? '确认清空今天' : '清空今天'}</Button>
+            {todayMsg ? <span className="text-xs text-muted-foreground" aria-live="polite">{todayMsg}</span> : null}
+          </div>
         </CardContent>
       </Card>
 
