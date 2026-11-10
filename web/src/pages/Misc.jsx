@@ -35,7 +35,7 @@ export function Mistakes() {
         <div>
           <div className="mb-2 text-[11px] uppercase tracking-[0.18em] text-muted-foreground">MISTAKES</div>
           <h1 className="font-display text-3xl font-semibold tracking-tight sm:text-4xl">错题本</h1>
-          <p className="mt-2 text-sm text-muted-foreground">按套题归组 · 答错/原则性错误自动收录 · 复习后自动移除</p>
+          <p className="mt-2 text-sm text-muted-foreground">按套题归组 · 答错/有遗漏自动收录 · 复习后自动移除</p>
         </div>
         <Badge variant="outline" className="rounded-md font-normal">{list.length} 题</Badge>
       </div>
