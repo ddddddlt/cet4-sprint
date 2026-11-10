@@ -1,3 +1,5 @@
+import { hashState } from './cloud'
+
 const KEY = 'cet4-sprint/supabase/v1'
 
 function read() {
@@ -9,13 +11,18 @@ function read() {
 }
 
 export function getSupabaseConfig() {
-  return { url: '', anonKey: '', auto: false, session: null, lastPush: 0, lastPull: 0, lastError: '', ...read() }
+  return { url: '', anonKey: '', auto: false, autoPull: true, session: null, lastPush: 0, lastPull: 0, lastHash: '', lastRemoteAt: '', lastError: '', ...read() }
 }
 
 export function saveSupabaseConfig(patch) {
   const cfg = { ...getSupabaseConfig(), ...(patch || {}) }
   localStorage.setItem(KEY, JSON.stringify(cfg))
   return cfg
+}
+
+export function canonicalHash(value) {
+  const obj = typeof value === 'string' ? JSON.parse(value) : value
+  return hashState(JSON.stringify(obj))
 }
 
 function base() {
@@ -147,6 +154,31 @@ async function rest(method, path, cfg, token, body, extraHeaders = {}) {
   })
 }
 
+export async function fetchRemoteSupabase() {
+  const { cfg, session } = await ensureSession()
+  let rows
+  try {
+    rows = await rest('GET', 'progress?select=data,updated_at&user_id=eq.' + encodeURIComponent(session.user.id), cfg, session.access_token)
+  } catch (e) {
+    if (!/登录已过期/.test(e.message)) throw e
+    const next = await refresh(cfg)
+    rows = await rest('GET', 'progress?select=data,updated_at&user_id=eq.' + encodeURIComponent(next.user.id), cfg, next.access_token)
+  }
+  return Array.isArray(rows) && rows.length ? rows[0] : null
+}
+
+export async function applyRemoteSupabase(core, row) {
+  if (!row || !row.data) throw new Error('云端没有可恢复的进度')
+  core.importJSON(JSON.stringify(row.data))
+  saveSupabaseConfig({
+    lastPull: Date.now(),
+    lastHash: canonicalHash(row.data),
+    lastRemoteAt: row.updated_at || new Date().toISOString(),
+    lastError: '',
+  })
+  return row
+}
+
 export async function testSupabase() {
   const { cfg, session } = await ensureSession()
   await rest('GET', 'progress?select=user_id&limit=1', cfg, session.access_token)
@@ -172,22 +204,13 @@ export async function pushSupabase(core) {
       updated_at: updatedAt,
     }, { Prefer: 'resolution=merge-duplicates,return=representation' })
   }
-  saveSupabaseConfig({ lastPush: Date.now(), lastError: '' })
+  const finalHash = canonicalHash(core.exportJSON())
+  saveSupabaseConfig({ lastPush: Date.now(), lastHash: finalHash, lastRemoteAt: updatedAt, lastError: '' })
   return { updatedAt }
 }
 
 export async function pullSupabase(core) {
-  const { cfg, session } = await ensureSession()
-  let rows
-  try {
-    rows = await rest('GET', 'progress?select=data,updated_at&user_id=eq.' + encodeURIComponent(session.user.id), cfg, session.access_token)
-  } catch (e) {
-    if (!/登录已过期/.test(e.message)) throw e
-    const next = await refresh(cfg)
-    rows = await rest('GET', 'progress?select=data,updated_at&user_id=eq.' + encodeURIComponent(next.user.id), cfg, next.access_token)
-  }
-  if (!Array.isArray(rows) || !rows.length) throw new Error('云端还没有这个账号的进度，请先上传一次')
-  core.importJSON(JSON.stringify(rows[0].data))
-  saveSupabaseConfig({ lastPull: Date.now(), lastError: '' })
-  return rows[0]
+  const row = await fetchRemoteSupabase()
+  if (!row) throw new Error('云端还没有这个账号的进度，请先上传一次')
+  return applyRemoteSupabase(core, row)
 }

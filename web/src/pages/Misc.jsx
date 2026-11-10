@@ -363,10 +363,17 @@ export function Settings() {
                   runSupa('恢复', async () => { await pullSupabase(core); setTimeout(() => window.location.reload(), 400); return '已恢复，正在刷新…' })
                 }}>{confirmPull ? '确认覆盖并恢复' : '从 Supabase 恢复'}</Button>
               </div>
-              <label className="mt-3 flex items-center gap-2 text-sm">
-                <input type="checkbox" checked={!!supa.auto} onChange={(e) => saveSupa({ auto: e.target.checked })} />
-                自动上传（每 15 秒检查变更）
-              </label>
+              <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                <label className="flex items-center gap-2 text-sm">
+                  <input type="checkbox" checked={!!supa.auto} onChange={(e) => saveSupa({ auto: e.target.checked })} />
+                  自动上传本机改动
+                </label>
+                <label className="flex items-center gap-2 text-sm">
+                  <input type="checkbox" checked={!!supa.autoPull} onChange={(e) => saveSupa({ autoPull: e.target.checked })} />
+                  自动获取云端更新
+                </label>
+              </div>
+              {!supa.lastHash ? <p className="mt-2 rounded-lg bg-warning-soft p-2 text-[11px] text-warning">首次连接：先手动「上传到 Supabase」或「从 Supabase 恢复」一次；完成后自动更新才会启用。</p> : null}
               <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-[var(--faint)]">
                 {supa.lastPush ? <span>上次上传 {new Date(supa.lastPush).toLocaleString()}</span> : null}
                 {supa.lastPull ? <span>上次恢复 {new Date(supa.lastPull).toLocaleString()}</span> : null}

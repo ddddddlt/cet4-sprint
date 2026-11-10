@@ -38,7 +38,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './com
 import { Progress } from './components/ui/progress'
 import { cn } from './lib/utils'
 import { getCloudConfig, hashState, pushCloud, setCloudConfig } from './lib/cloud'
-import { getSupabaseConfig, pushSupabase, saveSupabaseConfig } from './lib/supabase'
+import { getSupabaseConfig, pushSupabase, saveSupabaseConfig, fetchRemoteSupabase, applyRemoteSupabase, canonicalHash } from './lib/supabase'
 import { loadPapers } from './lib/papers'
 
 const NAV = [
@@ -207,14 +207,33 @@ function Shell({ route, children }) {
     let busy = false
     async function tick() {
       const cfg = getSupabaseConfig()
-      if (!cfg.auto || !cfg.session || !cfg.url || !cfg.anonKey || busy) return
-      const raw = core.exportJSON()
-      const hash = hashState(raw)
-      if (cfg.lastHash === hash) return
+      if (!cfg.session || !cfg.url || !cfg.anonKey || busy) return
+      if (!cfg.lastHash) return
+      if (document.visibilityState === 'hidden') return
+      const tag = (document.activeElement && document.activeElement.tagName) || ''
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return
+      const route = window.location.hash.split('?')[0]
+      if (route.startsWith('#/exam') || route.startsWith('#/settings')) return
       busy = true
       try {
-        await pushSupabase(core)
-        saveSupabaseConfig({ lastHash: hash })
+        const localHash = canonicalHash(core.exportJSON())
+        const remote = await fetchRemoteSupabase()
+        const remoteHash = remote ? canonicalHash(remote.data) : ''
+        const localDirty = localHash !== cfg.lastHash
+        const remoteChanged = !!remote && remoteHash !== cfg.lastHash
+        if (localDirty && remoteChanged) {
+          saveSupabaseConfig({ lastError: '本机和云端都有新改动，未自动覆盖。请手动选择上传或从云端恢复。' })
+          return
+        }
+        if (localDirty) {
+          if (!cfg.auto) return
+          await pushSupabase(core)
+          return
+        }
+        if (remoteChanged && cfg.autoPull) {
+          await applyRemoteSupabase(core, remote)
+          window.location.reload()
+        }
       } catch (err) {
         saveSupabaseConfig({ lastError: err.message })
       } finally {
@@ -222,7 +241,8 @@ function Shell({ route, children }) {
       }
     }
     const timer = setInterval(tick, 15000)
-    return () => clearInterval(timer)
+    const first = setTimeout(tick, 2500)
+    return () => { clearInterval(timer); clearTimeout(first) }
   }, [])
 
   useEffect(() => {
