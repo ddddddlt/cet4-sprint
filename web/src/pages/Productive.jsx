@@ -208,10 +208,17 @@ export function WritingRunner({ id }) {
   const set = (window.CET4_WRITING || []).find((x) => x.id === id)
   const [text, setText] = useState('')
   const [submitted, setSubmitted] = useState(false)
+  const [elapsed, setElapsed] = useState(0)
 
   useEffect(() => {
     if (core && set) setText(core.writingDraft(set.id) || '')
   }, [id])
+
+  useEffect(() => {
+    if (submitted) return
+    const t = setInterval(() => setElapsed((s) => s + 1), 1000)
+    return () => clearInterval(t)
+  }, [submitted])
 
   if (!set) return <div className="py-20 text-center text-sm text-muted-foreground">题目不存在</div>
   const words = (text.trim().match(/[A-Za-z0-9'’-]+/g) || []).length
@@ -224,7 +231,7 @@ export function WritingRunner({ id }) {
 
   function submit() {
     core.saveWritingDraft(set.id, text)
-    core.recordWriting(set.id, words, 0)
+    core.recordWriting(set.id, words, elapsed)
     setSubmitted(true)
   }
 
@@ -234,7 +241,7 @@ export function WritingRunner({ id }) {
         <Button variant="ghost" size="icon" asChild><a href="#/writing" aria-label="返回"><ArrowLeft className="h-4 w-4" /></a></Button>
         <div>
           <h1 className="font-display text-lg font-semibold">{set.source} · {set.topic}</h1>
-          <div className="mt-0.5 text-xs text-muted-foreground">{set.minutes} 分钟 · {set.minWords}–{set.maxWords} 词</div>
+          <div className="mt-0.5 text-xs text-muted-foreground">{set.minutes} 分钟 · {set.minWords}–{set.maxWords} 词 · 已用 {Math.floor(elapsed / 60)}:{String(elapsed % 60).padStart(2, '0')}</div>
         </div>
       </div>
       <div className="grid gap-4 lg:grid-cols-[.9fr_1.1fr]">

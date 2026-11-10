@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { AlertTriangle, ArrowUpRight, Check, Monitor, Moon, Save, Sun } from 'lucide-react'
 import { currentMode, setTheme } from '../lib/theme'
 import { Badge } from '../components/ui/badge'
@@ -92,6 +92,7 @@ export function Settings() {
   const [target, setTarget] = useState(50)
   const [saved, setSaved] = useState(false)
   const [theme, setThemeMode] = useState(() => currentMode())
+  const importRef = useRef(null)
 
   useEffect(() => {
     if (!st) return
@@ -99,6 +100,30 @@ export function Settings() {
     setName(st.settings.name || '')
     setTarget(core.checkTarget())
   }, [st])
+
+  function exportData() {
+    if (!core) return
+    const blob = new Blob([core.exportJSON()], { type: 'application/json' })
+    const a = document.createElement('a')
+    a.href = URL.createObjectURL(blob)
+    a.download = 'cet4-sprint-' + new Date().toISOString().slice(0, 10) + '.json'
+    a.click()
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000)
+  }
+
+  function importData(e) {
+    const file = e.target.files && e.target.files[0]
+    if (!file || !core) return
+    file.text().then((text) => {
+      try {
+        core.importJSON(text)
+        window.location.reload()
+      } catch (err) {
+        window.alert('导入失败：' + err.message)
+      }
+    })
+    e.target.value = ''
+  }
 
   function save() {
     if (!st) return
@@ -163,13 +188,15 @@ export function Settings() {
         <Card className="paper-texture">
           <CardContent className="p-6">
             <h2 className="font-display text-lg font-semibold">更多</h2>
-            <p className="mt-1 text-xs text-muted-foreground">云同步与数据导入导出仍保留在旧版。</p>
+            <p className="mt-1 text-xs text-muted-foreground">云同步仍保留在旧版；数据导入导出已迁到 v2。</p>
             <div className="mt-5 space-y-2">
+              <div className="flex gap-2">
+                <Button variant="outline" className="flex-1" onClick={exportData}>导出 JSON</Button>
+                <Button variant="outline" className="flex-1" onClick={() => importRef.current?.click()}>导入 JSON</Button>
+                <input ref={importRef} type="file" accept="application/json,.json" className="hidden" onChange={importData} />
+              </div>
               <a href={legacyUrl('#/settings')} className="flex items-center justify-between rounded-lg border bg-card px-4 py-3 text-sm hover:bg-secondary/40">
-                打开旧版设置 <ArrowUpRight className="h-4 w-4 opacity-50" />
-              </a>
-              <a href={legacyUrl('#/settings')} className="flex items-center justify-between rounded-lg border bg-card px-4 py-3 text-sm hover:bg-secondary/40">
-                云同步 / 导出 <ArrowUpRight className="h-4 w-4 opacity-50" />
+                云同步 / 旧版设置 <ArrowUpRight className="h-4 w-4 opacity-50" />
               </a>
             </div>
             <div className="mt-6 rounded-lg bg-secondary/40 p-4 text-xs leading-relaxed text-muted-foreground">

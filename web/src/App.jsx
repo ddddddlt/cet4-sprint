@@ -107,6 +107,7 @@ function Shell({ route, children }) {
     setTheme(next)
     setThemeMode(next)
   }
+  const isDark = themeMode === 'dark' || (themeMode === 'auto' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches)
   const tabKey = route.startsWith('#/practice') || route.startsWith('#/reading') || route.startsWith('#/cloze') || route.startsWith('#/matching') || route.startsWith('#/listening') || route.startsWith('#/translation') || route.startsWith('#/writing')
     ? 'practice'
     : route.startsWith('#/mistakes')
@@ -185,8 +186,8 @@ function Shell({ route, children }) {
             <span className="text-foreground">{title}</span>
           </div>
           <div className="ml-auto flex items-center gap-2">
-            <Button variant="ghost" size="icon" onClick={toggleTheme} aria-label={themeMode === 'dark' ? '切换到浅色' : '切换到深色'}>
-              {themeMode === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+            <Button variant="ghost" size="icon" onClick={toggleTheme} aria-label={isDark ? '切换到浅色' : '切换到深色'}>
+              {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
             </Button>
             <Badge variant="secondary" className="rounded-md font-normal">新版</Badge>
             <a href={legacyUrl('#/')} className="text-xs text-muted-foreground underline-offset-4 hover:text-foreground hover:underline">
