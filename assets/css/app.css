@@ -126,6 +126,10 @@ html[data-theme="dark"] :focus-visible { outline-color: #8fe0c6; }
 .filter-bar { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
 .filter-bar .chip { cursor: pointer; }
 .filter-bar .chip.on { border-color: var(--brand-2); color: var(--brand); background: var(--brand-soft); }
+.page-back { margin-bottom: 12px; }
+.practice-card h3 { display: flex; align-items: center; gap: 8px; }
+.practice-card h3 .ic { width: 20px; height: 20px; color: var(--brand); }
+
 
 .lookup-bar { display: flex; margin-bottom: 16px; }
 .lookup-bar .input { width: 100%; max-width: 420px; }
@@ -2393,16 +2397,16 @@ html[data-theme="dark"] .btn-danger { background: #9c5548; color: #f7ede9; }
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 3px;
+    gap: 2px;
     padding: 5px 0;
     margin: 0 2px;
     min-width: 0;
     white-space: nowrap;
-    font-size: 10.5px;
+    font-size: 12px;
     color: var(--muted);
     border-radius: 10px;
   }
-  .tab-item .ic { width: 20px; height: 20px; }
+  .tab-item .ic { width: 18px; height: 18px; }
   .tab-item.on { color: var(--brand); background: var(--brand-soft); }
 
   .topbar .icon-btn { width: 40px; height: 40px; }
@@ -2492,14 +2496,14 @@ html[data-theme="dark"] .btn-danger { background: #9c5548; color: #f7ede9; }
   .stat { padding: 11px 12px; gap: 8px; }
   .stat-ic { width: 32px; height: 32px; }
   .stat-value { font-size: 19px; }
-  .tab-item { font-size: 9.5px; margin: 0 1px; }
+  .tab-item { font-size: 12px; margin: 0 1px; }
   .page-head h1 { font-size: 22px; }
   .brand-text strong { font-size: 14px; }
 }
 
 @media (max-width: 360px) {
   .rate-row { grid-template-columns: repeat(2, 1fr); }
-  .tab-item { font-size: 9px; gap: 2px; padding: 4px 0; }
+  .tab-item { font-size: 12px; gap: 2px; padding: 4px 0; }
   .tab-item .ic { width: 17px; height: 17px; }
 }
 

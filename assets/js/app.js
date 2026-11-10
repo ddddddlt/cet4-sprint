@@ -11,6 +11,7 @@ window.App = window.App || {};
   var NAV = [
     { key: 'dashboard', href: '#/', label: '首页', ic: 'home' },
     { key: 'vocab', href: '#/vocab', label: '抽查', ic: 'book' },
+    { key: 'practice', href: '#/practice', label: '题目练习', tabLabel: '练习', ic: 'layers' },
     { key: 'wordbook', href: '#/wordbook', label: '单词本', ic: 'bookmark', tab: false },
     { key: 'reading', href: '#/reading', label: '阅读', ic: 'file' },
     { key: 'listening', href: '#/listening', label: '听力', ic: 'headphones' },
@@ -21,7 +22,7 @@ window.App = window.App || {};
   ];
 
   var TITLES = {
-    dashboard: '首页', vocab: '抽查单词', wordbook: '单词本', reading: '阅读', listening: '听力', translation: '翻译', writing: '写作',
+    dashboard: '首页', vocab: '抽查单词', practice: '题目练习', wordbook: '单词本', reading: '阅读', listening: '听力', translation: '翻译', writing: '写作',
     readingRunner: '仔细阅读', listeningRunner: '听力练习', translationRunner: '翻译练习',
     clozeRunner: '选词填空', matchingRunner: '长篇匹配',
     mistakes: '错题本', settings: '设置', notFound: '页面不存在'
@@ -35,8 +36,12 @@ window.App = window.App || {};
         '</a>';
     }).join('');
 
-    var tabs = NAV.filter(function (n) { return n.tab !== false && n.key !== 'settings'; }).map(function (n) {
-      return '<a class="tab-item" data-nav="' + n.key + '" href="' + n.href + '">' + icon(n.ic) + '<span>' + n.label + '</span></a>';
+    var TAB_KEYS = ['dashboard', 'vocab', 'practice', 'mistakes', 'settings'];
+    var tabs = TAB_KEYS.map(function (key) {
+      var n = null;
+      for (var i = 0; i < NAV.length; i++) if (NAV[i].key === key) n = NAV[i];
+      if (!n) return '';
+      return '<a class="tab-item" data-nav="' + n.key + '" href="' + n.href + '">' + icon(n.ic) + '<span>' + (n.tabLabel || n.label) + '</span></a>';
     }).join('');
 
     var themeItem = '<button class="nav-item nav-theme" data-theme-toggle>' + icon('moon') + '<span>深色模式</span></button>';
@@ -90,7 +95,7 @@ window.App = window.App || {};
     var parts = p.parts;
     if (!parts.length) return { view: 'dashboard', params: {} };
     var head = parts[0];
-    if (head === 'vocab' || head === 'wordbook' || head === 'mistakes' || head === 'settings') return { view: head, params: {} };
+    if (head === 'vocab' || head === 'practice' || head === 'wordbook' || head === 'mistakes' || head === 'settings') return { view: head, params: {} };
     if (head === 'writing') {
       if (parts[1]) return { view: 'writingRunner', params: { id: parts[1] } };
       return { view: 'writing', params: {} };
@@ -125,13 +130,33 @@ window.App = window.App || {};
     return view;
   }
 
+  var PRACTICE_VIEWS = {
+    practice: 1, reading: 1, readingRunner: 1, clozeRunner: 1, matchingRunner: 1,
+    listening: 1, listeningRunner: 1, translation: 1, translationRunner: 1,
+    translationReview: 1, writing: 1, writingRunner: 1
+  };
+  var PRACTICE_LIST_VIEWS = { reading: 1, listening: 1, translation: 1, writing: 1 };
+
+  function applyActive(a, on) {
+    a.classList.toggle('on', on);
+    if (on) a.setAttribute('aria-current', 'page');
+    else a.removeAttribute('aria-current');
+  }
+
   function setActive(view) {
     var key = navKeyOf(view);
-    document.querySelectorAll('[data-nav]').forEach(function (a) {
-      var on = a.getAttribute('data-nav') === key;
-      a.classList.toggle('on', on);
-      if (on) a.setAttribute('aria-current', 'page');
-      else a.removeAttribute('aria-current');
+    var inPractice = !!PRACTICE_VIEWS[view];
+    document.querySelectorAll('.sidebar [data-nav]').forEach(function (a) {
+      var nav = a.getAttribute('data-nav');
+      var on;
+      if (nav === 'practice') on = inPractice;
+      else if (inPractice && (nav === 'reading' || nav === 'listening' || nav === 'translation' || nav === 'writing')) on = false;
+      else on = nav === key;
+      applyActive(a, on);
+    });
+    document.querySelectorAll('.tabbar [data-nav]').forEach(function (a) {
+      var nav = a.getAttribute('data-nav');
+      applyActive(a, nav === 'practice' ? inPractice : nav === key);
     });
   }
 
@@ -202,6 +227,13 @@ window.App = window.App || {};
     }
     if (LIST_VIEWS[route.view]) {
       restoreScroll = storageGet('scroll:' + p.path);
+    }
+
+    if (PRACTICE_LIST_VIEWS[route.view]) {
+      if (lastView === 'practice') storageSet('entryFrom', '#/practice');
+      else if (!(lastView && (RUNNER_VIEWS[lastView] || lastView === 'reading' || lastView === 'listening' || lastView === 'translation' || lastView === 'writing'))) {
+        try { window.sessionStorage.removeItem('entryFrom'); } catch (err) { /* ignore */ }
+      }
     }
 
     if (current && typeof current.destroy === 'function') {

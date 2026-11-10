@@ -285,6 +285,15 @@ window.App = window.App || {};
     apply(savedMode === 'todo' || savedMode === 'done' ? savedMode : 'all');
   }
 
+  function practiceBackHtml() {
+    try {
+      if (window.sessionStorage.getItem('entryFrom') === '#/practice') {
+        return '<div class="page-back"><a class="back-link" href="#/practice">' + icon('arrowLeft') + '题目练习</a></div>';
+      }
+    } catch (e) { /* ignore */ }
+    return '';
+  }
+
   function sessionWhen(ts) {
     var d = new Date(ts || Date.now());
     return (d.getMonth() + 1 < 10 ? '0' : '') + (d.getMonth() + 1) + '-' +
@@ -1074,7 +1083,7 @@ window.App = window.App || {};
     }
 
     return {
-      html: pageHead('写作', '真题作文 · 先自己写，再对照范文') +
+      html: practiceBackHtml() + pageHead('写作', '真题作文 · 先自己写，再对照范文') +
         (sets.length
           ? '<div class="set-grid">' + sets.map(card).join('') + '</div>'
           : '<div class="card">' + emptyState('pen', '还没有作文题', '运行 tools/build_writing.py 生成题库') + '</div>')
@@ -1217,6 +1226,69 @@ window.App = window.App || {};
     };
   };
 
+  /* ================= 题目练习 ================= */
+  views.practice = function () {
+    var readingSets = (window.CET4_READING || []).concat(window.CET4_CLOZE || [], window.CET4_MATCHING || []);
+    var listeningSets = window.CET4_LISTENING || [];
+    var translationSets = window.CET4_TRANSLATION || [];
+    var writingSets = window.CET4_WRITING || [];
+
+    function doneCount(kind, sets) {
+      var n = 0;
+      sets.forEach(function (set) { if (A.core.attempt(kind, set.id)) n += 1; });
+      return n;
+    }
+
+    function progress(total, done, unit) {
+      if (!done) return '<span class="muted">' + (unit === '题' ? total + ' 题 · ' : '') + '未做</span>';
+      return '<span>' + total + ' ' + unit + ' · 已做 ' + done + '</span>';
+    }
+
+    var items = [
+      {
+        name: '阅读', href: '#/reading', ic: 'file',
+        desc: '仔细阅读 / 选词填空 / 长篇匹配',
+        total: readingSets.length, done: doneCount('reading', readingSets), unit: '套'
+      },
+      {
+        name: '听力', href: '#/listening', ic: 'headphones',
+        desc: '短篇新闻 / 长对话 / 听力篇章',
+        total: listeningSets.length, done: doneCount('listening', listeningSets), unit: '套'
+      },
+      {
+        name: '翻译', href: '#/translation', ic: 'languages',
+        desc: '段落翻译',
+        total: translationSets.length, done: doneCount('translation', translationSets), unit: '套'
+      },
+      {
+        name: '写作', href: '#/writing', ic: 'pen',
+        desc: '命题作文',
+        total: writingSets.length, done: doneCount('writing', writingSets), unit: '题'
+      }
+    ];
+
+    var cards = items.map(function (item) {
+      return '<article class="set-card practice-card">' +
+        '<h3>' + icon(item.ic) + ' ' + item.name + '</h3>' +
+        '<p class="set-intro">' + item.desc + '</p>' +
+        '<div class="set-status">' + progress(item.total, item.done, item.unit) + '</div>' +
+        '<a class="btn btn-soft" data-practice-link href="' + item.href + '">进入' + item.name + icon('arrowRight') + '</a>' +
+        '</article>';
+    }).join('');
+
+    return {
+      html: pageHead('题目练习', '按题型进入，练习记录自动保存') +
+        '<div class="set-grid practice-grid">' + cards + '</div>',
+      mount: function (root) {
+        root.querySelectorAll('[data-practice-link]').forEach(function (a) {
+          a.addEventListener('click', function () {
+            try { window.sessionStorage.setItem('entryFrom', '#/practice'); } catch (e) { /* ignore */ }
+          });
+        });
+      }
+    };
+  };
+
   /* ================= 阅读 ================= */
   views.reading = function () {
     var careful = window.CET4_READING || [];
@@ -1266,7 +1338,7 @@ window.App = window.App || {};
     }).length;
 
     return {
-      html: pageHead('阅读', '仔细阅读 · 长篇匹配 · 选词填空') + lookup +
+      html: practiceBackHtml() + pageHead('阅读', '仔细阅读 · 长篇匹配 · 选词填空') + lookup +
         filterBarHtml(doneCount, all - doneCount) + tip +
         (all ? body : emptyState('file', '还没有阅读题', '在 assets/js/data/ 中添加题目即可')),
       mount: function (root) {
@@ -2306,7 +2378,7 @@ window.App = window.App || {};
       '<div><strong>关于音频</strong><span>练习音频由浏览器语音合成朗读，音色取决于系统。正式备考建议配合真题音频精听。</span></div></div>';
 
     return {
-      html: pageHead('听力', '长对话 · 听力篇章 · 原文精听') + filterBarHtml(doneCount, sets.length - doneCount) + tip +
+      html: practiceBackHtml() + pageHead('听力', '长对话 · 听力篇章 · 原文精听') + filterBarHtml(doneCount, sets.length - doneCount) + tip +
         (cards ? '<div class="set-grid">' + cards + '</div>' : emptyState('headphones', '还没有听力题', '在 assets/js/data/content.js 中添加题目即可')),
       mount: function (root) { bindSetFilter(root); }
     };
@@ -2661,7 +2733,7 @@ window.App = window.App || {};
       '<div><strong>翻译占 15%（106.5 分）</strong><span>题材集中在传统文化与数字生活。先找主干（谁 + 做了什么），再用从句、分词补修饰；不会的词用简单表达解释，不要留空。</span></div></div>';
 
     return {
-      html: pageHead('翻译', '汉译英 · 得分点检查 · 逐句对照') + filterBarHtml(doneCount, sets.length - doneCount) + tip +
+      html: practiceBackHtml() + pageHead('翻译', '汉译英 · 得分点检查 · 逐句对照') + filterBarHtml(doneCount, sets.length - doneCount) + tip +
         (cards ? '<div class="set-grid">' + cards + '</div>'
           : emptyState('languages', '还没有翻译题', '在 assets/js/data/translation.js 中添加题目即可')),
       mount: function (root) { bindSetFilter(root); }
