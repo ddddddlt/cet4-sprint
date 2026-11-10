@@ -32,6 +32,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './com
 import { Progress } from './components/ui/progress'
 import { cn } from './lib/utils'
 import { applyTheme, currentMode, setTheme } from './lib/theme'
+import { getCloudConfig, hashState, pushCloud, setCloudConfig } from './lib/cloud'
 
 const NAV = [
   { key: 'home', label: '首页', icon: Home, href: '#/' },
@@ -101,6 +102,30 @@ function Shell({ route, children }) {
     window.addEventListener('themechange', onChange)
     return () => window.removeEventListener('themechange', onChange)
   }, [])
+  useEffect(() => {
+    const core = window.App?.core
+    if (!core) return
+    let busy = false
+    async function tick() {
+      const cfg = getCloudConfig()
+      if (!cfg.auto || !cfg.token || !cfg.repo || busy) return
+      const raw = core.exportJSON()
+      if (cfg.lastHash === hashState(raw)) return
+      busy = true
+      try {
+        await pushCloud(core, cfg)
+      } catch (err) {
+        setCloudConfig({ lastError: err.message })
+      } finally {
+        busy = false
+      }
+    }
+    const timer = setInterval(tick, 15000)
+    const onHide = () => { if (document.visibilityState === 'hidden') tick() }
+    document.addEventListener('visibilitychange', onHide)
+    return () => { clearInterval(timer); document.removeEventListener('visibilitychange', onHide) }
+  }, [])
+
   function toggleTheme() {
     const dark = document.documentElement.classList.contains('dark')
     const next = dark ? 'light' : 'dark'

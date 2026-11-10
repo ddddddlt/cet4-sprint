@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { AlertTriangle, ArrowUpRight, Check, Monitor, Moon, Save, Sun } from 'lucide-react'
 import { currentMode, setTheme } from '../lib/theme'
 import { createProfile, listProfiles, removeProfile, renameProfile, switchProfile } from '../lib/profiles'
+import { getCloudConfig, setCloudConfig, pushCloud, pullCloud, testCloud } from '../lib/cloud'
 import { Badge } from '../components/ui/badge'
 import { Button } from '../components/ui/button'
 import { Card, CardContent } from '../components/ui/card'
@@ -101,6 +102,9 @@ export function Settings() {
   const [theme, setThemeMode] = useState(() => currentMode())
   const [profiles, setProfiles] = useState(() => listProfiles())
   const [newName, setNewName] = useState('')
+  const [cloud, setCloud] = useState(() => getCloudConfig())
+  const [cloudBusy, setCloudBusy] = useState(false)
+  const [cloudMsg, setCloudMsg] = useState('')
   const importRef = useRef(null)
 
   useEffect(() => {
@@ -109,6 +113,28 @@ export function Settings() {
     setName(st.settings.name || '')
     setTarget(core.checkTarget())
   }, [st])
+
+  function saveCloud(patch) {
+    const cfg = setCloudConfig({ ...cloud, ...(patch || {}) })
+    setCloud(cfg)
+    return cfg
+  }
+
+  async function runCloud(label, fn) {
+    setCloudBusy(true)
+    setCloudMsg(label + '中…')
+    try {
+      const result = await fn()
+      setCloudMsg(result || (label + '成功'))
+      setCloud(getCloudConfig())
+    } catch (err) {
+      setCloudConfig({ lastError: err.message })
+      setCloudMsg('失败：' + err.message)
+      setCloud(getCloudConfig())
+    } finally {
+      setCloudBusy(false)
+    }
+  }
 
   function exportData() {
     if (!core) return
@@ -211,6 +237,60 @@ export function Settings() {
           </div>
         </CardContent>
       </Card>
+      <Card className="paper-texture mb-4">
+        <CardContent className="p-6">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <h2 className="font-display text-lg font-semibold">云同步 · 当前档案独立</h2>
+              <p className="mt-1 text-xs text-muted-foreground">每个档案绑定自己的仓库和 Token；两人互不覆盖。仓库需为私有仓库，Token 只需 Contents 读写权限。</p>
+            </div>
+            <Badge variant="outline" className="font-normal">GitHub</Badge>
+          </div>
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            <label className="block">
+              <span className="mb-1 block text-xs text-muted-foreground">仓库 owner/repo</span>
+              <input value={cloud.repo} onChange={(e) => setCloud({ ...cloud, repo: e.target.value.trim() })} placeholder="你的用户名/cet4-progress" className="h-10 w-full rounded-md border bg-card px-3 text-sm" />
+            </label>
+            <label className="block">
+              <span className="mb-1 block text-xs text-muted-foreground">文件路径</span>
+              <input value={cloud.path} onChange={(e) => setCloud({ ...cloud, path: e.target.value.trim() })} placeholder="sync/progress.json" className="h-10 w-full rounded-md border bg-card px-3 text-sm" />
+            </label>
+            <label className="block sm:col-span-2">
+              <span className="mb-1 block text-xs text-muted-foreground">Fine-grained GitHub Token（只存在本机）</span>
+              <input type="password" value={cloud.token} onChange={(e) => setCloud({ ...cloud, token: e.target.value.trim() })} placeholder="github_pat_..." autoComplete="off" className="h-10 w-full rounded-md border bg-card px-3 text-sm" />
+            </label>
+          </div>
+          <label className="mt-4 flex items-center gap-2 text-sm">
+            <input type="checkbox" checked={!!cloud.auto} onChange={(e) => saveCloud({ auto: e.target.checked })} />
+            自动上传（每 15 秒检查变更；不会自动覆盖本地）
+          </label>
+          <div className="mt-4 flex flex-wrap gap-2">
+            <Button variant="outline" disabled={cloudBusy} onClick={() => { saveCloud(); setCloudMsg('配置已保存') }}>保存配置</Button>
+            <Button variant="outline" disabled={cloudBusy} onClick={() => { saveCloud(); runCloud('测试连接', async () => {
+              const r = await testCloud(cloud)
+              return r.exists ? '连接成功，云端已有进度' : '连接成功，云端暂无文件（首次上传会创建）'
+            }) }}>测试连接</Button>
+            <Button disabled={cloudBusy} onClick={() => runCloud('上传', async () => {
+              saveCloud()
+              await pushCloud(core, cloud)
+              return '已上传到云端'
+            })}>上传到云端</Button>
+            <Button variant="outline" disabled={cloudBusy} onClick={() => { saveCloud(); runCloud('下载', async () => {
+              if (!window.confirm('从云端恢复会覆盖当前档案的本地进度，确定继续？')) return '已取消'
+              await pullCloud(core, cloud)
+              setTimeout(() => window.location.reload(), 400)
+              return '已下载，正在刷新…'
+            }) }}>从云端恢复</Button>
+          </div>
+          <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-muted-foreground">
+            <span>{cloudMsg || '每个档案使用不同仓库，不要把同一个 Token 填到两个档案。'}</span>
+            {cloud.lastPush ? <span>上次上传 {new Date(cloud.lastPush).toLocaleString()}</span> : null}
+            {cloud.lastPull ? <span>上次恢复 {new Date(cloud.lastPull).toLocaleString()}</span> : null}
+          </div>
+          {cloud.lastError ? <p className="mt-2 rounded-lg bg-rose-50 p-2 text-xs text-rose-800">{cloud.lastError}</p> : null}
+        </CardContent>
+      </Card>
+
       <div className="grid gap-4 lg:grid-cols-2">
         <Card className="paper-texture">
           <CardContent className="space-y-5 p-6">
@@ -238,7 +318,7 @@ export function Settings() {
         <Card className="paper-texture">
           <CardContent className="p-6">
             <h2 className="font-display text-lg font-semibold">更多</h2>
-            <p className="mt-1 text-xs text-muted-foreground">云同步仍保留在旧版；数据导入导出已迁到 v2。</p>
+            <p className="mt-1 text-xs text-muted-foreground">数据导入导出已迁到 v2；旧版设置里的云同步是单文件，不建议两人同时使用。</p>
             <div className="mt-5 space-y-2">
               <div className="flex gap-2">
                 <Button variant="outline" className="flex-1" onClick={exportData}>导出 JSON</Button>
@@ -246,7 +326,7 @@ export function Settings() {
                 <input ref={importRef} type="file" accept="application/json,.json" className="hidden" onChange={importData} />
               </div>
               <a href={legacyUrl('#/settings')} className="flex items-center justify-between rounded-lg border bg-card px-4 py-3 text-sm hover:bg-secondary/40">
-                云同步 / 旧版设置 <ArrowUpRight className="h-4 w-4 opacity-50" />
+                打开旧版设置 <ArrowUpRight className="h-4 w-4 opacity-50" />
               </a>
             </div>
             <div className="mt-6 rounded-lg bg-secondary/40 p-4 text-xs leading-relaxed text-muted-foreground">
