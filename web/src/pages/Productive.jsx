@@ -93,7 +93,7 @@ export function TranslationList() {
   const sets = window.CET4_TRANSLATION || []
   return (
     <>
-      <ListHead title="翻译" description="段落翻译 · 逐句对照 · 自评档位" count={sets.length} />
+      <ListHead title="翻译" description="段落翻译 · 逐句对照 · AI 评分" count={sets.length} />
       <div className="grid gap-3 sm:grid-cols-2">
         {sets.map((set) => {
           const att = core ? core.attempt('translation', set.id) : null
@@ -105,7 +105,7 @@ export function TranslationList() {
               <a href={href} className="block">
                 <div className="flex items-center justify-between">
                   <Badge variant="secondary" className="font-normal">汉译英</Badge>
-                  <Badge variant={att?.graded ? 'default' : 'muted'} className="font-normal">{att?.graded ? `自评 ${att.score}/15 · 标准分 ${toCetStandard('translation', att.score, 15)}` : '未做'}</Badge>
+                  <Badge variant={att?.graded ? 'default' : 'muted'} className="font-normal">{att?.graded ? `评分 ${att.score}/15 · 标准分 ${toCetStandard('translation', att.score, 15)}` : '未做'}</Badge>
                 </div>
                 <h3 className="mt-4 font-display text-lg font-semibold">{set.title}</h3>
                 <p className="mt-1 text-xs text-muted-foreground">{set.topic} · 约 {set.sentences.length} 句</p>
@@ -125,17 +125,12 @@ export function TranslationList() {
   )
 }
 
-const BANDS = [
-  [14, '13–15', '完整准确'], [11, '10–12', '基本完整'], [8, '7–9', '有遗漏'], [5, '4–6', '只译出部分'], [2, '1–3', '难成句'],
-]
-
 export function TranslationRunner({ id }) {
   useCoreReady()
   const core = window.App?.core
   const set = (window.CET4_TRANSLATION || []).find((x) => x.id === id)
   const [texts, setTexts] = useState([])
   const [submitted, setSubmitted] = useState(false)
-  const [band, setBand] = useState(null)
   const [ai, setAi] = useState(null)
   const [aiBusy, setAiBusy] = useState(false)
   const [aiError, setAiError] = useState('')
@@ -155,10 +150,7 @@ export function TranslationRunner({ id }) {
     }
     setTexts(arr)
     const att = core.attempt('translation', set.id)
-    if (att?.graded) {
-      setBand(att.score)
-      setSubmitted(true)
-    }
+    if (att?.graded || att) setSubmitted(true)
     setAi(savedAiGrade('translation:' + set.id))
   }, [id])
 
@@ -175,35 +167,10 @@ export function TranslationRunner({ id }) {
 
   function submit() {
     core.saveDraft(set.id, JSON.stringify(texts))
-    core.recordSet('translation', set.id, band || 0, 15)
+    core.recordSet('translation', set.id, 0, 15)
     setSubmitted(true)
     window.scrollTo(0, 0)
-  }
-
-  function choose(v) {
-    setBand(v)
-    core.gradeTranslation(set.id, v)
-    const qid = 'translation:' + set.id
-    if (v <= 9) {
-      const zh = set.sentences.map((x) => x.zh).join('\n')
-      const en = set.sentences.map((x) => x.en).join('\n')
-      const mine = texts.map((t, i) => `${i + 1}. ${String(t || '').trim() || '（未译）'}`).join('\n')
-      core.wrongQuestion(qid, 'translation', set.id, {
-        stem: `【翻译】${set.title}\n${zh}\n\n我的译文：\n${mine}`,
-        answer: en,
-        explain: '自评 9 分及以下，存在原则性错误、明显遗漏或内容不完整；重新练习后达到 10 分及以上会自动移出错题本。',
-        title: set.title,
-        type: '翻译',
-      })
-      setWrongMsg('已收录进错题本：这道翻译有遗漏或原则性错误')
-    } else {
-      const st = core.getState()
-      if (st.wrong.questions[qid]) {
-        delete st.wrong.questions[qid]
-        core.save()
-      }
-      setWrongMsg('本次没有需要收录的错误')
-    }
+    askAI()
   }
 
   async function askAI() {
@@ -219,6 +186,28 @@ export function TranslationRunner({ id }) {
       })
       setAi(result)
       saveAiGrade('translation:' + set.id, result)
+      core.gradeTranslation(set.id, result.score)
+      const qid = 'translation:' + set.id
+      if (result.score <= 9) {
+        const zh = set.sentences.map((x) => x.zh).join('\n')
+        const en = set.sentences.map((x) => x.en).join('\n')
+        const mine = texts.map((t, i) => `${i + 1}. ${String(t || '').trim() || '（未译）'}`).join('\n')
+        core.wrongQuestion(qid, 'translation', set.id, {
+          stem: `【翻译】${set.title}\n${zh}\n\n我的译文：\n${mine}`,
+          answer: en,
+          explain: `AI 评分 ${result.score}/15，存在遗漏、表达错误或内容不完整；重新批改达到 10 分及以上会自动移出错题本。`,
+          title: set.title,
+          type: '翻译',
+        })
+        setWrongMsg('已收录进错题本：AI 判断存在遗漏或错误')
+      } else {
+        const st = core.getState()
+        if (st.wrong.questions[qid]) {
+          delete st.wrong.questions[qid]
+          core.save()
+        }
+        setWrongMsg('AI 未发现需要收录的原则性问题')
+      }
     } catch (e) {
       setAiError(e.message || 'AI 批改失败')
     } finally {
@@ -229,7 +218,6 @@ export function TranslationRunner({ id }) {
   function redo() {
     setTexts(set.sentences.map(() => ''))
     setSubmitted(false)
-    setBand(null)
     setAi(null)
     setAiError('')
     setWrongMsg('')
@@ -244,7 +232,7 @@ export function TranslationRunner({ id }) {
           <h1 className="font-display text-lg font-semibold">{set.title}</h1>
           <div className="mt-0.5 text-xs text-muted-foreground">汉译英 · {set.sentences.length} 句 · {words} 词</div>
         </div>
-        {!submitted ? <Button onClick={submit}>提交并对照</Button> : null}
+        {!submitted ? <Button onClick={submit}>提交并 AI 批改</Button> : null}
       </div>
 
       <div className="space-y-3">
@@ -274,30 +262,14 @@ export function TranslationRunner({ id }) {
         ))}
       </div>
 
-      {submitted ? (
-        <Card className="mt-4">
-          <CardContent className="p-6">
-            <h2 className="font-display text-lg font-semibold">自评档位</h2>
-            <p className="mt-1 text-xs text-muted-foreground">参考译文不是唯一答案，选择后会计入今日记录。自评 9 分及以下（有遗漏、明显遗漏或原则性错误）会收录错题本，10 分及以上不收录。</p>
-            <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-5">
-              {BANDS.map(([v, label, desc]) => (
-                <button key={v} type="button" onClick={() => choose(v)}
-                  className={`rounded-lg border px-3 py-3 text-left ${band === v ? 'border-primary bg-secondary' : 'bg-card hover:bg-secondary/40'}`}>
-                  <span className="block font-display text-sm font-semibold">{label}</span>
-                  <span className="mt-0.5 block text-[11px] text-muted-foreground">{desc}</span>
-                </button>
-              ))}
-            </div>
-            {wrongMsg ? <p className={`mt-3 text-xs ${band && band <= 9 ? 'text-warning' : 'text-success'}`} aria-live="polite">{wrongMsg}</p> : null}
-            {band ? <p className="mt-4 text-xs text-muted-foreground">四级翻译标准分 <span className="text-foreground">{toCetStandard('translation', band, 15)} / 106.5</span>（按 15 分制比例折算）</p> : null}
-            <div className="mt-5 flex gap-2">
-              <Button variant="outline" asChild><a href="#/translation">返回列表</a></Button>
-              <Button variant="ghost" onClick={redo}>重做</Button>
-            </div>
-          </CardContent>
-        </Card>
-      ) : null}
       {submitted ? <AiReview result={ai} busy={aiBusy} error={aiError} onGrade={askAI} /> : null}
+      {wrongMsg ? <p className={`mt-3 text-xs ${ai && ai.score <= 9 ? 'text-warning' : 'text-success'}`} aria-live="polite">{wrongMsg}</p> : null}
+      {submitted ? (
+        <div className="mt-4 flex flex-wrap gap-2">
+          <Button variant="outline" asChild><a href="#/translation">返回列表</a></Button>
+          <Button variant="ghost" onClick={redo}>重做</Button>
+        </div>
+      ) : null}
     </div>
   )
 }
@@ -308,7 +280,7 @@ export function WritingList() {
   const sets = window.CET4_WRITING || []
   return (
     <>
-      <ListHead title="写作" description="命题作文 · 先写再对照范文" count={sets.length} />
+      <ListHead title="写作" description="命题作文 · AI 评分 + 参考范文" count={sets.length} />
       <div className="grid gap-3 sm:grid-cols-2">
         {sets.map((set) => {
           const att = core ? core.attempt('writing', set.id) : null
@@ -378,6 +350,8 @@ export function WritingRunner({ id }) {
     core.saveWritingDraft(set.id, text)
     core.recordWriting(set.id, words, elapsed)
     setSubmitted(true)
+    window.scrollTo(0, 0)
+    askAI()
   }
 
   async function askAI() {
@@ -425,10 +399,11 @@ export function WritingRunner({ id }) {
             <textarea value={text} onChange={(e) => save(e.target.value)} disabled={submitted}
               placeholder="Write your essay here…"
               className="min-h-64 w-full resize-y rounded-lg border bg-card p-4 font-display text-sm leading-relaxed outline-none focus:ring-2 focus:ring-ring" />
-            {!submitted ? <div className="mt-4 flex justify-end"><Button onClick={submit}>完成并对照</Button></div> : null}
+            {!submitted ? <div className="mt-4 flex justify-end"><Button onClick={submit}>提交并 AI 批改</Button></div> : null}
           </CardContent>
         </Card>
       </div>
+      {submitted ? <AiReview result={ai} busy={aiBusy} error={aiError} onGrade={askAI} /> : null}
       {submitted ? (
         <Card className="mt-4">
           <CardContent className="p-6">
@@ -448,7 +423,6 @@ export function WritingRunner({ id }) {
           </CardContent>
         </Card>
       ) : null}
-      {submitted ? <AiReview result={ai} busy={aiBusy} error={aiError} onGrade={askAI} /> : null}
     </div>
   )
 }
