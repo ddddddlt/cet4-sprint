@@ -43,7 +43,6 @@ import { loadPapers } from './lib/papers'
 
 const NAV = [
   { key: 'home', label: '首页', icon: Home, href: '#/' },
-  { key: 'vocab', label: '抽查', icon: BookMarked, href: '#/vocab' },
   { key: 'practice', label: '题目练习', icon: Layers, href: '#/practice' },
   { key: 'exam', label: '整套模考', icon: FileText, href: '#/exam' },
   { key: 'drill', label: '词汇深练', icon: Sparkles, href: '#/drill' },
@@ -53,9 +52,10 @@ const NAV = [
 
 const BOTTOM = [
   { key: 'home', label: '首页', icon: Home, href: '#/' },
-  { key: 'vocab', label: '抽查', icon: BookMarked, href: '#/vocab' },
   { key: 'practice', label: '练习', icon: Layers, href: '#/practice' },
   { key: 'drill', label: '深练', icon: Sparkles, href: '#/drill' },
+  { key: 'wordbook', label: '单词本', icon: Bookmark, href: '#/wordbook' },
+  { key: 'mistakes', label: '错题本', icon: AlertTriangle, href: '#/mistakes' },
   { key: 'settings', label: '设置', icon: Settings, href: '#/settings' },
 ]
 
@@ -121,6 +121,7 @@ function SearchPalette({ open, onClose }) {
   const rows = useMemo(() => {
     const all = [
       ...NAV.map((x) => ({ ...x, group: '导航' })),
+      { key: 'vocab', label: '抽查单词', icon: BookMarked, href: '#/vocab', group: '导航' },
       ...PRACTICE.map((x) => ({ key: x.key, label: x.name + '练习', icon: x.icon, href: x.href, group: '练习' })),
       ...MODES.map((x) => ({ key: x.key, label: x.name + '训练', icon: x.icon, href: '#/drill/' + x.key, group: '深练' })),
       ...MORE.map((x) => ({ ...x, label: x.label, group: '更多' })),
@@ -437,7 +438,7 @@ function Shell({ route, children, pageAnim = 'page-lateral' }) {
 
       <nav data-tabbar className="glass-tab fixed inset-x-3 bottom-[calc(12px+env(safe-area-inset-bottom))] z-40 mx-auto max-w-[520px] md:max-w-[620px] lg:hidden" aria-label="主导航">
         <div className="relative flex items-stretch p-1">
-          {tabIndex >= 0 ? <span className="tab-liquid" style={{ transform: `translateX(${tabIndex * 100}%)` }} aria-hidden="true" /> : null}
+          {tabIndex >= 0 ? <span className="tab-liquid" style={{ transform: `translateX(${tabIndex * 100}%)`, width: `calc((100% - 8px) / ${BOTTOM.length})` }} aria-hidden="true" /> : null}
           {BOTTOM.map((item) => (
             <a key={item.key} href={item.href} className="tab-item" data-active={tabKey === item.key} aria-current={tabKey === item.key ? 'page' : undefined}>
               <item.icon className="h-[18px] w-[18px]" strokeWidth={1.5} aria-hidden="true" />
