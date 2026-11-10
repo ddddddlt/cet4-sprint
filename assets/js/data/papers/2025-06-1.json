@@ -1,0 +1,452 @@
+{
+ "source": {
+  "year": 2025,
+  "month": 6,
+  "set": 1,
+  "label": "2025年6月·第1套"
+ },
+ "writing": {
+  "id": "w2506-s1",
+  "type": "写作",
+  "title": "2025年6月·第1套 · Writing",
+  "source": "2025年6月·第1套",
+  "minutes": 30,
+  "prompt": "Suppose your university is seeking students' opinions on the necessity of making College Chinese a compulsory course. You are now to write an essay to express your view. You will have 30 minutes for the task. You should write at least 120 words but no more than 180 words.",
+  "sample": "The question of whether College Chinese should be a compulsory course has sparked heated discussion on campus. In my view, making it compulsory is both necessary and wise. Admittedly, some students argue that Chinese is their mother tongue and needs no further study. Yet this view overlooks two facts. First, a solid command of Chinese sharpens our thinking and expression. Many science majors write reports full of grammatical errors and muddled logic, which weakens their careers. A required course would help them communicate clearly. What's more, classical Chinese carries our cultural heritage. Through reading poems and essays, students inherit values and a sense of identity that no other subject offers. Therefore, I firmly believe College Chinese deserves a place as a compulsory course. It is not a burden but an investment in both our language ability and our cultural roots.",
+  "sampleZh": "大学语文是否应设为一门必修课，在校园里引发了热烈讨论。在我看来，把它设为必修既必要又明智。诚然，有些学生认为中文是母语，无需再学。然而这种看法忽视了两点事实。第一，扎实的中文功底能磨练我们的思维与表达。许多理工科学生写出的报告满是语法错误、逻辑混乱，这会拖累他们的职业发展。一门必修课能帮助他们清晰地沟通。此外，古典中文承载着我们的文化遗产。通过阅读诗文，学生得以传承价值观与身份认同，这是任何其他学科都给不了的。因此，我坚信大学语文理应占据一门必修课的位置。它不是负担，而是对我们语言能力与文化根脉的一项投资。",
+  "words": 140
+ },
+ "reading": [
+  {
+   "id": "2506-s1-r1",
+   "type": "仔细阅读",
+   "title": "2025年6月·第1套 · Passage One",
+   "source": "2025年6月·第1套",
+   "minutes": 8,
+   "passage": "New research suggests that pandas may be at risk of dying out because they are too comfortable. Experts say too much happiness can stop the bears from searching for new mates.\n\nEnvironmentalists have long believed that building roads or homes near the bears may threaten their survival by \"reducing or fragmenting their natural: habitats\", The Times reported. But the new research suggests that a \"modest degree of discomfort and fragmentation\" may actually help preserve panda populations.\n\nThe research was conducted by scientists from Michigan State University. It concluded that pandas fail to wander off in search of new mates if they find their habitat too comfortable, resulting in a lack of vital genetic diversity.\n\nFor their study—outlined in a paper in the journal Conservation Biology—the team looked at genetic diversity and spread among a Chinese panda population. The ideal level of perfectly livable habitat was found to be only 80% of an area, with the remainder either too harsh or too affected by human activity.\n\nThe experts concluded that pandas should ideally \"be happy enough to thrive, but not so content that they don't want to move around and find new mates\".\n\nTheir conclusions about what The Guardian described as this \"sweet spot\" are in line with the so-called Goldilocks principle: that there can be just the right amount of something. The concept has been applied to a wide range of disciplines, from developmental psychology to economics and engineering.\n\nClaudio Sillero, a professor of conservation biology at Oxford University, told the newspaper that the new findings could have implications beyond panda conservation.\n\n\"Most large animals that eat meat live in increasingly fragmented landscapes,\" said Sillero, who was not involved in the research. \"It may well be that the messy nature of their relationship with human efforts induces more animals to scatter or travel further, and might result in greater genetic connectivity and enhanced population persistence.\"\n\nThe most recent count of pandas found that there were more than 1,800 left in the wild, putting them on the list of vulnerable, but not endangered, species.",
+   "questions": [
+    {
+     "id": "2506-s1-r46",
+     "stem": "What do we learn from new research about pandas?",
+     "options": [
+      "They are losing habitat due to the building of roads and houses.",
+      "They have stopped seeking new mates for reproduction.",
+      "They may not adapt to the fragmentation of their habitat.",
+      "They may cease to exist as a result of enjoying too good a life."
+     ],
+     "answer": 3,
+     "evidence": "New research suggests that pandas may be at risk of dying out because they are",
+     "explain": "答案 D；定位：New research suggests that pandas may be at risk of dying out because they are"
+    },
+    {
+     "id": "2506-s1-r47",
+     "stem": "What can we conclude from the new research by scientists at Michigan State University?",
+     "options": [
+      "Environmentalists' long-time belief regarding panda conservation may be misleading.",
+      "Housing development near pandas' homes may threaten their survival.",
+      "Pandas' natural habitats are becoming less suitable for reproduction.",
+      "The increased panda population is attributed to the fragmentation of their habitat."
+     ],
+     "answer": 0,
+     "evidence": "The research was conducted by scientists from Michigan State University. It concluded that",
+     "explain": "答案 A；定位：The research was conducted by scientists from Michigan State University. It concluded that"
+    },
+    {
+     "id": "2506-s1-r48",
+     "stem": "What is the experts' conclusion regarding pandas?",
+     "options": [
+      "It is urgent to provide an ideal habitat for them to thrive.",
+      "It is very important to preserve their genetic diversity.",
+      "Their chances of finding new mates have a lot to do with their habitat.",
+      "Their environment for survival has been continuously worsening."
+     ],
+     "answer": 2,
+     "evidence": "The experts concluded that pandas should ideally \"be happy enough to thrive, but not so",
+     "explain": "答案 C；定位：The experts concluded that pandas should ideally \"be happy enough to thrive, but not so"
+    },
+    {
+     "id": "2506-s1-r49",
+     "stem": "What can we infer from the passage about the Goldilocks principle?",
+     "options": [
+      "It needs to be confirmed by more studies on pandas.",
+      "It applies to the preservation of pandas too.",
+      "It has implications for future panda research.",
+      "It can be used to locate the right spot for pandas."
+     ],
+     "answer": 1,
+     "evidence": "Their conclusions about what The Guardian described as this \"sweet spot\" are in line with the",
+     "explain": "答案 B；定位：Their conclusions about what The Guardian described as this \"sweet spot\" are in line with the"
+    },
+    {
+     "id": "2506-s1-r50",
+     "stem": "What can the new findings do according to Professor Sillero?",
+     "options": [
+      "Help discover new ways for the conservation of pandas.",
+      "Help remove pandas from the list of endangered species.",
+      "Shed light on the conservation of most large meat-eating animals.",
+      "Show the complexity of interactions between humans and animals."
+     ],
+     "answer": 2,
+     "evidence": "It may well be that the messy nature of their relationship with human efforts induces more",
+     "explain": "答案 C；定位：It may well be that the messy nature of their relationship with human efforts induces more"
+    }
+   ]
+  },
+  {
+   "id": "2506-s1-r2",
+   "type": "仔细阅读",
+   "title": "2025年6月·第1套 · Passage Two",
+   "source": "2025年6月·第1套",
+   "minutes": 8,
+   "passage": "With those born with natural talents, it feels as if they excel without really trying. But what about those of us who don't have a natural talent? We've been told all our lives that if you work hard, you too can succeed. But with the release of Angela Duckworth's Grit, we are given a new key to success.\n\n\"As much as talent counts, effort counts twice,\" says Duckworth in Grit. She introduces a new concept that talent may be overrated, and if you want real success, what you need is grit, the perfect combination of passion and persistence. Even if you have natural talent, it's nothing without grit.\n\nDuckworth says grit is the difference between success and failure. A person who has grit is more likely to succeed than a person who does not. When we think about attaining success—whether it's landing that job or learning that new skill—our thoughts are immediately burdened by all the things we must first learn. If you want that new job, you have to learn the job skills, then the interview skills, then the dress part—and you must be perfect at all of them. Grit is different because it tells us that perfection isn't the goal.\n\nGrit lifts the unreasonable expectations off our shoulders. Grit tells us that the door is open wider than we first thought possible. Grit allows us to redefine our goals. Think about it: what's something you've always wanted to do, but gave up because you \"don't have the skills for it\"? What's something you love but aren't good at?\n\nThe real workings of grit are to have sustainable passion and continue to try. Effort means more than your natural ability. Even if you haven't mastered a skill, grit tells you that you can still succeed if you can transform your passion into action. In a way, Duckworth is giving new hope to people who have shut the doors on their dreams. She is saying it is possible that you can accomplish anything. If at first you fail, then try one more time with grit.",
+   "questions": [
+    {
+     "id": "2506-s1-r51",
+     "stem": "What does the passage say about people born with natural talents?",
+     "options": [
+      "They seem to outdo others without hard work.",
+      "They appear to know all the secrets to success.",
+      "They feel it only too logical to succeed.",
+      "They are bound to excel effortlessly."
+     ],
+     "answer": 0,
+     "evidence": "With those born with natural talents, it feels as if they excel without really trying.",
+     "explain": "答案 A；定位：With those born with natural talents, it feels as if they excel without really trying."
+    },
+    {
+     "id": "2506-s1-r52",
+     "stem": "What does Duckworth say about talent?",
+     "options": [
+      "It is a new concept much too overrated.",
+      "It proves necessary for big achievements.",
+      "It plays a lesser role in one's success.",
+      "It is a guarantee for real success in life."
+     ],
+     "answer": 2,
+     "evidence": "As much as talent counts, effort counts twice.",
+     "explain": "答案 C；定位：As much as talent counts, effort counts twice."
+    },
+    {
+     "id": "2506-s1-r53",
+     "stem": "What does the passage say about people thinking of attaining success?",
+     "options": [
+      "They are puzzled how to present their best to the employer.",
+      "They are burdened by their expectation of perfection.",
+      "They will try hard to land a job that fits their skills best.",
+      "They will find themselves lacking in all the skills they need."
+     ],
+     "answer": 1,
+     "evidence": "When we think about attaining success—whether it's landing that job or learning that new",
+     "explain": "答案 B；定位：When we think about attaining success—whether it's landing that job or learning that new"
+    },
+    {
+     "id": "2506-s1-r54",
+     "stem": "How does the author think grit can be helpful to us?",
+     "options": [
+      "It allows us to know what we are good at.",
+      "It opens our eyes to new opportunities.",
+      "It focuses our attention on what we do.",
+      "It lets us reconsider the goals to achieve."
+     ],
+     "answer": 3,
+     "evidence": "Grit lifts the unreasonable expectations off our shoulders. Grit tells us that the door is open",
+     "explain": "答案 D；定位：Grit lifts the unreasonable expectations off our shoulders. Grit tells us that the door is open"
+    },
+    {
+     "id": "2506-s1-r55",
+     "stem": "What message does Duckworth try to convey in her book Grit?",
+     "options": [
+      "We should perfect ourselves to ensure success.",
+      "We should stay persistent even in face of failures.",
+      "We can never master a skill without constant practice.",
+      "We can never expect to reach our goals without passion."
+     ],
+     "answer": 1,
+     "evidence": "",
+     "explain": "答案 B"
+    }
+   ]
+  }
+ ],
+ "cloze": {
+  "id": "c2506-s1",
+  "type": "选词填空",
+  "title": "2025年6月·第1套 · Cloze",
+  "source": "2025年6月·第1套",
+  "minutes": 10,
+  "passage": "Psychologists have long been interested in how we construct our identities and the sorts of strategies that we use to present ourselves in society. New findings suggest that the kinds of {{1}} and strategic self-presentation behaviour we see in adults appear at a much younger age than {{2}} known. Research shows that a child's awareness of social standing comes from adults. Like grown-ups, kids want to be {{3}} by those they admire. Interactive experiences may provide opportunities for children to learn about what {{4}} a desirable reputation and the kinds of strategies that are effective for {{5}} a good reputation in their social environment. Five-year-olds aren't just aware of their reputations, they also behave strategically to alter their outward image. They will {{6}} their behaviour in order to appear moral or socially good in the eyes of key observers. While we know that adults use a large variety of attributes to manage and create impressions, we don't yet know whether children {{7}} and use the fact that different attributes are valuable at different times to different {{8}} It's important for us to further consider where in this process children succeed in controlling their reputation and where they {{9}} A question to think about is, \"What happens even earlier than age five?\" Children don't just show up to the first day of kindergarten and have the idea of reputation pop {{10}} into existence. The logical question to ask is, \"What happens even earlier?\"",
+  "bank": [
+   {
+    "k": "A",
+    "w": "accepted"
+   },
+   {
+    "k": "B",
+    "w": "audiences"
+   },
+   {
+    "k": "C",
+    "w": "building"
+   },
+   {
+    "k": "D",
+    "w": "complex"
+   },
+   {
+    "k": "E",
+    "w": "constitutes"
+   },
+   {
+    "k": "F",
+    "w": "deputies"
+   },
+   {
+    "k": "G",
+    "w": "previously"
+   },
+   {
+    "k": "H",
+    "w": "revolving"
+   },
+   {
+    "k": "I",
+    "w": "samples"
+   },
+   {
+    "k": "J",
+    "w": "selected"
+   },
+   {
+    "k": "K",
+    "w": "solemn"
+   },
+   {
+    "k": "L",
+    "w": "struggle"
+   },
+   {
+    "k": "M",
+    "w": "suddenly"
+   },
+   {
+    "k": "N",
+    "w": "understand"
+   },
+   {
+    "k": "O",
+    "w": "vary"
+   }
+  ],
+  "blanks": [
+   {
+    "no": 1,
+    "answer": "D",
+    "explain": "答案 D) complex"
+   },
+   {
+    "no": 2,
+    "answer": "G",
+    "explain": "答案 G) previously"
+   },
+   {
+    "no": 3,
+    "answer": "A",
+    "explain": "答案 A) accepted"
+   },
+   {
+    "no": 4,
+    "answer": "E",
+    "explain": "答案 E) constitutes"
+   },
+   {
+    "no": 5,
+    "answer": "C",
+    "explain": "答案 C) building"
+   },
+   {
+    "no": 6,
+    "answer": "O",
+    "explain": "答案 O) vary"
+   },
+   {
+    "no": 7,
+    "answer": "N",
+    "explain": "答案 N) understand"
+   },
+   {
+    "no": 8,
+    "answer": "B",
+    "explain": "答案 B) audiences"
+   },
+   {
+    "no": 9,
+    "answer": "L",
+    "explain": "答案 L) struggle"
+   },
+   {
+    "no": 10,
+    "answer": "M",
+    "explain": "答案 M) suddenly"
+   }
+  ]
+ },
+ "matching": {
+  "id": "m2506-s1",
+  "type": "长篇匹配",
+  "title": "2025年6月·第1套 · Getting young minds into design",
+  "source": "2025年6月·第1套",
+  "minutes": 15,
+  "paragraphs": [
+   {
+    "k": "A",
+    "text": "Recently, a leading design federation in the UK warned that the UK could face a creative skills shortage, after the latest figures revealed a drop of almost 10 percent in students studying Design and Technology. These figures showed that the number of pupils that sat exams in Design and Technology fell 10 percent from 204,788 to 185,279 last year."
+   },
+   {
+    "k": "B",
+    "text": "Chief executive John Kampfner of the Creative Industries Federation thinks that this drop in figures has worrying implications for the skills pipeline in Britain's hugely successful arts and creative industries. He said, \"We already have skills shortages in many jobs such as animation and special effects.\" He added: \"Engineering, which requires a similar mix of creative and technical skills, also has recruitment problems.\""
+   },
+   {
+    "k": "C",
+    "text": "Many other designers and architects have expressed concern over the future supply of home-grown talent for UK firms, and industry bodies have pointed out that there has been a lack of roots-level support. However, if these designers had visited the Design Museum shop in London earlier this year their fears may have been eased. With £10 to spend, they could have bought a fascinating children's toy called \"Dazzle Racer\". An automotive cylinder, it included a wind-up, elastic- band-powered mechanism, minimal parts, all 100 percent recycled, and lots of stickers. It was good fun, simple, eye-catching and very original."
+   },
+   {
+    "k": "D",
+    "text": "Well, you'd expect the Design Museum to commission and make some interesting items, but this one was different. Designed by a group of six Year 9 and Year 10 boys from Finchley Catholic High School, the toy was the winning entry in the museum's 2015 Design Ventura competition, which brings the business of design to life for students aged 13 to 16 by challenging them to develop a new creative, sustainable and commercially feasible product for the Design Museum shop and attracts hundreds of entries nationwide."
+   },
+   {
+    "k": "E",
+    "text": "\"We did Design Ventura in my previous school,\" says Liam Hourican, Finchley Catholic High School's design technology curriculum leader. \"Then when I changed schools four years ago, I introduced it here because it helps to develop so many skills.\""
+   },
+   {
+    "k": "F",
+    "text": "The theme for last year's competition was \"Move\", and Hourican began with three groups working in lunch breaks and after school before selecting the group with the most innovative idea. Each participating school may submit just one proposal. \"It's the taking part and doing the work which is important,\" he says. \"And I never dreamt we'd win.\""
+   },
+   {
+    "k": "G",
+    "text": "Catherine Ritman Smith, head of learning at the Design Museum, is expecting around 10,000 participants aged 13 to 16 to take part this year and says that the project—funded by Deutsche Bank as part of its youth engagement programme Born To Be—is the biggest event in the museum's calendar. \"We started Design Ventura with around 800 young people in 2010 and it has grown steadily since,\" she says. \"Teachers like it because the skills are all transferable and it helps to validate the value of design as a subject,\" she explains, telling me that nearly 600 schools have taken part so far."
+   },
+   {
+    "k": "H",
+    "text": "So how does the competition work? A single-word theme is announced in the summer. This year it is \"Change\". Schools work with groups to produce imaginative design ideas for a product in simple materials that could sell for £10 in the Design Museum shop. Participating schools then register by November and eventually submit their design idea. Along the way there is training and support for teachers and tutoring for students from designers. An additional bonus is when the winners see their design on sale in the spring of the following year."
+   },
+   {
+    "k": "I",
+    "text": "Hourican and his pupils have happy memories of spending a whole day at the museum, having been selected as one of 10 shortlisted schools to present their idea to a panel of judges, including designer Jasper Conran. Then they worked with the Kin Design Studio in Shoreditch, met designers at their school and attended a lunch with Deutsche Bank employees. The students helped to make decisions and there were plenty of discussions—they changed the product's name, for example."
+   },
+   {
+    "k": "J",
+    "text": "\"One of the really useful things about this competition,\" says Hourican, \"is that there's a commercial element because the product is going on sale for real and the boys had to learn about budgeting and marketing, as well as designing their game.\" Profits go to charity. \"The winning team chooses where it wants the profits to go,\" says Ritman Smith. \"The Finchley Catholic High School product raised about £1,000 for Great Ormond Street Hospital.\" Winning entries in past years have included a make- your-own cloth kit called Dove Bunting and a threefold, wallet-sized travel game with goals at each end, called Badoiiing. Catholic High School"
+   },
+   {
+    "k": "K",
+    "text": "It costs the schools nothing to participate in Design Ventura; the professional designers provide their services for free. Among them are architect Asif Khan, a Design Museum trustee who has worked as designer-in-residence at the museum, helping emerging architects. He has recently been commissioned to design the new Museum of London building in Smithfield. Smithfield"
+   },
+   {
+    "k": "L",
+    "text": "Another is television presenter and interior designer Naomi Cleaver, who is one of the competition's judges. \"I'm very keen to encourage young people,\" she says, observing that design brings together other subjects such as literature, art, history, geography and science. \"Now that design education is limited in the curriculum, I'm all in favour of competitions such as Design Ventura, which helps to bring the standard curriculum to life,\" says Cleaver. \"And the judging day is terrific fun. Some of these students are very imaginative. One group presented their idea in the form of a puppet show and we see some marvelous demonstration models. I'm always impressed by the levels of confidence and the support the students get from their teachers.\""
+   },
+   {
+    "k": "M",
+    "text": "Ritman Smith adds: \"Design technology has become a tricky subject to make a case for, and we've heard of departments closing in some schools. We find that if pupils take part in Design Ventura in Year Nine it can be the trigger which leads them to opt for it at General Certificate of Secondary Education, so we are helping to keep alive something which is crucial to industry and entrepreneurship.\""
+   }
+  ],
+  "statements": [
+   {
+    "id": "2506-s1-m1",
+    "text": "During the course of preparing for Design Ventura, teachers receive training and support while students get tutoring from designers.",
+    "answer": "H",
+    "explain": "答案 H 段；定位：Along the way there is training and support for teachers and tutoring for students"
+   },
+   {
+    "id": "2506-s1-m2",
+    "text": "A visit to the Design Museum shop in London can reduce the designers' fears about the future supply of talents educated in Britain.",
+    "answer": "C",
+    "explain": "答案 C 段"
+   },
+   {
+    "id": "2506-s1-m3",
+    "text": "One of Design Ventura's judges says the competition adds vigour to the standard curriculum in schools.",
+    "answer": "L",
+    "explain": "答案 L 段；定位：Now that design education is limited in the curriculum, I'm all in favour of competitions such"
+   },
+   {
+    "id": "2506-s1-m4",
+    "text": "Enrollment in Design and Technology decreased by nearly ten percent last year in the UK.",
+    "answer": "A",
+    "explain": "答案 A 段；定位：These figures showed that the number of pupils that sat exams in Design and Technology fell"
+   },
+   {
+    "id": "2506-s1-m5",
+    "text": "Participation of ninth graders in Design Ventura can motivate them to choose design technology as their subject.",
+    "answer": "M",
+    "explain": "答案 M 段；定位：We find that if pupils take part in Design Ventura in Year Nine it can be the trigger which"
+   },
+   {
+    "id": "2506-s1-m6",
+    "text": "Design Ventura is welcomed by teachers because it helps to prove the worth of design as a school subject.",
+    "answer": "G",
+    "explain": "答案 G 段；定位：Teachers like it because the skills are all transferable and it helps to validate the value of"
+   },
+   {
+    "id": "2506-s1-m7",
+    "text": "The schools don't have to pay anything to take part in the Design Ventura competition.",
+    "answer": "K",
+    "explain": "答案 K 段；定位：It costs the schools nothing to participate in Design Ventura; the professional designers"
+   },
+   {
+    "id": "2506-s1-m8",
+    "text": "Participants in Design Ventura are challenged to create sustainable and marketable products.",
+    "answer": "D",
+    "explain": "答案 D 段；定位：Designed by a group of six Year 9 and Year 10 boys from Finchley Catholic High School, the"
+   },
+   {
+    "id": "2506-s1-m9",
+    "text": "Students benefit from Design Ventura because they can learn about budgeting and marketing in addition to game design.",
+    "answer": "J",
+    "explain": "答案 J 段；定位：One of the really useful things about this competition is that there's a commercial element"
+   },
+   {
+    "id": "2506-s1-m10",
+    "text": "According to an officer of the Creative Industries Federation, there is difficulty now in recruiting engineers in the UK.",
+    "answer": "B",
+    "explain": "答案 B 段；定位：He said, \"We already have skills shortages in many jobs such as animation and"
+   }
+  ]
+ },
+ "translation": {
+  "id": "t2506-s1",
+  "type": "汉译英",
+  "title": "2025年6月·第1套 · 汉译英",
+  "source": "2025年6月·第1套",
+  "minutes": 15,
+  "zh": "被誉为“杂交水稻（hybrid rice）之父”的袁隆平和他的科研团队克服重重困难，研发出了一种超级杂交水稻。这项技术获得了举世公认的巨大成功。通过这项技术的应用，水稻抗旱抗病能力更强，能适应不同的气候和土壤条件，产量可提高20-30%。超级杂交水稻营养丰富，口感更佳。目前，这项技术已经在许多国家得到广泛应用，为全球粮食安全做出了重大贡献。",
+  "sentences": [
+   {
+    "zh": "被誉为“杂交水稻（hybrid rice）之父”的袁隆平和他的科研团队克服重重困难，研发出了一种超级杂交水稻。",
+    "en": "Yuan Longping, known as the father of hybrid rice, and his research team, overcoming numerous difficulties, developed a super hybrid rice.",
+    "tip": ""
+   },
+   {
+    "zh": "这项技术获得了举世公认的巨大成功。",
+    "en": "This technology has achieved great success recognized worldwide.",
+    "tip": ""
+   },
+   {
+    "zh": "通过这项技术的应用，水稻抗旱抗病能力更强，能适应不同的气候和土壤条件，产量可提高20-30%。",
+    "en": "With the application of this technology, the rice has stronger resistance to drought and disease and can adapt to different climates and soil conditions, and its yield can increase by 20 to 30 percent.",
+    "tip": ""
+   },
+   {
+    "zh": "超级杂交水稻营养丰富，口感更佳。",
+    "en": "In addition, super hybrid rice is rich in nutrition and tastes better.",
+    "tip": ""
+   },
+   {
+    "zh": "目前，这项技术已经在许多国家得到广泛应用，为全球粮食安全做出了重大贡献。",
+    "en": "Currently, this technology has been widely applied in many countries, making great contributions to global food security.",
+    "tip": ""
+   }
+  ],
+  "keyPoints": []
+ }
+}
