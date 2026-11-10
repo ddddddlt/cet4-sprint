@@ -477,7 +477,7 @@ function Dashboard() {
   const remaining = Math.max(0, totalWords - mastered - due)
 
   const tiles = [
-    ...MODES.map((m) => ({ ...m, href: '#/drill/' + m.key, meta: '5 种模式' })),
+    ...MODES.map((m) => ({ ...m, href: '#/drill/' + m.key, meta: '' })),
     { key: 'wordbook', name: '单词本', desc: '收藏词复习', icon: Bookmark, href: '#/wordbook', meta: wordbook + ' 词' },
   ]
 
@@ -554,7 +554,7 @@ function Dashboard() {
                     <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/[.06] text-primary">
                       <tile.icon className="h-4 w-4" strokeWidth={1.5} aria-hidden="true" />
                     </span>
-                    <span className="text-[11px] text-[var(--faint)]">{tile.meta}</span>
+                    {tile.meta ? <span className="text-[11px] text-[var(--faint)]">{tile.meta}</span> : null}
                   </div>
                   <div>
                     <div className="t-card">{tile.name}</div>
