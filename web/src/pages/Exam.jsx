@@ -6,6 +6,7 @@ import { Card, CardContent } from '../components/ui/card'
 import { Progress } from '../components/ui/progress'
 import { cn } from '../lib/utils'
 import { clearExam, evaluate, listPapers, loadExam, makeExam, paperLabel, saveExam, startExam } from '../lib/exam'
+import { toCetStandard } from '../lib/cetScore'
 
 const SECTIONS = [
   { key: 'writing', label: '写作', minutes: 30 },
@@ -50,7 +51,7 @@ export function ExamList() {
         {papers.map(({ paper, index }) => {
           const exam = makeExam(paper, index)
           const state = loadExam(exam.id)
-          const score = state?.result?.score
+          const objectiveStandard = state?.result ? toCetStandard('reading', state.result.score, state.result.total) : 0
           const running = state && !state.submitted
           const href = `#/exam/${index}`
           return (
@@ -62,7 +63,7 @@ export function ExamList() {
                     <h2 className="mt-3 font-display text-xl leading-tight">{paperLabel(paper, index)}</h2>
                   </div>
                   <Badge variant={state?.submitted ? 'default' : running ? 'outline' : 'muted'}>
-                    {state?.submitted ? `${score} / ${state.result.total}` : running ? '进行中' : '未开始'}
+                    {state?.submitted ? `标准分 ${objectiveStandard} / 248.5` : running ? '进行中' : '未开始'}
                   </Badge>
                 </div>
                 <p className="t-meta mt-2">写作 1 · 客观题 30 · 翻译 1 · 125 分钟</p>
@@ -447,18 +448,19 @@ function ExamResult({ exam, state, showReview, setShowReview }) {
           <div className="t-eyebrow">EXAM RESULT</div>
           <h1 className="t-display mt-2">{exam.label}</h1>
           <div className="mt-6 flex flex-wrap items-end gap-4">
-            <div className="t-num text-[42px] leading-none text-primary">{r.score}<span className="text-base text-[var(--faint)]"> / {r.total}</span></div>
-            <div className="pb-1 text-sm text-[var(--faint)]">客观题正确率 {r.pct}%</div>
+            <div className="t-num text-[42px] leading-none text-primary">{toCetStandard('reading', r.score, r.total)}<span className="text-base text-[var(--faint)]"> / 248.5</span></div>
+            <div className="pb-1 text-sm text-[var(--faint)]">客观题标准分（估算） · 答对 {r.score} / {r.total} · 正确率 {r.pct}%</div>
           </div>
           <div className="mt-6 grid gap-2 sm:grid-cols-3">
             {[['阅读', r.reading], ['选词', r.cloze], ['匹配', r.matching]].map(([name, s]) => (
               <div key={name} className="rounded-xl border border-white/10 bg-white/[.04] p-4">
                 <div className="text-xs text-[var(--faint)]">{name}</div>
                 <div className="mt-1 t-num">{s.score} / {s.total}</div>
+                <div className="mt-1 text-[11px] text-primary">标准分 {toCetStandard('reading', s.score, s.total)} / 248.5</div>
               </div>
             ))}
           </div>
-          <p className="mt-4 text-xs text-[var(--faint)]">写作 {r.writingWords} 词 · 翻译 {r.translationWords} 词。写作和翻译不自动打分，可查看参考后自评。</p>
+          <p className="mt-4 text-xs text-[var(--faint)]">写作 {r.writingWords} 词 · 翻译 {r.translationWords} 词。写作和翻译不自动打分，可查看参考后自评；写作、翻译各占 106.5 分，标准分尚未计入。</p>
           <div className="mt-6 flex flex-wrap gap-2">
             <Button variant="primary" onClick={() => setShowReview((v) => !v)}><FileText className="h-4 w-4" /> {showReview ? '收起解析' : '查看解析'}</Button>
             <Button variant="outline" onClick={() => { clearExam(exam.id); window.location.reload() }}><RotateCcw className="h-4 w-4" /> 重新开始</Button>

@@ -5,6 +5,7 @@ import { Button } from '../components/ui/button'
 import { Card, CardContent } from '../components/ui/card'
 import { gradeWithAI, saveAiGrade, savedAiGrade } from '../lib/ai'
 import { restartPractice } from '../lib/practice'
+import { toCetStandard } from '../lib/cetScore'
 
 function useCoreReady() {
   const [ready, setReady] = useState(false)
@@ -33,7 +34,7 @@ function AiReview({ result, busy, error, onGrade }) {
           <div>
             <div className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">AI REVIEW</div>
             <h2 className="mt-1 font-display text-lg font-semibold">AI 批改</h2>
-            <p className="mt-1 text-xs text-muted-foreground">DeepSeek · 15 分制 · 只给建议，不替代自评</p>
+            <p className="mt-1 text-xs text-muted-foreground">DeepSeek · 15 分制 · 自动换算四级标准分</p>
           </div>
           <Button variant="outline" onClick={onGrade} disabled={busy}>
             {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
@@ -47,6 +48,7 @@ function AiReview({ result, busy, error, onGrade }) {
               <span className="font-display text-4xl font-semibold text-primary">{result.score}</span>
               <span className="pb-1 text-xs text-muted-foreground">/ 15 · {result.band || '已批改'}</span>
             </div>
+            <p className="mt-1 text-xs text-muted-foreground">四级标准分 <span className="text-foreground">{toCetStandard(result.kind === 'writing' ? 'writing' : 'translation', result.score, 15)} / 106.5</span>（按 15 分制比例折算）</p>
             {result.summary ? <p className="mt-3 text-sm leading-relaxed">{result.summary}</p> : null}
             {result.strengths?.length ? (
               <div className="mt-4">
@@ -103,7 +105,7 @@ export function TranslationList() {
               <a href={href} className="block">
                 <div className="flex items-center justify-between">
                   <Badge variant="secondary" className="font-normal">汉译英</Badge>
-                  <Badge variant={att?.graded ? 'default' : 'muted'} className="font-normal">{att?.graded ? `自评 ${att.score}/15` : '未做'}</Badge>
+                  <Badge variant={att?.graded ? 'default' : 'muted'} className="font-normal">{att?.graded ? `自评 ${att.score}/15 · 标准分 ${toCetStandard('translation', att.score, 15)}` : '未做'}</Badge>
                 </div>
                 <h3 className="mt-4 font-display text-lg font-semibold">{set.title}</h3>
                 <p className="mt-1 text-xs text-muted-foreground">{set.topic} · 约 {set.sentences.length} 句</p>
@@ -263,6 +265,7 @@ export function TranslationRunner({ id }) {
                 </button>
               ))}
             </div>
+            {band ? <p className="mt-4 text-xs text-muted-foreground">四级翻译标准分 <span className="text-foreground">{toCetStandard('translation', band, 15)} / 106.5</span>（按 15 分制比例折算）</p> : null}
             <div className="mt-5 flex gap-2">
               <Button variant="outline" asChild><a href="#/translation">返回列表</a></Button>
               <Button variant="ghost" onClick={redo}>重做</Button>
@@ -285,6 +288,7 @@ export function WritingList() {
       <div className="grid gap-3 sm:grid-cols-2">
         {sets.map((set) => {
           const att = core ? core.attempt('writing', set.id) : null
+          const ai = core ? core.getState().aiGrades?.['writing:' + set.id] : null
           const draft = core ? core.writingDraft(set.id) : ''
           const progress = !!draft || !!att
           const href = `#/writing/${set.id}`
@@ -293,7 +297,7 @@ export function WritingList() {
               <a href={href} className="block">
                 <div className="flex items-center justify-between">
                   <Badge variant="secondary" className="font-normal">{set.source}</Badge>
-                  <Badge variant={att ? 'default' : 'muted'} className="font-normal">{att ? `已完成 · ${att.words} 词` : '未开始'}</Badge>
+                  <Badge variant={ai || att ? 'default' : 'muted'} className="font-normal">{ai ? `AI ${ai.score}/15 · 标准分 ${toCetStandard('writing', ai.score, 15)}` : att ? `已完成 · ${att.words} 词` : '未开始'}</Badge>
                 </div>
                 <h3 className="mt-4 font-display text-lg font-semibold">{set.topic}</h3>
                 <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{set.prompt}</p>

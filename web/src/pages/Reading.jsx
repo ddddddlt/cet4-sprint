@@ -6,6 +6,7 @@ import { Card, CardContent } from '../components/ui/card'
 import { Progress } from '../components/ui/progress'
 import { cn } from '../lib/utils'
 import { restartPractice } from '../lib/practice'
+import { toCetStandard } from '../lib/cetScore'
 
 function useCoreReady() {
   const [ready, setReady] = useState(false)
@@ -60,7 +61,7 @@ export function ReadingList() {
                     <a href={href} className="block">
                       <div className="flex items-center justify-between gap-2">
                         <Badge variant="secondary" className="font-normal">{set.type}</Badge>
-                        <Badge variant={saved ? 'outline' : att ? 'default' : 'muted'} className="font-normal">{saved ? '进行中' : att ? `最好 ${att.best}/${att.total}` : '未做'}</Badge>
+                        <Badge variant={saved ? 'outline' : att ? 'default' : 'muted'} className="font-normal">{saved ? '进行中' : att ? `最好 ${att.best}/${att.total} · 标准分 ${toCetStandard('reading', att.best, att.total)}` : '未做'}</Badge>
                       </div>
                       <h3 className="mt-4 font-display text-lg font-semibold leading-snug">{set.title}</h3>
                       <p className="mt-1 text-xs text-muted-foreground">{set.topic || set.intro || ''}</p>
@@ -210,7 +211,7 @@ export function ReadingRunner({ id, reviewQ }) {
           <CardContent className="flex flex-wrap items-center justify-between gap-4 p-5">
             <div>
               <div className="font-display text-2xl font-semibold">答对 {score} / {set.questions.length}</div>
-              <p className="mt-1 text-xs text-muted-foreground">错题已加入错题本</p>
+              <p className="mt-1 text-xs text-muted-foreground">错题已加入错题本 · 四级阅读标准分（估算） <span className="text-foreground">{toCetStandard('reading', score, set.questions.length)} / 248.5</span></p>
             </div>
             <Button variant="outline" asChild><a href="#/reading">返回阅读列表</a></Button>
           </CardContent>
@@ -323,7 +324,7 @@ export function ClozeRunner({ id }) {
     <div>
       <RunnerTop title={set.title} meta={`选词填空 · ${set.blanks.length} 空`} />
       {resumed && !submitted ? <div className="mb-3 rounded-lg border bg-card px-4 py-2.5 text-xs text-muted-foreground">已恢复上次作答 · 已填 {Object.keys(answers).length} 空</div> : null}
-      {submitted ? <div aria-live="polite" className="glass-card mb-4 p-4 font-display text-lg">答对 {score} / {set.blanks.length} <a className="ml-3 text-xs text-primary underline" href="#/reading">返回列表</a></div> : null}
+      {submitted ? <div aria-live="polite" className="glass-card mb-4 p-4 font-display text-lg">答对 {score} / {set.blanks.length} <span className="ml-2 text-sm text-muted-foreground">· 四级阅读标准分（估算） {toCetStandard('reading', score, set.blanks.length)} / 248.5</span> <a className="ml-3 text-xs text-primary underline" href="#/reading">返回列表</a></div> : null}
       <div className="grid gap-4">
         <Card className="">
           <CardContent className="p-6 font-display text-sm leading-[2.2]">
@@ -410,7 +411,7 @@ export function MatchingRunner({ id }) {
     <div>
       <RunnerTop title={set.title} meta={`长篇匹配 · ${set.statements.length} 题`} />
       {resumed && !submitted ? <div className="mb-3 rounded-lg border bg-card px-4 py-2.5 text-xs text-muted-foreground">已恢复上次作答 · 已选 {Object.keys(answers).length} 题</div> : null}
-      {submitted ? <div aria-live="polite" className="glass-card mb-4 p-4 font-display text-lg">答对 {score} / {set.statements.length} <a className="ml-3 text-xs text-primary underline" href="#/reading">返回列表</a></div> : null}
+      {submitted ? <div aria-live="polite" className="glass-card mb-4 p-4 font-display text-lg">答对 {score} / {set.statements.length} <span className="ml-2 text-sm text-muted-foreground">· 四级阅读标准分（估算） {toCetStandard('reading', score, set.statements.length)} / 248.5</span> <a className="ml-3 text-xs text-primary underline" href="#/reading">返回列表</a></div> : null}
       <div className="grid gap-4 lg:grid-cols-[1.05fr_.95fr]">
         <Card className="">
           <CardContent className="space-y-4 p-6 font-display text-sm leading-relaxed">

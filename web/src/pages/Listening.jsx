@@ -5,6 +5,7 @@ import { Button } from '../components/ui/button'
 import { Card, CardContent } from '../components/ui/card'
 import { cn } from '../lib/utils'
 import { restartPractice } from '../lib/practice'
+import { toCetStandard } from '../lib/cetScore'
 
 function useCoreReady() {
   const [ready, setReady] = useState(false)
@@ -43,7 +44,7 @@ export function ListeningList() {
               <a href={href} className="block">
                 <div className="flex items-center justify-between">
                   <Badge variant="secondary" className="font-normal">{set.type}</Badge>
-                  <Badge variant={saved ? 'outline' : att ? 'default' : 'muted'} className="font-normal">{saved ? '进行中' : att ? `最好 ${att.best}/${att.total}` : '未做'}</Badge>
+                  <Badge variant={saved ? 'outline' : att ? 'default' : 'muted'} className="font-normal">{saved ? '进行中' : att ? `最好 ${att.best}/${att.total} · 标准分 ${toCetStandard('listening', att.best, att.total)}` : '未做'}</Badge>
                 </div>
                 <h3 className="mt-4 font-display text-lg font-semibold">{set.title}</h3>
                 <p className="mt-1 text-xs text-muted-foreground">{set.intro}</p>
@@ -135,7 +136,7 @@ export function ListeningRunner({ id }) {
 
       {resumed && !submitted ? <div className="mb-3 rounded-lg border bg-card px-4 py-2.5 text-xs text-muted-foreground">已恢复上次作答 · 已答 {Object.keys(answers).length} 题</div> : null}
       {submitted ? (
-        <div aria-live="polite" className="glass-card mb-4 p-4 font-display text-lg">答对 {score} / {set.questions.length} <a className="ml-3 text-xs text-primary underline" href="#/listening">返回列表</a></div>
+        <div aria-live="polite" className="glass-card mb-4 p-4 font-display text-lg">答对 {score} / {set.questions.length} <span className="ml-2 text-sm text-muted-foreground">· 四级听力标准分（估算） {toCetStandard('listening', score, set.questions.length)} / 248.5</span> <a className="ml-3 text-xs text-primary underline" href="#/listening">返回列表</a></div>
       ) : null}
 
       <div className="grid gap-4 lg:grid-cols-[.8fr_1.2fr]">
