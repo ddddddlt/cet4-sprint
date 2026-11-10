@@ -847,6 +847,166 @@ window.App = window.App || {};
     };
   };
 
+  /* ================= 写作 ================= */
+  views.writing = function () {
+    var sets = (window.CET4_WRITING || []).slice().sort(function (a, b) { return a.id < b.id ? 1 : -1; });
+
+    function card(set) {
+      var att = A.core.attempt('writing', set.id);
+      return '<article class="set-card">' +
+        '<div class="set-top"><span class="chip chip-type">' + esc(set.source) + '</span>' +
+        (att ? '<span class="chip status-ok">已完成 · ' + att.words + ' 词</span>' : '<span class="chip">未开始</span>') + '</div>' +
+        '<h3>' + esc(set.topic) + '</h3>' +
+        '<p class="set-intro">' + esc(set.prompt.slice(0, 72)) + '…</p>' +
+        '<div class="set-meta"><span>' + icon('clock') + '30 分钟</span><span>' + icon('pen') + '120–180 词</span><span>' + icon('file') + '范文 ' + set.words + ' 词</span></div>' +
+        '<a class="btn btn-soft" href="#/writing/' + set.id + '">' + (att ? '再写一次' : '开始写作') + icon('arrowRight') + '</a>' +
+        '</article>';
+    }
+
+    return {
+      html: pageHead('写作', '真题作文 · 先自己写，再对照范文') +
+        (sets.length
+          ? '<div class="set-grid">' + sets.map(card).join('') + '</div>'
+          : '<div class="card">' + emptyState('pen', '还没有作文题', '运行 tools/build_writing.py 生成题库') + '</div>')
+    };
+  };
+
+  views.writingRunner = function (ctx) {
+    var set = (window.CET4_WRITING || []).filter(function (x) { return x.id === ctx.params.id; })[0];
+    if (!set) {
+      return { html: pageHead('作文不存在', '回到写作列表重新选择') + '<a class="btn btn-primary" href="#/writing">返回写作</a>' };
+    }
+
+    var root = null;
+    var submitted = !!A.core.attempt('writing', set.id);
+    var startedAt = Date.now();
+    var elapsed = 0;
+    var interval = null;
+    var saveTimer = null;
+
+    function countWords(t) {
+      var m = String(t).trim().match(/[A-Za-z0-9'’-]+/g);
+      return m ? m.length : 0;
+    }
+
+    function sampleHtml() {
+      if (!submitted) return '';
+      return '<section class="card writing-sample" id="wsample">' +
+        '<div class="ws-head"><h2>参考范文</h2><span class="chip">' + set.words + ' 词</span></div>' +
+        '<p class="ws-en">' + esc(set.sample) + '</p>' +
+        (set.sampleZh ? '<details><summary>查看中文译文</summary><p class="ws-zh">' + esc(set.sampleZh) + '</p></details>' : '') +
+        '<div class="ws-actions"><button class="btn btn-ghost" data-rewrite>' + icon('rotate') + '重写本篇</button>' +
+        '<a class="btn btn-primary" href="#/writing">返回写作列表</a></div>' +
+        '</section>';
+    }
+
+    function shell() {
+      return '<div class="runner writing-runner">' +
+        '<div class="runner-top">' +
+        '<a class="back-link" href="#/writing">' + icon('arrowLeft') + '写作</a>' +
+        '<h1 class="runner-title">' + esc(set.source) + ' · ' + esc(set.topic) + '</h1>' +
+        '<span class="chip chip-type">写作</span>' +
+        '<div class="runner-right">' +
+        '<span class="timer" id="timer">' + icon('clock') + ui.mmss(elapsed) + '</span>' +
+        (submitted ? '' : '<button class="btn btn-primary" data-submit>完成</button>') +
+        '</div></div>' +
+        '<div class="writing-grid">' +
+        '<section class="card writing-prompt">' +
+        '<div class="q-type">WRITING TASK</div>' +
+        '<p class="wp-text">' + esc(set.prompt) + '</p>' +
+        '<div class="wp-meta">' + icon('clock') + ' 30 分钟 · ' + set.minWords + '–' + set.maxWords + ' 词</div>' +
+        '</section>' +
+        '<section class="card writing-editor">' +
+        '<div class="we-head"><span>你的作文</span><span id="wcount">0 词</span></div>' +
+        '<textarea id="wtext" class="answer-area" placeholder="Write your essay here..."' + (submitted ? ' disabled' : '') + '>' +
+        esc(A.core.writingDraft(set.id)) + '</textarea>' +
+        (submitted ? '' : '<div class="we-actions"><button class="btn btn-primary" data-submit2>完成并对照范文</button></div>') +
+        '</section></div>' +
+        sampleHtml() +
+        '</div>';
+    }
+
+    function updateCount() {
+      var ta = root.querySelector('#wtext');
+      var el = root.querySelector('#wcount');
+      if (ta && el) el.textContent = countWords(ta.value) + ' 词';
+    }
+
+    function render() {
+      root.innerHTML = storageBanner() + shell();
+      var ta = root.querySelector('#wtext');
+      if (ta && !submitted) {
+        ta.addEventListener('input', function () {
+          updateCount();
+          if (saveTimer) clearTimeout(saveTimer);
+          saveTimer = setTimeout(function () { A.core.saveWritingDraft(set.id, ta.value); }, 400);
+        });
+      }
+      updateCount();
+      root.querySelectorAll('[data-submit], [data-submit2]').forEach(function (b) {
+        b.addEventListener('click', function () { finish(); });
+      });
+      var rewrite = root.querySelector('[data-rewrite]');
+      if (rewrite) rewrite.addEventListener('click', function () {
+        submitted = false;
+        elapsed = 0;
+        startedAt = Date.now();
+        render();
+        startTimer();
+      });
+      if (!submitted) startTimer();
+    }
+
+    function finish() {
+      var ta = root.querySelector('#wtext');
+      var text = ta ? ta.value : A.core.writingDraft(set.id);
+      var words = countWords(text);
+      if (words < 30) {
+        ui.modal({
+          title: '作文还比较短',
+          body: '<p>目前只有 <strong>' + words + '</strong> 词，确定要完成吗？</p>',
+          okText: '仍然完成',
+          onOk: function () { doFinish(text, words); }
+        });
+        return;
+      }
+      doFinish(text, words);
+    }
+
+    function doFinish(text, words) {
+      elapsed = Math.round((Date.now() - startedAt) / 1000);
+      A.core.saveWritingDraft(set.id, text);
+      A.core.recordWriting(set.id, words, elapsed);
+      submitted = true;
+      if (interval) { clearInterval(interval); interval = null; }
+      render();
+      setTimeout(function () {
+        var sample = root.querySelector('#wsample');
+        if (sample) sample.scrollIntoView({ block: 'start' });
+      }, 100);
+    }
+
+    function startTimer() {
+      if (interval) clearInterval(interval);
+      interval = setInterval(function () {
+        var t = root && root.querySelector('#timer');
+        if (!t) return;
+        elapsed = Math.round((Date.now() - startedAt) / 1000);
+        t.innerHTML = icon('clock') + ui.mmss(elapsed);
+      }, 1000);
+    }
+
+    return {
+      html: '',
+      mount: function (r) { root = r; render(); },
+      destroy: function () {
+        if (interval) { clearInterval(interval); interval = null; }
+        if (saveTimer) { clearTimeout(saveTimer); saveTimer = null; }
+        ui.tts.cancel();
+      }
+    };
+  };
+
   /* ================= 阅读 ================= */
   views.reading = function () {
     var careful = window.CET4_READING || [];
@@ -1874,29 +2034,6 @@ window.App = window.App || {};
     };
   };
 
-  /* ================= 翻译增强：AI 回译 / 规则评分 / 错译 SRS ================= */
-  function trSrsList() {
-    var s = A.core.getState();
-    if (!Array.isArray(s.translationSrs)) s.translationSrs = [];
-    return s.translationSrs;
-  }
-  function trSrsDue() {
-    var t = A.core.todayStart();
-    return trSrsList().filter(function (c) { return c.due <= t; });
-  }
-  function trMarks(chars, marks, tag) {
-    var html = '';
-    var open = false;
-    chars.forEach(function (ch, i) {
-      var miss = !marks[i];
-      if (miss && !open) { html += '<' + tag + '>'; open = true; }
-      if (!miss && open) { html += '</' + tag + '>'; open = false; }
-      html += esc(ch);
-    });
-    if (open) html += '</' + tag + '>';
-    return html;
-  }
-
   /* ================= 翻译 ================= */
   views.translation = function () {
     var sets = window.CET4_TRANSLATION || [];
@@ -1922,15 +2059,8 @@ window.App = window.App || {};
     var tip = '<div class="banner tip">' + icon('languages') +
       '<div><strong>翻译占 15%（106.5 分）</strong><span>题材集中在传统文化与数字生活。先找主干（谁 + 做了什么），再用从句、分词补修饰；不会的词用简单表达解释，不要留空。</span></div></div>';
 
-    var due = trSrsDue().length;
-    var srsBanner = due
-      ? '<div class="ts-srs-banner"><div><strong>待复习 ' + due + ' 个表达</strong>' +
-      '<p>来自之前翻译时没译出的得分点，按间隔重复排期</p></div>' +
-      '<a class="btn btn-primary small" href="#/translation/review">开始复习</a></div>'
-      : '';
-
     return {
-      html: pageHead('翻译', '汉译英 · 得分点检查 · 逐句对照') + tip + srsBanner +
+      html: pageHead('翻译', '汉译英 · 得分点检查 · 逐句对照') + tip +
         (cards ? '<div class="set-grid">' + cards + '</div>'
           : emptyState('languages', '还没有翻译题', '在 assets/js/data/translation.js 中添加题目即可'))
     };
@@ -1954,9 +2084,6 @@ window.App = window.App || {};
     var gradedBand = null;
     var wasGraded = false;
     var saveTimer = null;
-    var aiBack = null;
-    var aiLoading = false;
-    var aiError = '';
 
     var BANDS = [
       { v: 14, label: '13–15', desc: '完整准确' },
@@ -2084,164 +2211,14 @@ window.App = window.App || {};
         '<div class="section-head"><div><h2>逐句对照</h2><p>参考译文不是唯一答案，重点看结构</p></div></div>' +
         rows +
         '</section>' +
-        '<section class="card rule-score">' + ruleCard() + '</section>' +
-        '<section class="card ai-back-card">' +
-        '<div class="section-head"><div><h2>AI 机器回译</h2><p>把你的英文译回中文，看看和原文差多少</p></div></div>' +
-        aiBackBlock() +
-        '</section>' +
         '<section class="card grade-card">' +
         '<div class="section-head"><div><h2>自评档位</h2><p>满分 15 分，选择后计入今日记录</p></div></div>' +
         '<div class="grade-row">' + gradeBtns + '</div>' +
         '<p class="grade-note" id="grade-note">' + (wasGraded ? '已记录：' + gradedBand + ' 分档，可重新选择。' : '选择后会计入今日学习记录。') + '</p>' +
-        '<div class="ts-nav">' + (points.length ? '<button class="btn btn-ghost" data-add-srs>' + icon('bookmark') + '未命中得分点加入复习</button>' : '') +
-        '<button class="btn btn-ghost" data-retry>' + icon('rotate') + '重做</button>' +
+        '<div class="ts-nav"><button class="btn btn-ghost" data-retry>' + icon('rotate') + '重做</button>' +
         '<a class="btn btn-primary" href="#/translation">返回列表</a></div>' +
         '</section>' +
         '</div></div>';
-    }
-
-    function ruleStats() {
-      var SE = window.SubjectiveEngine;
-      var text = answers.join(' ').trim();
-      var hit = points.filter(function (p) { return p.hit; }).length;
-      var total = points.length;
-      var coverage = total ? hit / total : 0;
-      var issues = SE ? SE.runRules(text) : [];
-      var errs = issues.filter(function (i) { return i.severity === 'error'; }).length;
-      var warns = issues.length - errs;
-      var refWords = set.sentences.reduce(function (n, s) { return n + wc(s.en); }, 0);
-      var words = wc(text);
-      var ratio = refWords ? words / refWords : 0;
-      var content = total ? Math.round(coverage * 100) : null;
-      var language = Math.max(15, 100 - errs * 9 - warns * 3 - (ratio < 0.6 ? 15 : 0));
-      var fluency = 55 + (ratio >= 0.8 && ratio <= 1.3 ? 35 : ratio >= 0.6 && ratio <= 1.5 ? 22 : 8);
-      if (words / Math.max(1, set.sentences.length) >= 8) fluency += 10;
-      fluency = Math.min(100, fluency);
-      var markers = (text.match(/\b(which|that|who|whose|because|although|though|when|while|whereas|if|since|as)\b/gi) || []).length;
-      var nonFinite = (text.match(/\b(to\s+\w+|by\s+\w+ing|instead\s+of\s+\w+ing)\b/gi) || []).length;
-      var variety = Math.min(100, 55 + markers * 5 + nonFinite * 6);
-      var totalScore = content === null
-        ? Math.round((language * 0.2 + fluency * 0.18 + variety * 0.17) / 0.55)
-        : Math.round(content * 0.45 + language * 0.2 + fluency * 0.18 + variety * 0.17);
-      var band = SE ? SE.bandOf(totalScore) : (totalScore >= 86 ? 14 : totalScore >= 72 ? 11 : totalScore >= 52 ? 8 : totalScore >= 38 ? 5 : 2);
-      var score = SE ? SE.score106(band) : Math.round(band / 15 * 106.5);
-      return {
-        content: content, language: language, fluency: fluency, variety: variety,
-        band: band, score: score, hit: hit, total: total, hasPoints: total > 0
-      };
-    }
-
-    function ruleCard() {
-      var r = ruleStats();
-      var dims = [
-        ['信息完整', r.hasPoints ? r.content : null],
-        ['语言准确', r.language],
-        ['表达流畅', r.fluency],
-        ['句式多样', r.variety]
-      ];
-      return '<div class="section-head"><div><h2>规则评分</h2><p>按信息点、语法规则和长度自动估算，用来对照自评</p></div></div>' +
-        '<div class="rs-head"><strong>' + r.band + '</strong><span>/ 15 分档</span>' +
-        '<em>折合 ' + r.score + ' 分 · ' + (r.hasPoints ? '信息点 ' + r.hit + '/' + r.total : '这套题未标注得分点') + '</em></div>' +
-        '<div class="rs-dims">' + dims.map(function (d) {
-          var v = d[1];
-          return '<div class="rs-dim"><span>' + d[0] + '</span>' +
-            '<div class="rs-bar"><i style="width:' + (v == null ? 0 : v) + '%"></i></div>' +
-            '<strong>' + (v == null ? '—' : v) + '</strong></div>';
-        }).join('') + '</div>' +
-        '<p class="muted small">' +
-        (r.hasPoints ? '规则引擎估算，用于定位问题，不等同于阅卷分数。'
-          : '这套题没有标注得分点，信息完整不参与评分；分数由语言、流畅度和句式三项估算。') +
-        '</p>';
-    }
-
-    function aiBackBlock() {
-      if (aiLoading) {
-        return '<div class="ai-loading"><span class="ai-spinner"></span><span>正在调用 DeepSeek 做机器回译…</span></div>';
-      }
-      if (aiError) {
-        return '<div class="ai-err">' + esc(aiError) + '</div>' +
-          '<div class="ai-back-actions" style="margin-top:12px">' +
-          '<button class="btn btn-primary" data-ai-back>重试</button>' +
-          '<button class="btn btn-ghost" data-ai-settings>AI 设置</button></div>';
-      }
-      if (aiBack) {
-        var avg = aiBack.reduce(function (n, it) { return n + it.sim; }, 0) / Math.max(1, aiBack.length);
-        var pct = Math.round(avg * 100);
-        var tone = pct >= 80 ? 'ok' : pct >= 55 ? 'mid' : 'bad';
-        var rows = aiBack.map(function (it, i) {
-          var p = Math.round(it.sim * 100);
-          return '<div class="ab-row">' +
-            '<div class="ab-head"><span class="ab-no">' + (i + 1) + '</span><span class="ab-sim">还原度 ' + p + '%</span></div>' +
-            '<div class="ab-cols">' +
-            '<div class="ab-col"><span class="ab-label">中文原文（红字没还原）</span><p>' + trMarks(it.cmp.source, it.cmp.sourceMarks, 'del') + '</p></div>' +
-            '<div class="ab-col"><span class="ab-label">AI 回译（绿字原文没有）</span><p>' + trMarks(it.cmp.user, it.cmp.userMarks, 'ins') + '</p></div>' +
-            '</div></div>';
-        }).join('');
-        return '<div class="ab-summary ' + tone + '"><div><strong>' + pct + '%</strong><span>平均还原度</span></div>' +
-          '<p>' + (tone === 'ok' ? 'AI 把你的英文译回中文后，和原文基本一致，主要信息都译出来了。'
-            : tone === 'mid' ? '大部分信息对上了，但有几处意思跑偏或漏译。'
-              : 'AI 回译和原文出入较大，建议对照逐句参考译文再看一遍。') + '</p></div>' +
-          rows +
-          '<div class="ai-back-actions" style="margin-top:12px">' +
-          '<button class="btn btn-ghost" data-ai-back>重新回译</button></div>';
-      }
-      return '<p class="muted small" style="margin-bottom:12px">把这次写的英文交给 DeepSeek 译回中文，再和原文逐句比对：还原度高说明意思传达到了，低说明有漏译或理解偏差。</p>' +
-        '<div class="ai-back-actions"><button class="btn btn-primary" data-ai-back>' + icon('languages') + '开始机器回译</button>' +
-        '<span class="muted small">约 3–10 秒，会产生少量 API 费用</span></div>';
-    }
-
-    function runAIBack() {
-      var LLM = window.DeepSeekLLM;
-      var SE = window.SubjectiveEngine;
-      if (!LLM || !SE) { ui.toast('AI 模块未加载'); return; }
-      if (!LLM.isConfigured()) { LLM.settings(function () { runAIBack(); }); return; }
-      aiLoading = true;
-      aiError = '';
-      render();
-      var lines = set.sentences.map(function (s, i) {
-        return (i + 1) + '. ' + (String(answers[i] || '').trim() || s.en);
-      }).join('\n');
-      var content = '把下面每句英文翻译成自然、通顺的中文，保持原意，不要解释，不要遗漏信息。\n' + lines +
-        '\n\n只输出 JSON：{"translations":["第1句的中文","第2句的中文"]}';
-      LLM.chatJSON([
-        { role: 'system', content: '你是英译中翻译，只输出 JSON，不要输出其他文字。' },
-        { role: 'user', content: content }
-      ], { maxTokens: 1000 }).then(function (data) {
-        var arr = (data && data.translations) || [];
-        aiBack = set.sentences.map(function (s, i) {
-          var zh = String(arr[i] || '').trim();
-          return { zh: zh, sim: zh ? SE.zhSimilarity(s.zh, zh) : 0, cmp: SE.charDiff(s.zh, zh) };
-        });
-        aiLoading = false;
-        render();
-        ui.toast('机器回译完成');
-      }).catch(function (err) {
-        aiLoading = false;
-        aiError = err.message;
-        render();
-        ui.toast(err.message, 'danger');
-      });
-    }
-
-    function addSrs() {
-      if (!points.length) { ui.toast('这套题没有标注得分点，暂时无法生成复习卡'); return; }
-      var list = trSrsList();
-      var seen = {};
-      list.forEach(function (c) { seen[c.id] = true; });
-      var added = 0;
-      points.filter(function (p) { return !p.hit; }).forEach(function (p) {
-        var id = 't:' + set.id + ':' + p.zh;
-        if (seen[id]) return;
-        list.push({
-          id: id, front: p.zh, back: p.en, context: set.title,
-          due: A.core.todayStart(), interval: 0, ease: 2.5, reps: 0, last: 0
-        });
-        seen[id] = true;
-        added += 1;
-      });
-      A.core.save();
-      ui.toast(added ? '已加入 ' + added + ' 张复习卡' : '这次没有未命中的得分点', added ? 'success' : '');
-      render();
     }
 
     function render() {
@@ -2274,15 +2251,6 @@ window.App = window.App || {};
         root.querySelectorAll('[data-band]').forEach(function (b) {
           b.addEventListener('click', function () { chooseBand(+b.getAttribute('data-band')); });
         });
-        root.querySelectorAll('[data-ai-back]').forEach(function (b) {
-          b.addEventListener('click', runAIBack);
-        });
-        var aiSet = root.querySelector('[data-ai-settings]');
-        if (aiSet) aiSet.addEventListener('click', function () {
-          if (window.DeepSeekLLM) window.DeepSeekLLM.settings(function () { runAIBack(); });
-        });
-        var srsBtn = root.querySelector('[data-add-srs]');
-        if (srsBtn) srsBtn.addEventListener('click', addSrs);
       }
       var t = root.querySelector('#timer');
       if (t) t.innerHTML = icon('clock') + ui.mmss(elapsed);
@@ -2349,117 +2317,6 @@ window.App = window.App || {};
         if (saveTimer) clearTimeout(saveTimer);
         if (interval) { clearInterval(interval); interval = null; }
       }
-    };
-  };
-
-  /* ================= 错译表达复习（SRS） ================= */
-  views.translationReview = function () {
-    var root = null;
-    var queue = [];
-    var idx = 0;
-    var revealed = false;
-    var ok = 0;
-    var again = {};
-
-    function find(id) {
-      var list = trSrsList();
-      for (var i = 0; i < list.length; i++) if (list[i].id === id) return list[i];
-      return null;
-    }
-
-    function start() {
-      var due = trSrsDue();
-      if (!due.length) {
-        root.innerHTML = pageHead('错译复习', '来自翻译里没译出的得分点') +
-          emptyState('checkCircle', '没有到期卡片', '去翻译页做完一套，点「未命中得分点加入复习」',
-            '<a class="btn btn-primary" href="#/translation">去翻译</a>');
-        return;
-      }
-      queue = due.map(function (c) { return c.id; });
-      idx = 0;
-      revealed = false;
-      ok = 0;
-      again = {};
-      renderCard();
-    }
-
-    function rate(g) {
-      var card = find(queue[idx]);
-      if (card) {
-        if (g === 1) {
-          card.interval = 0;
-          card.ease = Math.max(1.3, (card.ease || 2.5) - 0.2);
-          card.due = A.core.todayStart();
-        } else {
-          card.ease = Math.min(3, (card.ease || 2.5) + (g === 3 ? 0.1 : -0.05));
-          card.interval = card.reps
-            ? Math.max(1, Math.round((card.interval || 1) * card.ease))
-            : (g === 3 ? 3 : 1);
-          card.due = A.core.addDays(A.core.todayStart(), card.interval);
-        }
-        card.reps = (card.reps || 0) + 1;
-        card.last = Date.now();
-        A.core.save();
-      }
-      if (g === 1 && !again[queue[idx]]) {
-        again[queue[idx]] = true;
-        queue.push(queue[idx]);
-      }
-      if (g >= 2) ok += 1;
-      idx += 1;
-      revealed = false;
-      renderCard();
-    }
-
-    function renderCard() {
-      if (idx >= queue.length) return renderDone();
-      var card = find(queue[idx]);
-      if (!card) { idx += 1; return renderCard(); }
-      root.innerHTML = '<div class="runner">' +
-        '<div class="runner-top"><a class="back-link" href="#/translation">' + icon('arrowLeft') + '翻译</a>' +
-        '<h1 class="runner-title">错译复习</h1><span class="chip chip-type">中译英</span>' +
-        '<div class="runner-right"><span class="timer">' + (idx + 1) + ' / ' + queue.length + '</span></div></div>' +
-        '<div class="srs-wrap"><section class="card srs-card">' +
-        '<span class="srs-tag">得分点</span>' +
-        '<h2 class="srs-front">' + esc(card.front) + '</h2>' +
-        (card.context ? '<p class="srs-context">' + esc(card.context) + '</p>' : '') +
-        (revealed
-          ? '<div class="srs-answer"><span class="srs-label">参考表达</span>' +
-          '<p class="srs-back">' + esc(card.back) + '</p></div>' +
-          '<div class="srs-rate">' +
-          '<button class="btn btn-ghost" data-rate="1">忘记</button>' +
-          '<button class="btn btn-ghost" data-rate="2">模糊</button>' +
-          '<button class="btn btn-primary" data-rate="3">会了</button></div>'
-          : '<button class="btn btn-primary" data-show>显示答案</button>') +
-        '</section></div></div>';
-
-      var show = root.querySelector('[data-show]');
-      if (show) show.addEventListener('click', function () { revealed = true; renderCard(); });
-      root.querySelectorAll('[data-rate]').forEach(function (b) {
-        b.addEventListener('click', function () { rate(+b.getAttribute('data-rate')); });
-      });
-    }
-
-    function renderDone() {
-      root.innerHTML = '<div class="runner">' +
-        '<div class="runner-top"><a class="back-link" href="#/translation">' + icon('arrowLeft') + '翻译</a>' +
-        '<h1 class="runner-title">错译复习</h1></div>' +
-        '<section class="card srs-done"><div class="srs-big">' + ok + '</div>' +
-        '<h2>本轮复习完成</h2>' +
-        '<p class="muted">共 ' + queue.length + ' 张卡，答对 ' + ok + ' 张。选「忘记」的卡片今天会再出现一次。</p>' +
-        '<div class="ts-nav"><a class="btn btn-primary" href="#/translation">返回翻译</a>' +
-        '<button class="btn btn-ghost" data-again>再复习一轮</button></div></section></div>';
-      var againBtn = root.querySelector('[data-again]');
-      if (againBtn) againBtn.addEventListener('click', start);
-    }
-
-    return {
-      html: '',
-      mount: function (r) {
-        root = r;
-        start();
-      },
-      destroy: function () { }
     };
   };
 
@@ -2663,55 +2520,9 @@ window.App = window.App || {};
     var canStore = A.core.storageOK();
     var syncCfg = A.core.syncConfig();
     var syncFmt = function (t) { return t ? new Date(t).toLocaleString() : '—'; };
-    var profiles = A.core.listProfiles();
-    var activeId = A.core.profileId();
-    var aiCfg = window.DeepSeekLLM ? window.DeepSeekLLM.getConfig() : { apiKey: '', model: 'deepseek-chat' };
-    var aiModels = window.DeepSeekLLM ? window.DeepSeekLLM.models : [{ id: 'deepseek-chat', label: 'deepseek-chat' }];
-
-    var profileCard =
-      '<section class="card profile-card">' +
-      sectionHead('学习档案', '两个人各用各的进度，互不影响', '') +
-      '<div class="profile-list">' + profiles.map(function (p) {
-        var on = p.id === activeId;
-        return '<div class="profile-row' + (on ? ' on' : '') + '">' +
-          '<div class="profile-name"><strong>' + esc(p.name) + '</strong>' +
-          (on ? '<span class="chip status-ok">当前</span>' : '') + '</div>' +
-          '<div class="profile-acts">' +
-          (on ? '' : '<button class="btn btn-ghost small" data-profile-switch="' + p.id + '">切换</button>') +
-          '<button class="btn btn-ghost small" data-profile-rename="' + p.id + '">重命名</button>' +
-          (profiles.length > 1 ? '<button class="btn btn-danger-ghost small" data-profile-del="' + p.id + '">删除</button>' : '') +
-          '</div></div>';
-      }).join('') + '</div>' +
-      '<div class="profile-new"><input class="input" id="profile-name" maxlength="12" placeholder="新档案名称，如：小明">' +
-      '<button class="btn btn-primary" id="profile-create">新建并切换</button></div>' +
-      '<p class="field-hint">档案之间完全独立：单词进度、错题、翻译记录、作文记录、AI Key 都分开；切换后页面会刷新。云同步也会按档案写成不同文件。</p>' +
-      '</section>';
-
-    var aiCard =
-      '<section class="card ai-settings-card">' +
-      sectionHead('AI 批改', 'DeepSeek · 可选', '') +
-      '<div class="form">' +
-      field('API Key',
-        '<input class="input" type="password" id="ai-key" autocomplete="off" placeholder="' +
-        (aiCfg.apiKey ? '已保存，重新填写可替换' : 'sk-...') + '">',
-        '只保存在当前档案的本机浏览器里，直连 api.deepseek.com；公共电脑用完请清除') +
-      field('模型',
-        '<select class="input" id="ai-model">' + aiModels.map(function (m) {
-          return '<option value="' + m.id + '"' + (aiCfg.model === m.id ? ' selected' : '') + '>' + esc(m.label) + '</option>';
-        }).join('') + '</select>', '') +
-      '<div class="form-actions">' +
-      '<button class="btn btn-primary" id="ai-save">' + icon('check') + '保存 Key</button>' +
-      '<button class="btn btn-ghost" id="ai-test">测试连接</button>' +
-      (aiCfg.apiKey ? '<button class="btn btn-danger-ghost" id="ai-clear">清除</button>' : '') +
-      '</div>' +
-      '<div class="storage-state ' + (aiCfg.apiKey ? 'ok' : 'bad') + '" id="ai-state">' +
-      icon(aiCfg.apiKey ? 'checkCircle' : 'alert') +
-      '<span>' + (aiCfg.apiKey ? '已配置 · ' + esc(aiCfg.model) : '未配置，AI 批改和机器回译不可用') + '</span></div>' +
-      '</div></section>';
 
     var html = pageHead('设置', '学习计划与数据管理') +
       storageBanner() +
-      profileCard +
       '<div class="grid-2 settings-grid">' +
       '<section class="card">' +
       sectionHead('学习计划', '影响每日任务和倒计时', '') +
@@ -2726,7 +2537,6 @@ window.App = window.App || {};
       '<div class="form-actions"><button class="btn btn-primary" id="save-settings">' + icon('check') + '保存设置</button></div>' +
       '</div>' +
       '</section>' +
-      aiCard +
       '<section class="card">' +
       sectionHead('数据', '数据保存在本机浏览器', '') +
       '<div class="data-actions">' +
@@ -2743,7 +2553,7 @@ window.App = window.App || {};
       '</div>' +
       '</section>' +
       '<section class="card sync-card">' +
-      sectionHead('云同步', '每个学习档案一个进度文件，互不覆盖', '') +
+      sectionHead('云同步', '两台设备共用一个仓库进度文件', '') +
       '<div class="form">' +
       field('GitHub Token',
         '<input class="input" type="password" id="sync-token" autocomplete="off" placeholder="' +
@@ -2818,86 +2628,6 @@ window.App = window.App || {};
             }
           };
           reader.readAsText(f);
-        });
-
-        /* 学习档案 */
-        root.querySelectorAll('[data-profile-switch]').forEach(function (b) {
-          b.addEventListener('click', function () { A.core.switchProfile(b.getAttribute('data-profile-switch')); });
-        });
-        root.querySelectorAll('[data-profile-del]').forEach(function (b) {
-          b.addEventListener('click', function () {
-            var id = b.getAttribute('data-profile-del');
-            ui.modal({
-              title: '删除这个档案？',
-              body: '<p>该档案的单词、错题、翻译、作文记录都会删除，无法恢复。</p>',
-              okText: '删除',
-              danger: true,
-              onOk: function () { A.core.deleteProfile(id); location.reload(); }
-            });
-          });
-        });
-        root.querySelectorAll('[data-profile-rename]').forEach(function (b) {
-          b.addEventListener('click', function () {
-            var id = b.getAttribute('data-profile-rename');
-            ui.modal({
-              title: '重命名档案',
-              body: '<input class="input" id="rename-input" maxlength="12" value="' + esc(A.core.profileName(id)) + '">',
-              okText: '保存',
-              onOk: function (r) {
-                var v = (r.querySelector('#rename-input').value || '').trim();
-                if (!v) { ui.toast('名称不能为空'); return false; }
-                A.core.renameProfile(id, v);
-                location.reload();
-              }
-            });
-          });
-        });
-        var createBtn = root.querySelector('#profile-create');
-        if (createBtn) createBtn.addEventListener('click', function () {
-          var v = (root.querySelector('#profile-name').value || '').trim();
-          if (!v) { ui.toast('先输入档案名称'); return; }
-          A.core.switchProfile(A.core.createProfile(v));
-        });
-
-        /* AI Key */
-        var saveAi = root.querySelector('#ai-save');
-        if (saveAi) saveAi.addEventListener('click', function () {
-          var LLM = window.DeepSeekLLM;
-          if (!LLM) { ui.toast('AI 模块未加载'); return; }
-          var key = (root.querySelector('#ai-key').value || '').trim();
-          var model = root.querySelector('#ai-model').value;
-          var cur = LLM.getConfig();
-          LLM.saveConfig({ apiKey: key || cur.apiKey, model: model, baseURL: cur.baseURL });
-          ui.toast(key ? 'API Key 已保存' : '已保留原来的 Key', 'success');
-          setTimeout(function () { location.reload(); }, 400);
-        });
-        var testAi = root.querySelector('#ai-test');
-        if (testAi) testAi.addEventListener('click', function () {
-          var LLM = window.DeepSeekLLM;
-          if (!LLM) { ui.toast('AI 模块未加载'); return; }
-          var key = (root.querySelector('#ai-key').value || '').trim() || LLM.getConfig().apiKey;
-          if (!key) { ui.toast('先填 API Key'); return; }
-          var stateEl = root.querySelector('#ai-state');
-          testAi.disabled = true;
-          if (stateEl) { stateEl.className = 'storage-state'; stateEl.innerHTML = '<span>正在连接 DeepSeek…</span>'; }
-          LLM.probe({ apiKey: key, model: root.querySelector('#ai-model').value, baseURL: LLM.getConfig().baseURL })
-            .then(function (r) {
-              testAi.disabled = false;
-              if (stateEl) {
-                stateEl.className = 'storage-state ' + (r.ok ? 'ok' : 'bad');
-                stateEl.innerHTML = icon(r.ok ? 'checkCircle' : 'alert') +
-                  '<span>' + esc(r.ok ? '连接成功' : r.error) + '</span>';
-              }
-            });
-        });
-        var clearAi = root.querySelector('#ai-clear');
-        if (clearAi) clearAi.addEventListener('click', function () {
-          var LLM = window.DeepSeekLLM;
-          if (!LLM) return;
-          var cur = LLM.getConfig();
-          LLM.saveConfig({ apiKey: '', model: cur.model, baseURL: cur.baseURL });
-          ui.toast('已清除当前档案的 Key');
-          setTimeout(function () { location.reload(); }, 400);
         });
 
         var autoBox = root.querySelector('#sync-auto');
