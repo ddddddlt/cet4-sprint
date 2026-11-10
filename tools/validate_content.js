@@ -104,10 +104,10 @@ function checkExplainQuote(warnings, id, explain, corpus, field) {
   if (!explain) return;
   var m = String(explain).match(/定位：([\s\S]*)$/);
   if (!m) return;
-  var quote = m[1].replace(/[「」“”"']/g, '').replace(/[\u3400-\u4dbf\u4e00-\u9fff].*$/, '').trim();
+  var quote = m[1].replace(/[「」“”"'’]/g, '').replace(/[\u3400-\u4dbf\u4e00-\u9fff].*$/, '').trim();
   quote = quote.replace(/\s+/g, ' ');
   if (quote.length < 12) return;
-  var hay = String(corpus || '').replace(/[「」“”"']/g, '').replace(/\s+/g, ' ');
+  var hay = String(corpus || '').replace(/[「」“”"'’]/g, '').replace(/\s+/g, ' ');
   if (hay.indexOf(quote) < 0) {
     push(warnings, { id: id, field: field + '.explain', msg: '“定位”引文在原文中找不到', text: snippets(quote, 100) });
   }
