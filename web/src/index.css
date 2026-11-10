@@ -63,12 +63,11 @@
   html {
     -webkit-text-size-adjust: 100%;
     background: var(--bg);
-    scroll-behavior: smooth;
   }
 
   html,
   body {
-    overflow-x: hidden;
+    overflow-x: clip;
   }
 
   body {
@@ -81,7 +80,7 @@
     line-height: 1.6;
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
-    overscroll-behavior: none;
+    overscroll-behavior-x: none;
   }
 
   body::before {
