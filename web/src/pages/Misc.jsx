@@ -323,6 +323,8 @@ export function Settings() {
       const countAttempts = (value) => Object.values(value && value.attempts || {}).reduce((n, bucket) => n + Object.keys(bucket || {}).length, 0)
       setSyncDiag({
         email: supa.session?.user?.email || '—',
+        localUserId: supa.session?.user?.id || '—',
+        remoteUserId: row?.user_id || '—',
         updatedAt: row?.updated_at || '—',
         localWrong: core.wrongQuestions().length,
         remoteWrong: Object.keys(data.wrong?.questions || {}).length,
@@ -567,6 +569,7 @@ export function Settings() {
                       <div className="grid gap-1 sm:grid-cols-2">
                         <span>账号：{syncDiag.email}</span>
                         <span>云端时间：{syncDiag.updatedAt}</span>
+                        <span className="sm:col-span-2">本机用户：{syncDiag.localUserId} · 云端用户：{syncDiag.remoteUserId}</span>
                         <span>本机错题：{syncDiag.localWrong} · 云端错题：{syncDiag.remoteWrong}</span>
                         <span>本机练习：{syncDiag.localAttempts} · 云端练习：{syncDiag.remoteAttempts}</span>
                         <span>上次上传：{syncDiag.lastPush}</span>

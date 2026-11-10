@@ -158,11 +158,11 @@ export async function fetchRemoteSupabase() {
   const { cfg, session } = await ensureSession()
   let rows
   try {
-    rows = await rest('GET', 'progress?select=data,updated_at&user_id=eq.' + encodeURIComponent(session.user.id), cfg, session.access_token)
+    rows = await rest('GET', 'progress?select=data,updated_at,user_id&user_id=eq.' + encodeURIComponent(session.user.id), cfg, session.access_token)
   } catch (e) {
     if (!/登录已过期/.test(e.message)) throw e
     const next = await refresh(cfg)
-    rows = await rest('GET', 'progress?select=data,updated_at&user_id=eq.' + encodeURIComponent(next.user.id), cfg, next.access_token)
+    rows = await rest('GET', 'progress?select=data,updated_at,user_id&user_id=eq.' + encodeURIComponent(next.user.id), cfg, next.access_token)
   }
   return Array.isArray(rows) && rows.length ? rows[0] : null
 }
@@ -185,9 +185,18 @@ export async function testSupabase() {
   return { email: session.user && session.user.email, userId: session.user && session.user.id }
 }
 
+function dataCounts(state) {
+  const attempts = state && state.attempts ? state.attempts : {}
+  return {
+    wrong: Object.keys((state && state.wrong && state.wrong.questions) || {}).length,
+    attempts: Object.values(attempts).reduce((n, bucket) => n + Object.keys(bucket || {}).length, 0),
+  }
+}
+
 export async function pushSupabase(core) {
   const { cfg, session } = await ensureSession()
   const state = JSON.parse(core.exportJSON())
+  const local = dataCounts(state)
   const updatedAt = new Date().toISOString()
   try {
     await rest('POST', 'progress?on_conflict=user_id', cfg, session.access_token, {
@@ -203,6 +212,18 @@ export async function pushSupabase(core) {
       data: state,
       updated_at: updatedAt,
     }, { Prefer: 'resolution=merge-duplicates,return=representation' })
+  }
+  const remote = await fetchRemoteSupabase()
+  if (remote && remote.user_id && remote.user_id !== session.user.id) {
+    const message = '上传后校验失败：云端返回的用户不是当前登录账号'
+    saveSupabaseConfig({ lastError: message })
+    throw new Error(message)
+  }
+  const cloud = dataCounts(remote && remote.data)
+  if (!remote || cloud.wrong !== local.wrong || cloud.attempts !== local.attempts) {
+    const message = '上传后校验失败：云端错题 ' + cloud.wrong + ' / 练习 ' + cloud.attempts + '，本机错题 ' + local.wrong + ' / 练习 ' + local.attempts
+    saveSupabaseConfig({ lastError: message })
+    throw new Error(message)
   }
   const finalHash = canonicalHash(core.exportJSON())
   saveSupabaseConfig({ lastPush: Date.now(), lastHash: finalHash, lastRemoteAt: updatedAt, lastError: '' })
