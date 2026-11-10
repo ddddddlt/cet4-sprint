@@ -139,6 +139,7 @@ export function TranslationRunner({ id }) {
   const [ai, setAi] = useState(null)
   const [aiBusy, setAiBusy] = useState(false)
   const [aiError, setAiError] = useState('')
+  const [wrongMsg, setWrongMsg] = useState('')
 
   useEffect(() => {
     if (!core || !set) return
@@ -182,6 +183,27 @@ export function TranslationRunner({ id }) {
   function choose(v) {
     setBand(v)
     core.gradeTranslation(set.id, v)
+    const qid = 'translation:' + set.id
+    if (v <= 6) {
+      const zh = set.sentences.map((x) => x.zh).join('\n')
+      const en = set.sentences.map((x) => x.en).join('\n')
+      const mine = texts.map((t, i) => `${i + 1}. ${String(t || '').trim() || '（未译）'}`).join('\n')
+      core.wrongQuestion(qid, 'translation', set.id, {
+        stem: `【翻译】${set.title}\n${zh}\n\n我的译文：\n${mine}`,
+        answer: en,
+        explain: '自评 6 分及以下，存在原则性错误或明显遗漏；重新练习后达到 7 分以上会自动移出错题本。',
+        title: set.title,
+        type: '翻译',
+      })
+      setWrongMsg('已收录进错题本：这道翻译有原则性错误')
+    } else {
+      const st = core.getState()
+      if (st.wrong.questions[qid]) {
+        delete st.wrong.questions[qid]
+        core.save()
+      }
+      setWrongMsg('本次没有原则性错误，不收录错题本')
+    }
   }
 
   async function askAI() {
@@ -210,6 +232,7 @@ export function TranslationRunner({ id }) {
     setBand(null)
     setAi(null)
     setAiError('')
+    setWrongMsg('')
     core.clearSession('translation', set.id)
   }
 
@@ -255,7 +278,7 @@ export function TranslationRunner({ id }) {
         <Card className="mt-4">
           <CardContent className="p-6">
             <h2 className="font-display text-lg font-semibold">自评档位</h2>
-            <p className="mt-1 text-xs text-muted-foreground">参考译文不是唯一答案，选择后会计入今日记录</p>
+            <p className="mt-1 text-xs text-muted-foreground">参考译文不是唯一答案，选择后会计入今日记录。仅自评 6 分及以下（有原则性错误/明显遗漏）会收录错题本，7 分以上不收录。</p>
             <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-5">
               {BANDS.map(([v, label, desc]) => (
                 <button key={v} type="button" onClick={() => choose(v)}
@@ -265,6 +288,7 @@ export function TranslationRunner({ id }) {
                 </button>
               ))}
             </div>
+            {wrongMsg ? <p className={`mt-3 text-xs ${band && band <= 6 ? 'text-warning' : 'text-success'}`} aria-live="polite">{wrongMsg}</p> : null}
             {band ? <p className="mt-4 text-xs text-muted-foreground">四级翻译标准分 <span className="text-foreground">{toCetStandard('translation', band, 15)} / 106.5</span>（按 15 分制比例折算）</p> : null}
             <div className="mt-5 flex gap-2">
               <Button variant="outline" asChild><a href="#/translation">返回列表</a></Button>

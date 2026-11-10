@@ -35,7 +35,7 @@ export function Mistakes() {
         <div>
           <div className="mb-2 text-[11px] uppercase tracking-[0.18em] text-muted-foreground">MISTAKES</div>
           <h1 className="font-display text-3xl font-semibold tracking-tight sm:text-4xl">错题本</h1>
-          <p className="mt-2 text-sm text-muted-foreground">按套题归组 · 答错自动收录 · 复习后自动移除</p>
+          <p className="mt-2 text-sm text-muted-foreground">按套题归组 · 答错/原则性错误自动收录 · 复习后自动移除</p>
         </div>
         <Badge variant="outline" className="rounded-md font-normal">{list.length} 题</Badge>
       </div>
@@ -55,11 +55,16 @@ export function Mistakes() {
                 {g.items.map((e) => (
                   <Card key={e.qid} className="">
                     <CardContent className="p-5">
-                      <p className="text-sm leading-relaxed">{e.stem}</p>
+                      <p className="whitespace-pre-line text-sm leading-relaxed">{e.stem}</p>
                       <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                        <Badge variant="outline" className="font-normal">答案 {e.answer}</Badge>
-                        <span>错 {e.count} 次</span>
+                        {e.kind === 'translation' ? <span>错 {e.count} 次</span> : <><Badge variant="outline" className="font-normal">答案 {e.answer}</Badge><span>错 {e.count} 次</span></>}
                       </div>
+                      {e.kind === 'translation' && e.answer ? (
+                        <div className="mt-3 rounded-lg border border-white/10 bg-secondary/30 p-3">
+                          <div className="text-[11px] text-muted-foreground">参考译文</div>
+                          <p className="mt-1 whitespace-pre-line text-xs leading-relaxed">{e.answer}</p>
+                        </div>
+                      ) : null}
                       {e.explain ? <p className="mt-3 rounded-lg bg-secondary/40 p-3 text-xs leading-relaxed text-muted-foreground">{e.explain}</p> : null}
                       {e.setId ? (
                         <a className="mt-3 inline-flex items-center gap-1 text-xs text-primary hover:underline"
