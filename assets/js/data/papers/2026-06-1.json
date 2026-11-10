@@ -1,0 +1,453 @@
+{
+ "source": {
+  "year": 2026,
+  "month": 6,
+  "set": 1,
+  "label": "2026年6月·第1套"
+ },
+ "writing": {
+  "id": "w2606-s1",
+  "type": "写作",
+  "title": "2026年6月·第1套 · Writing",
+  "source": "2026年6月·第1套",
+  "minutes": 30,
+  "prompt": "Suppose it is proposed that university students should be required to participate in at least one research project. You are now to write a response by stating what you think of the proposal in terms of its necessity and practicality. You will have 30 minutes to write the response. You should write at least 120 words but not more than 180 words.",
+  "sample": "Requiring university students to take part in at least one research project is a proposal worth supporting, provided it is implemented flexibly and students can choose topics that interest them. From my perspective, such a policy is both necessary and practical for most undergraduates. First, it is necessary because research experience bridges the gap between textbook knowledge and real-world problem solving. Through a well-designed project, students learn to ask meaningful questions, collect reliable data, and think critically. These abilities are essential for their future careers. Second, it is practical because universities already have laboratories, supervisors, and course projects in place. A single semester-long project can fit into the existing curriculum without placing too much burden on students. Therefore, I support the proposal. It helps students develop practical skills that lectures alone cannot provide, and its flexible design makes it achievable for most universities.",
+  "sampleZh": "要求大学生至少参与一项科研项目是一项值得支持的提案，前提是其能灵活实施，学生也能选择自己感兴趣的课题。在我看来，这项政策对大多数本科生而言既有必要又切实可行。首先，它很有必要，因为科研经历能够弥合课本知识与现实问题解决之间的鸿沟。通过一个设计良好的项目，学生学习提出有意义的问题、收集可靠的数据并进行批判性思考。这些能力对他们未来的职业生涯至关重要。其次，它也很可行，因为高校已经拥有实验室、指导教师和课程项目等资源。一个为期一学期的项目可以嵌入现有课程体系，不会给学生造成过重负担。因此，我支持这一提案。它帮助学生培养课堂讲授无法提供的实践技能，而灵活的设计也让大多数高校能够落实。",
+  "words": 143
+ },
+ "reading": [
+  {
+   "id": "2606-s1-r1",
+   "type": "仔细阅读",
+   "title": "2026年6月·第1套 · Passage One",
+   "source": "2026年6月·第1套",
+   "minutes": 8,
+   "passage": "Is organic food worth the higher price? It's the classic grocery store dilemma. On the one hand, your family dinner table deserves only the best. On the other hand, your wallet can only stretch so far.\n\nWhether or not to buy organic is a personal decision, said Mike von Massow, professor of Food Agriculture.\n\nScience won't give a clear-cut answer to the question of whether organic food is \"better\". There are often trade-offs and answers become less definitive depending on the product under consideration.\n\nOne thing is definitive: Organic and conventionally grown food are equally nutritious. From a nutrition point of view, there is no difference between organic and traditionally grown products.\n\nOrganic products don't necessarily have fewer pesticides—in fact, they may have more. There is also no big difference between organic and non-organic products from a food-safety perspective. Even organic growers use pesticides. Testing shows little if any pesticide remains on conventionally grown products.\n\nIn fact, organic farmers often use larger quantities of pesticide because they can only use the natural variety of insect-killers. Chemical pesticides generally kill a much wider range of pests than any single natural pesticide.\n\nThe use of animal waste in organic agriculture can also be a factor in the spread of bacteria like E. coli and salmonella. Over the past 10 years, Canada has seen more food-safety recalls for organic products, proportionally, than for conventional products.\n\nOn the whole, organic agriculture may have a smaller environmental footprint. That's mostly because the risk of groundwater contamination from organic farming is lower. Organic farmers never use neonics, the controversial pesticides that have been linked to shrinking bee populations worldwide.\n\nTraditional agriculture has been making \"dramatic improvements\" to reduce its impact on the environment.\n\nIt isn't a black-and-white picture, though.\n\nOrganic farming is much less efficient when it comes to land use, although yields vary considerably depending on the crop.\n\nOn the other hand, advocates of organic farming argue yields and efficiency could be significantly improved if the food industry devoted as much research and money to organic farming as it does conventional agriculture.",
+   "questions": [
+    {
+     "id": "2606-s1-r46",
+     "stem": "What is the classic grocery store dilemma?",
+     "options": [
+      "Whether or not one should eat organic food.",
+      "Whether or not one can stretch their wallet far.",
+      "Organic food costs more but it certainly tastes better.",
+      "One wants the best food but their budget is limited."
+     ],
+     "answer": 3,
+     "evidence": "On the one hand, your family dinner table deserves only the best. On the other hand, your",
+     "explain": "答案 D；定位：On the one hand, your family dinner table deserves only the best. On the other hand, your"
+    },
+    {
+     "id": "2606-s1-r47",
+     "stem": "What do we learn about organic food from science?",
+     "options": [
+      "Whether it is any better remains uncertain.",
+      "Whether it is healthier is under consideration.",
+      "Whether it is more nutritious than conventional food is arguable.",
+      "Whether it is going to replace conventional food is still unclear."
+     ],
+     "answer": 0,
+     "evidence": "Science won't give a clear-cut answer to the question of whether organic food is 'better'.",
+     "explain": "答案 A；定位：Science won't give a clear-cut answer to the question of whether organic food is 'better'."
+    },
+    {
+     "id": "2606-s1-r48",
+     "stem": "What does the passage say about organic and non-organic products as far as food safety is",
+     "options": [
+      "Their difference is the conventions used to test them.",
+      "They differ in how much pesticide remains on them.",
+      "One relies on pesticides whereas the other does not.",
+      "There is no substantial difference between the two."
+     ],
+     "answer": 3,
+     "evidence": "There is also no big difference between organic and non-organic products from a food-",
+     "explain": "答案 D；定位：There is also no big difference between organic and non-organic products from a food-"
+    },
+    {
+     "id": "2606-s1-r49",
+     "stem": "What does the author say about organic farming?",
+     "options": [
+      "It may be blamed for the shrinking bee populations in the world.",
+      "It minimizes the use of controversial pesticides in its operations.",
+      "It may impact the environment less than conventional farming.",
+      "It contaminates groundwater as much as conventional farming."
+     ],
+     "answer": 2,
+     "evidence": "On the whole, organic agriculture may have a smaller environmental footprint.",
+     "explain": "答案 C；定位：On the whole, organic agriculture may have a smaller environmental footprint."
+    },
+    {
+     "id": "2606-s1-r50",
+     "stem": "What do advocates of organic farming argue about its yields and efficiency?",
+     "options": [
+      "They would increase quickly with the emergence of new technologies.",
+      "They would improve remarkably with more research and investment.",
+      "They would be achieved along with enormous health benefits.",
+      "They would considerably lower the cost to the environment."
+     ],
+     "answer": 1,
+     "evidence": "On the other hand, advocates of organic farming argue yields and efficiency could be",
+     "explain": "答案 B；定位：On the other hand, advocates of organic farming argue yields and efficiency could be"
+    }
+   ]
+  },
+  {
+   "id": "2606-s1-r2",
+   "type": "仔细阅读",
+   "title": "2026年6月·第1套 · Passage Two",
+   "source": "2026年6月·第1套",
+   "minutes": 8,
+   "passage": "It is still controversial whether we are fundamentally generous or selfish and whether these tendencies are shaped by our genes or environment.\n\nSome evidence points to humans being born cooperative. At later stages in life we routinely work together to reach goals and help out in times of need.\n\nYet instances of selfish behavior are also plenty. One recent study tested people's willingness to set aside selfish interests to reach a greater good. It found that being selfish was more advantageous than cooperating. The benefit may be short-lived, however. Another study showed that players who cooperated did better in the long run.\n\nIt seems that human nature supports both pro-social and selfish traits. Genetic studies have made some progress toward identifying their biological roots. By comparing identical twins, who share nearly 100 percent of their genes, and non-identical twins, who share about half, researchers have found overwhelming evidence for genetic effects on behaviors. In these twin studies, identical and non-identical twins are asked, for example, to split a sum of money with a peer. Such studies often also rely on careful psychological assessments and DNA analysis.\n\nOther work highlights specific genes as key players. My colleagues and I recently identified a gene linked to altruistic behavior and found that a particular variant of it was associated with more selfish behavior in preschoolers.\n\nAccording to evolutionary scientists, cooperative behavior may have evolved first among relatives to promote the continuation of their genetic line. As communities diversified, mutual support could have broadened to include individuals not linked by blood. Another possibility is that humans cooperate to gain some advantage, such as boosting reputation. Finally, evolutionary processes take place at the group level. Groups of highly cooperative individuals have higher chances of survival because they can work together to reach goals that are unattainable to less cooperative groups.\n\nYet almost no behavior is entirely genetic, even among identical twins. Culture, schooling and parenting are important determinants of cooperation. Thus, the degree to which we act cooperatively or selfishly is unique to each individual and depends on a variety of genetic and environmental influences.",
+   "questions": [
+    {
+     "id": "2606-s1-r51",
+     "stem": "What is the finding of one recent study about being selfish?",
+     "options": [
+      "It may bring certain benefits in the short term.",
+      "It usually yields more disadvantages than advantages.",
+      "It serves individual interest rather than a collective's.",
+      "It may give way to cooperating in the long run."
+     ],
+     "answer": 0,
+     "evidence": "One recent study tested people's willingness to set aside selfish interests to reach a greater",
+     "explain": "答案 A；定位：One recent study tested people's willingness to set aside selfish interests to reach a greater"
+    },
+    {
+     "id": "2606-s1-r52",
+     "stem": "What have researchers found by studying identical and non-identical twins?",
+     "options": [
+      "They are overwhelmingly different in the amounts of genes.",
+      "One's behavior is largely determined by their genetic traits.",
+      "One's biological roots can be identified by their genes.",
+      "They differ from each other in their behavior patterns."
+     ],
+     "answer": 1,
+     "evidence": "By comparing identical twins, who share nearly 100 percent of their genes, and non-identical",
+     "explain": "答案 B；定位：By comparing identical twins, who share nearly 100 percent of their genes, and non-identical"
+    },
+    {
+     "id": "2606-s1-r53",
+     "stem": "What did the author and colleagues identify in their recent research?",
+     "options": [
+      "A gene-related selfish behavior in preschool children.",
+      "Key factors that determine one's altruistic behavior.",
+      "A specific gene associated with altruistic behavior.",
+      "Roles played by genes in shaping one's character."
+     ],
+     "answer": 2,
+     "evidence": "My colleagues and I recently identified a gene linked to altruistic behavior and",
+     "explain": "答案 C；定位：My colleagues and I recently identified a gene linked to altruistic behavior and"
+    },
+    {
+     "id": "2606-s1-r54",
+     "stem": "What do we learn from evolutionary scientists about cooperative behavior?",
+     "options": [
+      "It may have initially originated in individuals linked by blood.",
+      "It may have caused the diversification of communities.",
+      "It helps to build relationships among blood-related people.",
+      "It guarantees the achievement of goals otherwise unattainable."
+     ],
+     "answer": 0,
+     "evidence": "According to evolutionary scientists, cooperative behavior may have evolved first among",
+     "explain": "答案 A；定位：According to evolutionary scientists, cooperative behavior may have evolved first among"
+    },
+    {
+     "id": "2606-s1-r55",
+     "stem": "What can we infer from the last paragraph?",
+     "options": [
+      "Cooperative behavior is evident among identical twins.",
+      "One is born either cooperative or non-cooperative.",
+      "Genes determine one's tendency to cooperate.",
+      "Cooperative behavior may be cultivated."
+     ],
+     "answer": 3,
+     "evidence": "Yet almost no behavior is entirely genetic, even among identical twins. Culture, schooling",
+     "explain": "答案 D；定位：Yet almost no behavior is entirely genetic, even among identical twins. Culture, schooling"
+    }
+   ]
+  }
+ ],
+ "cloze": {
+  "id": "c2606-s1",
+  "type": "选词填空",
+  "title": "2026年6月·第1套 · Cloze",
+  "source": "2026年6月·第1套",
+  "minutes": 10,
+  "passage": "One of the biggest controversies over the Industrial Revolution is how it affected the working class. The oldest debates were over whether the standards of living rose or fell. Those that believed they fell claimed that the capitalists{{1}}every ounce of surplus they could from the working class. Those that believed the standards of living rose claimed that the environment was consumer-friendly, with more and more goods{{2}}to the working class every year. Today's historians agree that overall, the standards of living{{3}}. They do not agree, however, on when this improvement{{4}}. In an effort to solve this controversy, historians have attempted to define{{5}}what \"standard of living\" means. They all seem to agree that it should mean happiness, but happiness is impossible to measure. Instead, historians{{6}}use \"real income\" as the measure for the standards of living. Real income is money{{7}}and then adjusted according to the cost of living. However, it does not take into account unemployment, pollution, health, life expectancy, or free time. After{{8}}debate and analysis of the average income, historians have agreed to disagree on whether there was rapid or slow economic growth during the Industrial Revolution. Instead, they have decided to{{9}}how the Industrial Revolution was affected by other events. They have determined that the Industrial Revolution had an overall positive{{10}}, but it quite possibly was neutralized by negative events such as wars, high taxes, and rapid population growth.",
+  "bank": [
+   {
+    "k": "A",
+    "w": "available"
+   },
+   {
+    "k": "B",
+    "w": "deteriorating"
+   },
+   {
+    "k": "C",
+    "w": "earned"
+   },
+   {
+    "k": "D",
+    "w": "effect"
+   },
+   {
+    "k": "E",
+    "w": "enhance"
+   },
+   {
+    "k": "F",
+    "w": "exactly"
+   },
+   {
+    "k": "G",
+    "w": "exhausting"
+   },
+   {
+    "k": "H",
+    "w": "experience"
+   },
+   {
+    "k": "I",
+    "w": "increased"
+   },
+   {
+    "k": "J",
+    "w": "interpret"
+   },
+   {
+    "k": "K",
+    "w": "occurred"
+   },
+   {
+    "k": "L",
+    "w": "peculiar"
+   },
+   {
+    "k": "M",
+    "w": "probably"
+   },
+   {
+    "k": "N",
+    "w": "squeezed"
+   },
+   {
+    "k": "O",
+    "w": "typically"
+   }
+  ],
+  "blanks": [
+   {
+    "no": 1,
+    "answer": "N",
+    "explain": "答案 N) squeezed"
+   },
+   {
+    "no": 2,
+    "answer": "A",
+    "explain": "答案 A) available"
+   },
+   {
+    "no": 3,
+    "answer": "I",
+    "explain": "答案 I) increased"
+   },
+   {
+    "no": 4,
+    "answer": "K",
+    "explain": "答案 K) occurred"
+   },
+   {
+    "no": 5,
+    "answer": "F",
+    "explain": "答案 F) exactly"
+   },
+   {
+    "no": 6,
+    "answer": "O",
+    "explain": "答案 O) typically"
+   },
+   {
+    "no": 7,
+    "answer": "C",
+    "explain": "答案 C) earned"
+   },
+   {
+    "no": 8,
+    "answer": "G",
+    "explain": "答案 G) exhausting"
+   },
+   {
+    "no": 9,
+    "answer": "J",
+    "explain": "答案 J) interpret"
+   },
+   {
+    "no": 10,
+    "answer": "D",
+    "explain": "答案 D) effect"
+   }
+  ]
+ },
+ "matching": {
+  "id": "m2606-s1",
+  "type": "长篇匹配",
+  "title": "2026年6月·第1套 · The Star Quality of New Zealand's Great Barrier Island",
+  "source": "2026年6月·第1套",
+  "minutes": 15,
+  "paragraphs": [
+   {
+    "k": "A",
+    "text": "I was glad I had such terrible jetlag. Wide awake at 3:30 am with our nine-year-old daughter on our lodge balcony, I stared for hours at the most incredible night sky I've ever seen before the dawn slowly started to rub out the stars on the horizon and the multiple shooting stars faded away."
+   },
+   {
+    "k": "B",
+    "text": "We were going to my wife's big family reunion in Auckland, New Zealand, but when we found out that Great Barrier Island, just off the coast, had been recently awarded Dark Sky Sanctuary status—a typically remote area that has an \"exceptional or distinguished quality of starry nights\"—we thought it would be the perfect place to relax before our busy schedule. It's the first island and only the fourth location in the world to achieve this status."
+   },
+   {
+    "k": "C",
+    "text": "After a 28-hour flight with two travel-sick children, our hearts sank when we saw the tiny twin engine 10-seater that was to take us the 90km across the Hauraki Gulf to Great Barrier Island. But we needn't have worried. Whether it was the gravity force of the plane climbing or the noise of the engine, it put our three-year-old daughter instantly to sleep until we bumped down on the grass at Claris Airport. Our first empty sick bag against all the odds…Things were looking up."
+   },
+   {
+    "k": "D",
+    "text": "Great Barrier Island has no public facilities and the 950 people living there (though only about half permanently) rely on solar and wind energy, and bottled gas for cooking. There are no streetlights. There are no cash machines or banks. The police force comprises a husband and wife, and there's one postman. It's not just the lack of light but the lack of noise that's so delightful on this unique and gorgeous scene. It was first discovered by East Polynesians about 700 years ago and the Maori name for the island is Aotea. Captain Cook gave the island its European name, because it acts as a barrier between the Pacific and the Hauraki Gulf."
+   },
+   {
+    "k": "E",
+    "text": "The climate here is subtropical like Auckland's. The island boasts a beautiful wilderness with dense forests, glorious, unspoilt sandy beaches and plenty of bays and a few mountainous areas where there are good walking tracks among the wetlands and valleys. You can birdwatch, dive, surf and boat. The best beaches are on the eastern side of the island where the surf is better, too. The sheltered western side is where you'll find the best diving and boating. Lots of people come here for the fantastic fishing spots around the island. Like a lot of spots in New Zealand, there are whale- watching trips and you might just catch sight of sharks."
+   },
+   {
+    "k": "F",
+    "text": "It's rare to find an island that really does feel undiscovered—but this is it. When one of my wife's relations, who comes here regularly, found out that we'd been there, he whispered to us, only half- joking: \"Shh—don't tell anyone!\" The locals are a relaxed and friendly bunch—a lot of them told us that it's like what Waiheke Island (now in effect a suburb of Auckland) was in the 1970s when it was a commune of artists and people wanting to escape the city."
+   },
+   {
+    "k": "G",
+    "text": "Our guide for some of our stay was the inestimable Hilde Hoven, a Dark Sky ambassador who runs Good Heavens with Deborah Kilgallon and Orla Cumisky. They bring their Dobsonian telescope and beanbags (it's hard work staring up wide-eyed in wonder without neck support) and, our elder daughter was glad to hear, hot chocolate to wherever you are on the island. \"It's odd but when the light readings were done,\" said Hilde, explaining how the island was awarded its special status, \"they found there was more light pollution on the northern side coming from Fiji, which is about 3,000km away, than Auckland to the south. It's pretty dark!\""
+   },
+   {
+    "k": "H",
+    "text": "Beginning their astronomical PowerPoint demonstration using a green laser pointer, Hilde and Orla showed us the Messier 4 spherical cluster with white dwarf stars, Saturn and its rings, the Southern Cross and the Milky Way, which stretched across the sky. Our daughter was especially taken with Hilde's narrating of the Maori myth of Māui's fish hook to explain the shape of Scorpius. In the fable, Māui hauled the North Island of New Zealand from the bottom of the ocean with his hook."
+   },
+   {
+    "k": "I",
+    "text": "We stayed at Mount St Paul's Estate, a luxurious lodge run by the friendly Chris and Teara, both from Canada. Teara used to be a chef at the Langham in Auckland and so dinner, eaten around a huge circular table (made of one of the most ancient trees in the world), was every bit as mouth- watering as you'd expect. Eating pancakes on the balcony overlooking the unspoilt white sandy beach was a great way to start the day."
+   },
+   {
+    "k": "J",
+    "text": "Another highlight was an hour-long walk to Kaitoke hot pools in the centre of the island, through wetlands and a forest, where we whiled away a good hour sitting in the pools shaded from the heat by layers of delicate umbrella-like plants."
+   },
+   {
+    "k": "K",
+    "text": "We also loved visiting the potter Sarah Harrison, who showed us round her studio at Shoal Bay harbour, and her many pots and jugs, plates and bowls and colourful mosaics. In her work, she also uses a lot of materials found on the beach. Our elder daughter loved the gorgeous hidden pool at Medlands beach where the water is separated from the sea in a private rock pool. Other high points were the ancient pōhutukawa trees and the incredible views of Okiwi Basin and"
+   },
+   {
+    "k": "L",
+    "text": "Apparently the island council turned down famous musician Paul McCartney's application to buy a property at Great Barrier Island because of the unwelcome attention he would have brought. You can see why he wanted to come here; equally, the island knows exactly what kind of star watching it prefers."
+   }
+  ],
+  "statements": [
+   {
+    "id": "2606-s1-m1",
+    "text": "The author's daughter slept throughout the last leg of their flight to Great Barrier Island.",
+    "answer": "C",
+    "explain": "答案 C 段；定位：Whether it was the gravity force of the plane climbing or the noise of the engine, it put"
+   },
+   {
+    "id": "2606-s1-m2",
+    "text": "The lodge where the author stayed provided very delicious food.",
+    "answer": "I",
+    "explain": "答案 I 段"
+   },
+   {
+    "id": "2606-s1-m3",
+    "text": "Many people are attracted to Great Barrier Island because of the incredible fishing sites around it.",
+    "answer": "E",
+    "explain": "答案 E 段；定位：Lots of people come here for the fantastic fishing spots around the island."
+   },
+   {
+    "id": "2606-s1-m4",
+    "text": "A well-known artist failed to purchase a house on Great Barrier Island.",
+    "answer": "L",
+    "explain": "答案 L 段；定位：Apparently the island council turned down famous musician Paul McCartney's application"
+   },
+   {
+    "id": "2606-s1-m5",
+    "text": "Unable to fall asleep after a long flight, the author was pleased to enjoy the most gorgeous view of the night sky in his life.",
+    "answer": "A",
+    "explain": "答案 A 段；定位：Wide awake at 3:30 am with our nine-year-old daughter on our lodge balcony, I stared for"
+   },
+   {
+    "id": "2606-s1-m6",
+    "text": "Great Barrier Island is compared to another island which attracted a lot of artists and people who wished to stay away from city life half a century ago.",
+    "answer": "F",
+    "explain": "答案 F 段；定位：The locals are a relaxed and friendly bunch—a lot of them told us that it's like what Waiheke"
+   },
+   {
+    "id": "2606-s1-m7",
+    "text": "One most memorable part of the author's visit to Great Barrier Island was a one-hour walk to its centre's hot springs.",
+    "answer": "J",
+    "explain": "答案 J 段；定位：Another highlight was an hour-long walk to Kaitoke hot pools in the centre of the island,"
+   },
+   {
+    "id": "2606-s1-m8",
+    "text": "Great Barrier Island has officially been recognized for its extraordinary starry nights.",
+    "answer": "B",
+    "explain": "答案 B 段；定位：Great Barrier Island, just off the coast, had been recently awarded Dark Sky Sanctuary status"
+   },
+   {
+    "id": "2606-s1-m9",
+    "text": "Great Barrier Island is not connected to any public power supply lines.",
+    "answer": "D",
+    "explain": "答案 D 段；定位：Great Barrier Island has no public facilities and the 950 people living there (though only"
+   },
+   {
+    "id": "2606-s1-m10",
+    "text": "It is strange that light pollution on Great Barrier Island mainly comes from a faraway island to the north.",
+    "answer": "G",
+    "explain": "答案 G 段；定位：they found there was more light pollution on the northern side coming from Fiji, which is"
+   }
+  ]
+ },
+ "translation": {
+  "id": "t2606-s1",
+  "type": "汉译英",
+  "title": "2026年6月·第1套 · 汉译英",
+  "source": "2026年6月·第1套",
+  "minutes": 15,
+  "zh": "中国有句老话：\"一日为师，终身为父\"。在中国人的观念里，老师不仅传授知识，更教给学生做人的道理。在古代，学生初次见老师时要举行隆重的仪式，足见老师地位之高。为弘扬尊师的优良传统，中国从 1985 年开始将每年的 9 月 10 日定为教师节。在这一天，学生以各种方式表达对老师的敬意。尊师是中华民族的传统美德，在当今社会得到了发扬光大。",
+  "sentences": [
+   {
+    "zh": "中国有句老话：\"一日为师，终身为父\"。",
+    "en": "There is an old Chinese saying: \"A teacher for a day is a father for a lifetime.\"",
+    "tip": ""
+   },
+   {
+    "zh": "在中国人的观念里，老师不仅传授知识，更教给学生做人的道理。",
+    "en": "In the eyes of Chinese people, teachers not only impart knowledge, but also teach",
+    "tip": ""
+   },
+   {
+    "zh": "在古代，学生初次见老师时要举行隆重的仪式，足见老师地位之高。",
+    "en": "In ancient times, students had to hold a grand ceremony when they met their",
+    "tip": ""
+   },
+   {
+    "zh": "为弘扬尊师的优良传统，中国从 1985 年开始将每年的 9 月 10 日定为教师节。",
+    "en": "To carry forward the fine tradition of respecting teachers, China has observed",
+    "tip": ""
+   },
+   {
+    "zh": "在这一天，学生以各种方式表达对老师的敬意。",
+    "en": "On this day, students express their respect for teachers in various ways.",
+    "tip": ""
+   },
+   {
+    "zh": "尊师是中华民族的传统美德，在当今社会得到了发扬光大。",
+    "en": "Respecting teachers is a traditional virtue of the Chinese nation, and it has been",
+    "tip": ""
+   }
+  ],
+  "keyPoints": []
+ }
+}
