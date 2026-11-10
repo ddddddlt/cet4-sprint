@@ -453,8 +453,8 @@ window.App = window.App || {};
       }
       checkSession = {
         ids: ids, idx: 0, flipped: false,
-        stats: { 1: 0, 2: 0, 3: 0 },
-        group: { 1: 0, 2: 0, 3: 0 },
+        stats: { 1: 0, 2: 0, 3: 0, 4: 0 },
+        group: { 1: 0, 2: 0, 3: 0, 4: 0 },
         retry: {}, retrySeen: {}, retryCount: 0,
         pendingBreak: false,
         startTs: Date.now()
@@ -495,8 +495,8 @@ window.App = window.App || {};
         '<button class="audio-btn small" data-play>' + icon('volume') + '</button></div>' +
         '<button class="btn btn-ghost small book-btn" data-book>' + icon('bookmark') +
         (A.core.wordbookHas(w.id) ? '已在单词本' : '加入单词本') + '</button>' +
-        '<p class="hint">在心里造句、讲给自己听，再翻面核对</p>' +
-        '<button class="btn btn-primary btn-lg" data-flip>' + icon('eye') + '显示释义（空格）</button>' +
+        '<p class="hint">在心里造句、讲给自己听，再翻面核对（空格朗读）</p>' +
+        '<button class="btn btn-primary btn-lg" data-flip>' + icon('eye') + '显示释义</button>' +
         '</div>';
 
       var sensesHtml = senses.map(function (x, i) {
@@ -512,15 +512,18 @@ window.App = window.App || {};
         (w.ex ? '<div class="wd-ex">' + esc(w.ex) + '</div><div class="wd-exzh">' + esc(w.exZh || '') + '</div>' : '') +
         (w.note ? '<div class="wd-note">' + icon('sparkles') + '<span>' + esc(w.note) + '</span></div>' : '') +
         '<div class="rate-row">' +
-        '<button class="rate-btn bad" data-grade="1"><strong>忘了</strong><span>明天再来</span></button>' +
-        '<button class="rate-btn mid" data-grade="2"><strong>模糊</strong><span>几天后</span></button>' +
-        '<button class="rate-btn good" data-grade="3"><strong>记得</strong><span>拉长间隔</span></button>' +
+        '<button class="rate-btn bad" data-grade="1"><strong>忘记</strong><span>1</span></button>' +
+        '<button class="rate-btn mid" data-grade="2"><strong>模糊</strong><span>2</span></button>' +
+        '<button class="rate-btn good" data-grade="3"><strong>认识</strong><span>3</span></button>' +
+        '<button class="rate-btn easy" data-grade="4"><strong>简单</strong><span>4</span></button>' +
         '</div>' +
-        '<p class="hint">按 1 / 2 / 3 也可以</p>' +
+        '<p class="hint">按 1–4 评分 · 空格朗读 · Ctrl/Cmd+Z 撤销</p>' +
         '</div>';
 
       r.innerHTML = storageBanner() + '<div class="study check">' + head +
-        '<div class="check-card' + (s.flipped ? ' flipped' : '') + '">' + (s.flipped ? back : front) + '</div></div>';
+        '<div class="check-card' + (s.flipped ? ' flipped' : '') + '">' + (s.flipped ? back : front) + '</div>' +
+        '<div class="check-undo"><button class="btn btn-ghost small" data-undo' + (s.undo ? '' : ' disabled') + '>' +
+        icon('rotate') + '撤销上一题</button></div></div>';
 
       r.querySelector('[data-quit]').addEventListener('click', function () {
         checkSession = null;
@@ -546,12 +549,62 @@ window.App = window.App || {};
       r.querySelectorAll('[data-grade]').forEach(function (b) {
         b.addEventListener('click', function () { grade(+b.getAttribute('data-grade'), r); });
       });
+      var undoBtn = r.querySelector('[data-undo]');
+      if (undoBtn) undoBtn.addEventListener('click', function () { undo(r); });
+    }
+
+    function copyObj(o) {
+      var out = {};
+      for (var k in o) {
+        if (Object.prototype.hasOwnProperty.call(o, k)) out[k] = o[k];
+      }
+      return out;
+    }
+
+    function isTypingTarget(t) {
+      if (!t) return false;
+      var tag = (t.tagName || '').toLowerCase();
+      return tag === 'input' || tag === 'textarea' || tag === 'select' || !!t.isContentEditable;
+    }
+
+    function modalOpen() {
+      var m = document.getElementById('modal-root');
+      return !!(m && m.classList.contains('open'));
+    }
+
+    function undo(r) {
+      var s = checkSession;
+      if (!s || !s.undo) return;
+      var u = s.undo;
+      A.core.restoreCheck(u.id, u.snap);
+      if (u.insertedAt >= 0) s.ids.splice(u.insertedAt, 1);
+      s.stats = u.stats;
+      s.group = u.group;
+      s.retry = u.retry;
+      s.retrySeen = u.retrySeen;
+      s.retryCount = u.retryCount;
+      s.idx = u.idx;
+      s.flipped = true;
+      s.finished = false;
+      s.pendingBreak = false;
+      s.undo = null;
+      renderCard(r);
+      ui.toast('已撤销上一题');
     }
 
     function grade(g, r) {
       var s = checkSession;
+      if (!s || s.finished || s.idx >= s.ids.length) return;
       var id = s.ids[s.idx];
       var wasRetry = !!s.retrySeen[id];
+      var snap = A.core.checkSnapshot(id);
+      var rec = {
+        id: id, idx: s.idx, snap: snap, insertedAt: -1,
+        stats: copyObj(s.stats), group: copyObj(s.group),
+        retry: copyObj(s.retry), retrySeen: copyObj(s.retrySeen),
+        retryCount: s.retryCount
+      };
+
       A.core.reviewWord(id, g, wasRetry ? { daily: false } : undefined);
       if (!wasRetry) {
         s.stats[g] += 1;
@@ -564,7 +617,9 @@ window.App = window.App || {};
         var pos = s.idx + 3;
         if (pos >= s.ids.length) pos = s.ids.length;
         s.ids.splice(pos, 0, id);
+        rec.insertedAt = pos;
       }
+      s.undo = rec;
 
       s.idx += 1;
       s.flipped = false;
@@ -576,7 +631,7 @@ window.App = window.App || {};
         renderBreak(r);
         return;
       }
-      if (s.idx >= s.ids.length) { renderSummary(r); return; }
+      if (s.idx >= s.ids.length) { s.finished = true; renderSummary(r); return; }
       renderCard(r);
     }
 
@@ -585,15 +640,15 @@ window.App = window.App || {};
       s.pendingBreak = false;
       var n = Math.max(1, Math.round((A.core.todayRecord().checkDone || 0) / 10));
       var g = s.group;
-      s.group = { 1: 0, 2: 0, 3: 0 };
+      s.group = { 1: 0, 2: 0, 3: 0, 4: 0 };
       r.innerHTML = storageBanner() +
         '<div class="group-break card">' +
         '<div class="gb-badge">第 ' + n + ' 组完成</div>' +
         '<h2>先歇 20 秒</h2>' +
         '<div class="gb-stats">' +
-        '<div><strong>' + g[3] + '</strong><span>记得</span></div>' +
+        '<div><strong>' + (g[3] + g[4]) + '</strong><span>认识/简单</span></div>' +
         '<div><strong>' + g[2] + '</strong><span>模糊</span></div>' +
-        '<div><strong>' + g[1] + '</strong><span>忘了</span></div>' +
+        '<div><strong>' + g[1] + '</strong><span>忘记</span></div>' +
         '</div>' +
         '<div class="se-actions">' +
         '<button class="btn btn-primary btn-lg" data-next-group>' + icon('play') + '继续下一组</button>' +
@@ -609,8 +664,8 @@ window.App = window.App || {};
 
     function renderSummary(r) {
       var s = checkSession;
-      var n = s.stats[1] + s.stats[2] + s.stats[3];
-      var rate = n ? Math.round(((s.stats[2] + s.stats[3]) / n) * 100) : 0;
+      var n = s.stats[1] + s.stats[2] + s.stats[3] + s.stats[4];
+      var rate = n ? Math.round(((s.stats[2] + s.stats[3] + s.stats[4]) / n) * 100) : 0;
       var mins = Math.max(1, Math.round((Date.now() - s.startTs) / 60000));
       var done = A.core.todayRecord().checkDone || 0;
       var target = A.core.checkTarget();
@@ -619,19 +674,22 @@ window.App = window.App || {};
         '<div class="se-ring">' + ui.ring(rate / 100, 120, 8) +
         '<div class="se-ring-label"><strong>' + rate + '%</strong><span>记得率</span></div></div>' +
         '<h2>本轮抽查完成</h2>' +
-        '<p class="muted">完成 ' + done + ' / ' + target + ' · 记得 ' + s.stats[3] + ' · 模糊 ' + s.stats[2] + ' · 忘了 ' + s.stats[1] + ' · 回插 ' + s.retryCount + ' 次 · ' + mins + ' 分钟</p>' +
+        '<p class="muted">完成 ' + done + ' / ' + target + ' · 忘记 ' + s.stats[1] + ' · 模糊 ' + s.stats[2] + ' · 认识 ' + s.stats[3] + ' · 简单 ' + s.stats[4] + ' · 回插 ' + s.retryCount + ' 次 · ' + mins + ' 分钟</p>' +
         '<div class="se-actions">' +
         '<button class="btn btn-primary" data-add10>+10 个</button>' +
         '<button class="btn btn-ghost" data-again>' + icon('rotate') + '再抽查一轮</button>' +
+        '<button class="btn btn-ghost" data-undo' + (s.undo ? '' : ' disabled') + '>' + icon('rotate') + '撤销上一题</button>' +
         '<button class="btn btn-ghost" data-home>回到词库</button>' +
         '</div></div>';
-      checkSession = null;
       r.querySelector('[data-add10]').addEventListener('click', function () {
         A.core.addCheckGroup(10);
         startSession(r);
       });
       r.querySelector('[data-again]').addEventListener('click', function () { startSession(r); });
+      var undoBtn = r.querySelector('[data-undo]');
+      if (undoBtn) undoBtn.addEventListener('click', function () { undo(r); });
       r.querySelector('[data-home]').addEventListener('click', function () {
+        checkSession = null;
         r.innerHTML = storageBanner() + landing();
         bindLanding(r);
       });
@@ -647,14 +705,21 @@ window.App = window.App || {};
         if (c && c.query && c.query.start) setTimeout(function () { startSession(r); }, 30);
         checkKeys = function (e) {
           if (!checkSession) return;
-          var tag = (e.target && e.target.tagName) || '';
-          if (/INPUT|TEXTAREA/.test(tag)) return;
+          if (isTypingTarget(e.target) || modalOpen()) return;
           var s = checkSession;
-          if (e.key === ' ' || e.key === 'Enter') {
-            if (!s.flipped) { e.preventDefault(); s.flipped = true; renderCard(r); }
+          var mod = e.ctrlKey || e.metaKey;
+          if (mod && (e.key === 'z' || e.key === 'Z')) {
+            if (s.undo) { e.preventDefault(); undo(r); }
             return;
           }
-          if (s.flipped && /^[123]$/.test(e.key)) {
+          if (mod || e.altKey) return;
+          if (e.key === ' ' || e.code === 'Space') {
+            e.preventDefault();
+            var w = A.core.getWord(s.ids[s.idx]);
+            if (w) ui.tts.speak(w.w, { rate: 0.95 });
+            return;
+          }
+          if (!s.finished && /^[1-4]$/.test(e.key)) {
             e.preventDefault();
             grade(+e.key, r);
           }
