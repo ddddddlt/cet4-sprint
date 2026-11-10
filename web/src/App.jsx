@@ -88,11 +88,9 @@ function Shell({ route, children }) {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <aside className="fixed inset-y-0 left-0 z-40 hidden w-60 flex-col border-r border-border/80 bg-[hsl(42_30%_94%)] px-4 py-6 lg:flex">
+      <aside className="fixed inset-y-0 left-0 z-40 hidden w-60 flex-col border-r border-border/80 bg-[hsl(214_30%_94%)] px-4 py-6 lg:flex">
         <a href="#/" className="flex items-center gap-3 px-2">
-          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary font-display text-lg font-semibold text-primary-foreground shadow-sm">
-            四
-          </span>
+          <img src="./cet-logo-cropped.png" alt="CET" className="h-7 w-14 object-contain" />
           <span>
             <span className="block font-display text-base font-semibold tracking-tight">四级冲刺</span>
             <span className="block text-[10px] tracking-[0.22em] text-muted-foreground">CET-4 SPRINT</span>
@@ -142,7 +140,7 @@ function Shell({ route, children }) {
       <div className="lg:pl-60">
         <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-border/70 bg-background/85 px-4 backdrop-blur-md sm:px-8">
           <a href="#/" className="flex items-center gap-2 lg:hidden">
-            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary text-sm font-semibold text-primary-foreground">四</span>
+            <img src="./cet-logo-cropped.png" alt="CET" className="h-6 w-12 object-contain" />
             <span className="font-display text-sm font-semibold">四级冲刺</span>
           </a>
           <div className="hidden items-center gap-2 text-sm text-muted-foreground lg:flex">
@@ -217,8 +215,8 @@ function Dashboard() {
 
   return (
     <>
-      <section className="relative overflow-hidden rounded-2xl border border-border/80 bg-[linear-gradient(135deg,hsl(42_38%_94%),hsl(40_32%_97%)_55%,hsl(158_22%_91%))] p-6 shadow-sm sm:p-9">
-        <div className="pointer-events-none absolute -right-16 -top-24 h-64 w-64 rounded-full bg-[radial-gradient(circle,hsl(158_40%_30%/0.12),transparent_70%)]" />
+      <section className="relative overflow-hidden rounded-2xl border border-border/80 bg-[linear-gradient(135deg,hsl(210_38%_97%),hsl(214_32%_96%)_55%,hsl(219_44%_92%))] p-6 shadow-sm sm:p-9">
+        <div className="pointer-events-none absolute -right-16 -top-24 h-64 w-64 rounded-full bg-[radial-gradient(circle,hsl(219_60%_40%/0.10),transparent_70%)]" />
         <Badge variant="outline" className="mb-5 rounded-md border-primary/15 bg-card/60 text-primary">
           <Sparkles className="mr-1.5 h-3.5 w-3.5" /> 今日冲刺
         </Badge>
