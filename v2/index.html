@@ -5,6 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="theme-color" content="#f7f4ec" />
     <link rel="icon" type="image/png" href="./cet-logo-cropped.png" />
+    <script>
+      (function () {
+        try {
+          var raw = localStorage.getItem('cet4-sprint/v1');
+          var s = raw ? JSON.parse(raw) : {};
+          var mode = (s.settings || {}).theme || 'auto';
+          var dark = mode === 'dark' || (mode === 'auto' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+          document.documentElement.classList.toggle('dark', dark);
+          document.documentElement.style.colorScheme = dark ? 'dark' : 'light';
+        } catch (e) { /* ignore */ }
+      })();
+    </script>
     <title>四级冲刺 · CET-4 Sprint</title>
     <script src="./legacy/words-core.js"></script>
     <script src="./legacy/freq.js"></script>
@@ -15,8 +27,8 @@
     <script src="./legacy/word-extras.js"></script>
     <script src="./legacy/papers/bundle.js"></script>
     <script src="./legacy/core.js"></script>
-    <script type="module" crossorigin src="./assets/index-CP-FYnaH.js"></script>
-    <link rel="stylesheet" crossorigin href="./assets/index-D8z78aHz.css">
+    <script type="module" crossorigin src="./assets/index-CIEg7_pS.js"></script>
+    <link rel="stylesheet" crossorigin href="./assets/index-Ck1UCbso.css">
   </head>
   <body>
     <div id="root"></div>

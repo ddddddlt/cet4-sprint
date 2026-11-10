@@ -26,6 +26,32 @@
     --radius: 0.75rem;
   }
 
+  .dark {
+    --background: 215 30% 8%;
+    --foreground: 210 22% 92%;
+    --card: 215 25% 11%;
+    --card-foreground: 210 22% 92%;
+    --popover: 215 25% 11%;
+    --popover-foreground: 210 22% 92%;
+    --primary: 213 70% 64%;
+    --primary-foreground: 215 30% 8%;
+    --secondary: 215 20% 15%;
+    --secondary-foreground: 210 20% 88%;
+    --muted: 215 18% 15%;
+    --muted-foreground: 215 12% 64%;
+    --accent: 215 24% 18%;
+    --accent-foreground: 210 20% 90%;
+    --destructive: 5 66% 58%;
+    --destructive-foreground: 215 30% 8%;
+    --border: 215 16% 21%;
+    --input: 215 16% 21%;
+    --ring: 213 70% 62%;
+  }
+
+  .dark {
+    color-scheme: dark;
+  }
+
   * {
     @apply border-border;
   }
@@ -40,6 +66,10 @@
     background-image: url("./assets/paper-grain.png");
     background-repeat: repeat;
     background-size: 256px 256px;
+  }
+
+  .dark body {
+    background-image: url("./assets/paper-grain-dark.png");
   }
 
   ::selection {
@@ -66,6 +96,12 @@
     opacity: 0.32;
     mix-blend-mode: multiply;
   }
+
+  .dark .paper-texture::before {
+    background-image: url("./assets/paper-grain-dark.png");
+    opacity: 0.2;
+    mix-blend-mode: screen;
+  }
 }
 
 @layer utilities {
@@ -73,3 +109,31 @@
     font-family: theme("fontFamily.display");
   }
 }
+
+.dark .bg-emerald-50,
+.dark .hover\:bg-emerald-100:hover { background-color: rgba(16, 185, 129, .14); }
+.dark .bg-rose-50,
+.dark .hover\:bg-rose-100:hover { background-color: rgba(244, 63, 94, .14); }
+.dark .bg-amber-50,
+.dark .hover\:bg-amber-100:hover { background-color: rgba(245, 158, 11, .14); }
+.dark .bg-sky-50,
+.dark .hover\:bg-sky-100:hover { background-color: rgba(14, 165, 233, .14); }
+.dark .bg-emerald-100 { background-color: rgba(16, 185, 129, .2); }
+.dark .bg-rose-100 { background-color: rgba(244, 63, 94, .2); }
+.dark .bg-amber-100 { background-color: rgba(245, 158, 11, .2); }
+.dark .bg-sky-100 { background-color: rgba(14, 165, 233, .2); }
+.dark .border-emerald-200,
+.dark .border-emerald-300,
+.dark .border-emerald-400 { border-color: rgba(52, 211, 153, .45); }
+.dark .border-rose-200,
+.dark .border-rose-300,
+.dark .border-rose-400 { border-color: rgba(251, 113, 133, .45); }
+.dark .border-amber-200 { border-color: rgba(251, 191, 36, .45); }
+.dark .border-sky-200 { border-color: rgba(56, 189, 248, .45); }
+.dark .text-emerald-700,
+.dark .text-emerald-900 { color: #a7e8cd; }
+.dark .text-rose-700,
+.dark .text-rose-800,
+.dark .text-rose-900 { color: #f3b3aa; }
+.dark .text-amber-900 { color: #efd08d; }
+.dark .text-sky-900 { color: #b7dcf5; }

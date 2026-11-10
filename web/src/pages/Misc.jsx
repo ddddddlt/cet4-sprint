@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
-import { AlertTriangle, ArrowUpRight, Check, Save, Settings as SettingsIcon } from 'lucide-react'
+import { AlertTriangle, ArrowUpRight, Check, Monitor, Moon, Save, Sun } from 'lucide-react'
+import { currentMode, setTheme } from '../lib/theme'
 import { Badge } from '../components/ui/badge'
 import { Button } from '../components/ui/button'
 import { Card, CardContent } from '../components/ui/card'
@@ -90,6 +91,7 @@ export function Settings() {
   const [name, setName] = useState('')
   const [target, setTarget] = useState(50)
   const [saved, setSaved] = useState(false)
+  const [theme, setThemeMode] = useState(() => currentMode())
 
   useEffect(() => {
     if (!st) return
@@ -116,6 +118,24 @@ export function Settings() {
         <p className="mt-2 text-sm text-muted-foreground">考试日期、称呼与每日抽查量</p>
       </div>
 
+      <Card className="paper-texture mb-4">
+        <CardContent className="p-6">
+          <h2 className="font-display text-lg font-semibold">主题</h2>
+          <p className="mt-1 text-xs text-muted-foreground">暖白纸张或深色夜间；自动跟随系统</p>
+          <div className="mt-4 flex flex-wrap gap-2">
+            {[
+              ['auto', '跟随系统', Monitor],
+              ['light', '浅色', Sun],
+              ['dark', '深色', Moon],
+            ].map(([mode, label, Icon]) => (
+              <button key={mode} type="button" onClick={() => { setTheme(mode); setThemeMode(mode) }}
+                className={`inline-flex items-center gap-2 rounded-lg border px-4 py-2.5 text-sm ${theme === mode ? 'border-primary bg-secondary text-foreground' : 'bg-card text-muted-foreground hover:bg-secondary/40'}`}>
+                <Icon className="h-4 w-4" /> {label}
+              </button>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
       <div className="grid gap-4 lg:grid-cols-2">
         <Card className="paper-texture">
           <CardContent className="space-y-5 p-6">
@@ -143,7 +163,7 @@ export function Settings() {
         <Card className="paper-texture">
           <CardContent className="p-6">
             <h2 className="font-display text-lg font-semibold">更多</h2>
-            <p className="mt-1 text-xs text-muted-foreground">深色模式、云同步与数据导入导出仍保留在旧版。</p>
+            <p className="mt-1 text-xs text-muted-foreground">云同步与数据导入导出仍保留在旧版。</p>
             <div className="mt-5 space-y-2">
               <a href={legacyUrl('#/settings')} className="flex items-center justify-between rounded-lg border bg-card px-4 py-3 text-sm hover:bg-secondary/40">
                 打开旧版设置 <ArrowUpRight className="h-4 w-4 opacity-50" />
@@ -153,7 +173,7 @@ export function Settings() {
               </a>
             </div>
             <div className="mt-6 rounded-lg bg-secondary/40 p-4 text-xs leading-relaxed text-muted-foreground">
-              v2 预览版目前只提供浅色主题，配色为暖白纸张 + 深蓝。深色模式迁移后会保持同等对比度。
+              支持浅色、深色与跟随系统。浅色为暖白纸张，深色为深蓝夜间纸面。
             </div>
           </CardContent>
         </Card>
