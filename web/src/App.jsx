@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import Vocab from './pages/Vocab'
 import Wordbook from './pages/Wordbook'
 import DrillRunner from './pages/DrillRunner'
@@ -112,7 +112,12 @@ function Brand({ compact = false }) {
 
 function SearchPalette({ open, onClose }) {
   const [query, setQuery] = useState('')
+  const overlayRef = useRef(null)
+  const panelRef = useRef(null)
   const inputRef = useRef(null)
+  const lastTriggerRef = useRef(null)
+  const closeRef = useRef(onClose)
+  closeRef.current = onClose
   const rows = useMemo(() => {
     const all = [
       ...NAV.map((x) => ({ ...x, group: '导航' })),
@@ -126,19 +131,48 @@ function SearchPalette({ open, onClose }) {
     return q ? uniq.filter((x) => (x.label + ' ' + x.group + ' ' + (x.desc || '')).toLowerCase().includes(q)) : uniq.slice(0, 9)
   }, [query])
 
+  useLayoutEffect(() => {
+    if (!open) return undefined
+    const overlay = overlayRef.current
+    const panel = panelRef.current
+    const triggers = Array.from(document.querySelectorAll('[data-search-trigger]'))
+    const trigger = triggers.find((el) => el.getClientRects().length > 0) || triggers[0]
+    lastTriggerRef.current = trigger || null
+    setQuery('')
+    if (overlay && panel) {
+      const r = overlay.getBoundingClientRect()
+      const pr = panel.getBoundingClientRect()
+      const left = r.left + panel.offsetLeft
+      const top = r.top + panel.offsetTop
+      const sx = trigger ? trigger.getBoundingClientRect().left + trigger.getBoundingClientRect().width / 2 - left : panel.offsetWidth / 2
+      const sy = trigger ? trigger.getBoundingClientRect().top + trigger.getBoundingClientRect().height / 2 - top : 0
+      panel.style.setProperty('--sx', sx + 'px')
+      panel.style.setProperty('--sy', sy + 'px')
+      void pr
+    }
+    return undefined
+  }, [open])
+
   useEffect(() => {
     if (!open) return undefined
-    setQuery('')
-    const t = setTimeout(() => inputRef.current?.focus(), 20)
-    const onKey = (e) => { if (e.key === 'Escape') onClose() }
+    const trigger = lastTriggerRef.current
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    const focusTimer = setTimeout(() => inputRef.current?.focus(), 40)
+    const onKey = (e) => { if (e.key === 'Escape') closeRef.current() }
     document.addEventListener('keydown', onKey)
-    return () => { clearTimeout(t); document.removeEventListener('keydown', onKey) }
-  }, [open, onClose])
+    return () => {
+      clearTimeout(focusTimer)
+      document.body.style.overflow = previousOverflow
+      document.removeEventListener('keydown', onKey)
+      if (trigger) trigger.focus()
+    }
+  }, [open])
 
-  if (!open) return null
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center bg-[rgba(2,3,6,.62)] px-4 pt-[12vh] backdrop-blur-sm" onMouseDown={onClose}>
-      <div className="glass-card w-full max-w-[520px] overflow-hidden" onMouseDown={(e) => e.stopPropagation()}>
+    <div ref={overlayRef} className="search-overlay" data-open={open} aria-hidden={!open} inert={!open ? '' : undefined} onMouseDown={onClose}>
+      <div className="search-scrim" aria-hidden="true" />
+      <div ref={panelRef} className="search-panel glass-card overflow-hidden" role="dialog" aria-modal="true" aria-label="站内搜索" onMouseDown={(e) => e.stopPropagation()}>
         <div className="flex items-center gap-3 border-b border-white/10 px-4">
           <Search className="h-4 w-4 text-[var(--faint)]" aria-hidden="true" />
           <input
@@ -169,8 +203,12 @@ function SearchPalette({ open, onClose }) {
   )
 }
 
-function Shell({ route, children }) {
+function Shell({ route, children, pageAnim = 'page-lateral' }) {
   const [searchOpen, setSearchOpen] = useState(false)
+  const navRef = useRef(null)
+  const sideIndicatorRef = useRef(null)
+  const sideItemsRef = useRef(new Map())
+  const sideReadyRef = useRef(false)
   const core = window.App?.core
   const days = core ? core.examInfo().days : null
 
@@ -266,6 +304,42 @@ function Shell({ route, children }) {
     return () => document.removeEventListener('keydown', onKey)
   }, [])
 
+  function measureSide(animate = true) {
+    const nav = navRef.current
+    const indicator = sideIndicatorRef.current
+    if (!nav || !indicator) return
+    const item = NAV.find((x) => x.key === tabKey)
+    const el = item ? sideItemsRef.current.get(item.key) : null
+    if (!el || tabKey === 'settings') {
+      indicator.dataset.visible = 'false'
+      indicator.dataset.sweep = 'false'
+      if (!sideReadyRef.current) {
+        sideReadyRef.current = true
+        requestAnimationFrame(() => { indicator.dataset.ready = 'true' })
+      }
+      return
+    }
+    const first = !sideReadyRef.current
+    if (first) indicator.dataset.ready = 'false'
+    indicator.style.height = el.offsetHeight + 'px'
+    indicator.style.transform = `translateY(${el.offsetTop}px)`
+    indicator.dataset.visible = 'true'
+    if (first) {
+      sideReadyRef.current = true
+      requestAnimationFrame(() => { indicator.dataset.ready = 'true' })
+      return
+    }
+    if (animate) {
+      indicator.dataset.sweep = 'false'
+      void indicator.offsetWidth
+      requestAnimationFrame(() => {
+        if (indicator.dataset.visible === 'true') indicator.dataset.sweep = 'true'
+      })
+    } else {
+      indicator.dataset.sweep = 'false'
+    }
+  }
+
   const tabKey = route.startsWith('#/exam') ? 'exam'
     : route.startsWith('#/practice') || route.startsWith('#/reading') || route.startsWith('#/cloze') || route.startsWith('#/matching') || route.startsWith('#/listening') || route.startsWith('#/translation') || route.startsWith('#/writing')
     ? 'practice'
@@ -275,6 +349,17 @@ function Shell({ route, children }) {
           : route.startsWith('#/vocab') ? 'vocab'
             : route.startsWith('#/wordbook') ? 'wordbook'
               : 'home'
+  useLayoutEffect(() => {
+    measureSide()
+  }, [tabKey])
+
+  useEffect(() => {
+    const onResize = () => measureSide(false)
+    window.addEventListener('resize', onResize, { passive: true })
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => measureSide(false))
+    return () => window.removeEventListener('resize', onResize)
+  }, [tabKey])
+
   const tabIndex = BOTTOM.findIndex((x) => x.key === tabKey)
   const title = route.startsWith('#/exam') ? '整套模考' : route.startsWith('#/reading') || route.startsWith('#/cloze') || route.startsWith('#/matching') ? '阅读理解'
     : route.startsWith('#/listening') ? '听力'
@@ -293,22 +378,27 @@ function Shell({ route, children }) {
       <aside className="fixed inset-y-0 left-0 z-40 hidden w-[208px] flex-col border-r border-white/5 bg-[rgba(5,6,10,.42)] px-3 py-5 backdrop-blur-xl lg:flex">
         <div className="px-2"><Brand /></div>
         <div className="mb-2 mt-8 px-3 t-eyebrow">学习</div>
-        <nav className="flex w-full flex-col gap-1">
+        <nav ref={navRef} className="relative flex w-full flex-col gap-1">
+          <span ref={sideIndicatorRef} className="side-indicator" data-visible="false" data-ready="false" data-sweep="false" aria-hidden="true" />
           {NAV.map((item) => (
-            <a key={item.key} href={item.href} aria-current={tabKey === item.key ? 'page' : undefined}
-              className={cn('flex min-h-11 items-center gap-3 rounded-xl border border-transparent px-3 text-sm text-muted-foreground transition-colors hover:bg-white/[.05] hover:text-foreground',
-                tabKey === item.key && 'border-white/10 bg-white/[.07] text-foreground')}>
-              <item.icon className="h-[18px] w-[18px] shrink-0" strokeWidth={1.5} aria-hidden="true" />
-              <span>{item.label}</span>
+            <a key={item.key} href={item.href} aria-current={tabKey === item.key ? 'page' : undefined} data-active={tabKey === item.key}
+              ref={(el) => { if (el) sideItemsRef.current.set(item.key, el); else sideItemsRef.current.delete(item.key) }}
+              className="side-item flex min-h-11 items-center rounded-xl px-3 text-sm text-muted-foreground hover:text-foreground">
+              <span className="side-content">
+                <item.icon className="h-[18px] w-[18px] shrink-0" strokeWidth={1.5} aria-hidden="true" />
+                <span>{item.label}</span>
+              </span>
             </a>
           ))}
         </nav>
         <div className="mt-auto w-full border-t border-white/5 pt-3">
           <a href="#/settings" aria-current={tabKey === 'settings' ? 'page' : undefined}
-            className={cn('flex min-h-11 items-center gap-3 rounded-xl border border-transparent px-3 text-sm text-muted-foreground transition-colors hover:bg-white/[.05] hover:text-foreground',
+            className={cn('side-item flex min-h-11 items-center rounded-xl border border-transparent px-3 text-sm text-muted-foreground hover:text-foreground',
               tabKey === 'settings' && 'border-white/10 bg-white/[.07] text-foreground')}>
-            <Settings className="h-[18px] w-[18px] shrink-0" strokeWidth={1.5} aria-hidden="true" />
-            <span>设置</span>
+            <span className="side-content">
+              <Settings className="h-[18px] w-[18px] shrink-0" strokeWidth={1.5} aria-hidden="true" />
+              <span>设置</span>
+            </span>
           </a>
         </div>
       </aside>
@@ -320,7 +410,7 @@ function Shell({ route, children }) {
             <div className="hidden items-center gap-2 text-sm text-muted-foreground lg:flex">
               <span>四级冲刺</span>
               <ChevronRight className="h-3.5 w-3.5" aria-hidden="true" />
-              <span className="text-foreground">{title}</span>
+              <span key={title} className="breadcrumb-title text-foreground">{title}</span>
             </div>
           </div>
 
@@ -331,16 +421,16 @@ function Shell({ route, children }) {
                 <span className="t-num">{Math.max(0, days)}</span> 天
               </span>
             ) : null}
-            <button type="button" className="hidden h-9 w-[210px] items-center gap-2 rounded-xl border border-white/10 bg-white/[.04] px-3 text-left text-xs text-[var(--faint)] hover:border-white/20 hover:bg-white/[.06] md:flex" onClick={() => setSearchOpen(true)}>
+            <button type="button" className="hidden h-9 w-[210px] items-center gap-2 rounded-xl border border-white/10 bg-white/[.04] px-3 text-left text-xs text-[var(--faint)] hover:border-white/20 hover:bg-white/[.06] md:flex" data-search-trigger onClick={() => setSearchOpen((v) => !v)}>
               <Search className="h-3.5 w-3.5" aria-hidden="true" />
               搜索
             </button>
-            <button type="button" className="rail-icon h-10 w-10 md:hidden" onClick={() => setSearchOpen(true)} aria-label="搜索"><Search className="h-[18px] w-[18px]" strokeWidth={1.5} /></button>
+            <button type="button" className="rail-icon h-10 w-10 md:hidden" data-search-trigger onClick={() => setSearchOpen((v) => !v)} aria-label="搜索"><Search className="h-[18px] w-[18px]" strokeWidth={1.5} /></button>
             <a href="#/settings" className="rail-icon h-10 w-10" aria-label="设置"><Settings className="h-[18px] w-[18px]" strokeWidth={1.5} /></a>
           </div>
         </header>
 
-        <main key={route} className="page-enter mx-auto w-full max-w-[720px] px-4 pb-[calc(108px+env(safe-area-inset-bottom))] pt-6 md:max-w-[800px] md:px-6 lg:max-w-[928px] lg:px-8 lg:pb-12 xl:max-w-[1228px]">
+        <main key={route} className={cn(`${pageAnim} mx-auto w-full max-w-[720px] px-4 pb-[calc(108px+env(safe-area-inset-bottom))] pt-6 md:max-w-[800px] md:px-6 lg:max-w-[928px] lg:px-8 lg:pb-12 xl:max-w-[1228px]`)}>
           {children}
         </main>
       </div>
@@ -774,7 +864,47 @@ function needsPapers(route) {
 export default function App() {
   const route = useHashRoute()
   const [papersReady, setPapersReady] = useState(() => !!window.CET4_PAPERS)
+  const [pageAnim, setPageAnim] = useState('page-lateral')
+  const prevRouteRef = useRef(route)
+  const routeRef = useRef(route)
+  const backRef = useRef(false)
+  const scrollPositions = useRef(new Map())
   const paperRoute = needsPapers(route)
+
+  useEffect(() => {
+    if ('scrollRestoration' in window.history) window.history.scrollRestoration = 'manual'
+    const onScroll = () => { scrollPositions.current.set(routeRef.current, window.scrollY) }
+    const onPop = () => { backRef.current = true }
+    window.addEventListener('scroll', onScroll, { passive: true })
+    window.addEventListener('popstate', onPop)
+    return () => {
+      window.removeEventListener('scroll', onScroll)
+      window.removeEventListener('popstate', onPop)
+    }
+  }, [])
+
+  useLayoutEffect(() => {
+    const prev = prevRouteRef.current
+    if (prev === route) return undefined
+    scrollPositions.current.set(prev, window.scrollY)
+    const depth = (r) => r.split('?')[0].split('/').filter(Boolean).length
+    const dir = depth(route) > depth(prev) ? 'page-forward' : depth(route) < depth(prev) ? 'page-back' : 'page-lateral'
+    setPageAnim(dir)
+    const isBack = backRef.current
+    backRef.current = false
+    routeRef.current = route
+    prevRouteRef.current = route
+    const target = isBack ? (scrollPositions.current.get(route) || 0) : 0
+    const raf = requestAnimationFrame(() => {
+      window.scrollTo(0, target)
+      if (isBack) {
+        setTimeout(() => {
+          if (routeRef.current === route) window.scrollTo(0, target)
+        }, 260)
+      }
+    })
+    return () => cancelAnimationFrame(raf)
+  }, [route])
   useEffect(() => {
     if (!paperRoute || papersReady) return undefined
     let alive = true
@@ -782,7 +912,6 @@ export default function App() {
     return () => { alive = false }
   }, [paperRoute, papersReady])
   useEffect(() => {
-    window.scrollTo(0, 0)
     const name = route.startsWith('#/exam') ? '整套模考' : route.startsWith('#/reading') || route.startsWith('#/cloze') || route.startsWith('#/matching') ? '阅读理解' : route.startsWith('#/listening') ? '听力' : route.startsWith('#/translation') ? '翻译' : route.startsWith('#/writing') ? '写作' : route.startsWith('#/practice') ? '题目练习' : route.startsWith('#/drill') ? '词汇深练' : route.startsWith('#/vocab') ? '抽查单词' : route.startsWith('#/wordbook') ? '单词本' : route.startsWith('#/mistakes') ? '错题本' : route.startsWith('#/settings') ? '设置' : '首页'
     document.title = name + ' · 四级冲刺'
   }, [route])
@@ -817,7 +946,7 @@ export default function App() {
   return (
     <>
       <AuroraBackground />
-      <Shell route={route}>{page}</Shell>
+      <Shell route={route} pageAnim={pageAnim}>{page}</Shell>
     </>
   )
 }
