@@ -1232,12 +1232,30 @@ window.App = window.App || {};
   };
 
   /* ================= 题目练习 ================= */
-  views.practice = function () {
-    var readingSets = (window.CET4_READING || []).concat(window.CET4_CLOZE || [], window.CET4_MATCHING || []);
-    var listeningSets = window.CET4_LISTENING || [];
-    var translationSets = window.CET4_TRANSLATION || [];
-    var writingSets = window.CET4_WRITING || [];
+  var PRACTICE_ENTRIES = [
+    {
+      key: 'reading', name: '阅读', href: '#/reading', ic: 'file', kind: 'reading', unit: '套',
+      desc: '仔细阅读 / 选词填空 / 长篇匹配',
+      sets: function () { return (window.CET4_READING || []).concat(window.CET4_CLOZE || [], window.CET4_MATCHING || []); }
+    },
+    {
+      key: 'listening', name: '听力', href: '#/listening', ic: 'headphones', kind: 'listening', unit: '套',
+      desc: '短篇新闻 / 长对话 / 听力篇章',
+      sets: function () { return window.CET4_LISTENING || []; }
+    },
+    {
+      key: 'translation', name: '翻译', href: '#/translation', ic: 'languages', kind: 'translation', unit: '套',
+      desc: '段落翻译',
+      sets: function () { return window.CET4_TRANSLATION || []; }
+    },
+    {
+      key: 'writing', name: '写作', href: '#/writing', ic: 'pen', kind: 'writing', unit: '题',
+      desc: '命题作文',
+      sets: function () { return window.CET4_WRITING || []; }
+    }
+  ];
 
+  views.practice = function () {
     function doneCount(kind, sets) {
       var n = 0;
       sets.forEach(function (set) { if (A.core.attempt(kind, set.id)) n += 1; });
@@ -1249,28 +1267,13 @@ window.App = window.App || {};
       return '<span>' + total + ' ' + unit + ' · 已做 ' + done + '</span>';
     }
 
-    var items = [
-      {
-        name: '阅读', href: '#/reading', ic: 'file',
-        desc: '仔细阅读 / 选词填空 / 长篇匹配',
-        total: readingSets.length, done: doneCount('reading', readingSets), unit: '套'
-      },
-      {
-        name: '听力', href: '#/listening', ic: 'headphones',
-        desc: '短篇新闻 / 长对话 / 听力篇章',
-        total: listeningSets.length, done: doneCount('listening', listeningSets), unit: '套'
-      },
-      {
-        name: '翻译', href: '#/translation', ic: 'languages',
-        desc: '段落翻译',
-        total: translationSets.length, done: doneCount('translation', translationSets), unit: '套'
-      },
-      {
-        name: '写作', href: '#/writing', ic: 'pen',
-        desc: '命题作文',
-        total: writingSets.length, done: doneCount('writing', writingSets), unit: '题'
-      }
-    ];
+    var items = PRACTICE_ENTRIES.map(function (entry) {
+      var sets = entry.sets();
+      return {
+        name: entry.name, href: entry.href, ic: entry.ic, desc: entry.desc,
+        total: sets.length, done: doneCount(entry.kind, sets), unit: entry.unit
+      };
+    });
 
     var cards = items.map(function (item) {
       return '<article class="set-card practice-card">' +

@@ -13,10 +13,6 @@ window.App = window.App || {};
     { key: 'vocab', href: '#/vocab', label: '抽查', ic: 'book' },
     { key: 'practice', href: '#/practice', label: '题目练习', tabLabel: '练习', ic: 'layers' },
     { key: 'wordbook', href: '#/wordbook', label: '单词本', ic: 'bookmark', tab: false },
-    { key: 'reading', href: '#/reading', label: '阅读', ic: 'file' },
-    { key: 'listening', href: '#/listening', label: '听力', ic: 'headphones' },
-    { key: 'translation', href: '#/translation', label: '翻译', ic: 'languages' },
-    { key: 'writing', href: '#/writing', label: '写作', ic: 'pen' },
     { key: 'mistakes', href: '#/mistakes', label: '错题本', ic: 'alert' },
     { key: 'settings', href: '#/settings', label: '设置', ic: 'settings' }
   ];
@@ -150,7 +146,6 @@ window.App = window.App || {};
       var nav = a.getAttribute('data-nav');
       var on;
       if (nav === 'practice') on = inPractice;
-      else if (inPractice && (nav === 'reading' || nav === 'listening' || nav === 'translation' || nav === 'writing')) on = false;
       else on = nav === key;
       applyActive(a, on);
     });
