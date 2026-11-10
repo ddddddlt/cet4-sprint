@@ -162,7 +162,7 @@ function SearchPalette({ open, onClose }) {
         </div>
         <div className="flex items-center justify-between border-t border-white/10 px-4 py-2 text-[11px] text-[var(--faint)]">
           <span>Esc 关闭</span>
-          <span className="font-mono-ui">/ 或 ⌘K</span>
+          <span className="font-mono-ui">/ 或 Ctrl K</span>
         </div>
       </div>
     </div>
@@ -334,7 +334,6 @@ function Shell({ route, children }) {
             <button type="button" className="hidden h-9 w-[210px] items-center gap-2 rounded-xl border border-white/10 bg-white/[.04] px-3 text-left text-xs text-[var(--faint)] hover:border-white/20 hover:bg-white/[.06] md:flex" onClick={() => setSearchOpen(true)}>
               <Search className="h-3.5 w-3.5" aria-hidden="true" />
               搜索
-              <span className="ml-auto rounded-md border border-white/10 px-1.5 py-0.5 font-mono-ui text-[10px]">⌘K</span>
             </button>
             <button type="button" className="rail-icon h-10 w-10 md:hidden" onClick={() => setSearchOpen(true)} aria-label="搜索"><Search className="h-[18px] w-[18px]" strokeWidth={1.5} /></button>
             <a href="#/settings" className="rail-icon h-10 w-10" aria-label="设置"><Settings className="h-[18px] w-[18px]" strokeWidth={1.5} /></a>
