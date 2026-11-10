@@ -47,6 +47,7 @@ window.App = window.App || {};
       attempts: { reading: {}, listening: {}, translation: {} },
       qstats: {},
       sessions: {},
+      drill: { byMode: { spelling: { n: 0, ok: 0 }, dictation: { n: 0, ok: 0 }, sense: { n: 0, ok: 0 }, collocation: { n: 0, ok: 0 }, root: { n: 0, ok: 0 } }, byWord: {} },
       wrong: { words: {}, questions: {} },
       drafts: { translation: {} },
       custom: [],
@@ -71,6 +72,12 @@ window.App = window.App || {};
     s.attempts.translation = s.attempts.translation || {};
     s.qstats = s.qstats || {};
     s.sessions = s.sessions || {};
+    s.drill = s.drill || {};
+    s.drill.byMode = s.drill.byMode || {};
+    ['spelling', 'dictation', 'sense', 'collocation', 'root'].forEach(function (m) {
+      s.drill.byMode[m] = s.drill.byMode[m] || { n: 0, ok: 0 };
+    });
+    s.drill.byWord = s.drill.byWord || {};
     s.wrong = s.wrong || { words: {}, questions: {} };
     s.wrong.words = s.wrong.words || {};
     s.wrong.questions = s.wrong.questions || {};
@@ -548,7 +555,7 @@ window.App = window.App || {};
     if (opts.daily !== false) rec.checkDone = (rec.checkDone || 0) + 1;
     if (grade >= 2) rec.correct += 1;
     if (wasNew && opts.daily !== false) rec.newWords += 1;
-    rec.seconds += 12;
+    rec.seconds += opts.seconds != null ? Math.max(1, Math.round(opts.seconds)) : 12;
     if (grade === 1) {
       card.wrong = (card.wrong || 0) + 1;
       var entry = state.wrong.words[id] || { count: 0, last: 0 };
@@ -724,6 +731,37 @@ window.App = window.App || {};
 
   function attempt(kind, setId) {
     return (state.attempts[kind] || {})[setId] || null;
+  }
+
+  function drillStats() {
+    return JSON.parse(JSON.stringify(state.drill));
+  }
+
+  function recordDrill(mode, id, ok) {
+    var m = state.drill.byMode[mode] || (state.drill.byMode[mode] = { n: 0, ok: 0 });
+    m.n += 1;
+    if (ok) m.ok += 1;
+    var w = state.drill.byWord[id] || { n: 0, ok: 0, last: 0 };
+    w.n += 1;
+    if (ok) w.ok += 1;
+    w.last = Date.now();
+    state.drill.byWord[id] = w;
+    save();
+    return w;
+  }
+
+  function drillPool() {
+    var weights = {};
+    function add(id, w) {
+      if (!wordMap[id]) return;
+      weights[id] = (weights[id] || 0) + w;
+    }
+    Object.keys(state.wordbook || {}).forEach(function (id) { add(id, 1); });
+    Object.keys(state.wrong.words || {}).forEach(function (id) {
+      add(id, (state.wrong.words[id].count || 1) * 3);
+    });
+    dueList().forEach(function (id) { add(id, 1); });
+    return Object.keys(weights).map(function (id) { return { id: id, weight: weights[id] }; });
   }
 
   function saveSession(runner, setId, data) {
@@ -1026,6 +1064,9 @@ window.App = window.App || {};
     wrongQuestions: wrongQuestions,
     attempt: attempt,
     attemptSummary: attemptSummary,
+    drillStats: drillStats,
+    recordDrill: recordDrill,
+    drillPool: drillPool,
     saveSession: saveSession,
     getSession: getSession,
     clearSession: clearSession,

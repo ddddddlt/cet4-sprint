@@ -18,7 +18,7 @@ window.App = window.App || {};
   ];
 
   var TITLES = {
-    dashboard: '首页', vocab: '抽查单词', practice: '题目练习', wordbook: '单词本', reading: '阅读', listening: '听力', translation: '翻译', writing: '写作',
+    dashboard: '首页', vocab: '抽查单词', drill: '词汇深练', drillRunner: '词汇深练', practice: '题目练习', wordbook: '单词本', reading: '阅读', listening: '听力', translation: '翻译', writing: '写作',
     readingRunner: '仔细阅读', listeningRunner: '听力练习', translationRunner: '翻译练习',
     clozeRunner: '选词填空', matchingRunner: '长篇匹配',
     mistakes: '错题本', settings: '设置', notFound: '页面不存在'
@@ -92,6 +92,10 @@ window.App = window.App || {};
     if (!parts.length) return { view: 'dashboard', params: {} };
     var head = parts[0];
     if (head === 'vocab' || head === 'practice' || head === 'wordbook' || head === 'mistakes' || head === 'settings') return { view: head, params: {} };
+    if (head === 'drill') {
+      if (parts[1]) return { view: 'drillRunner', params: { mode: parts[1] } };
+      return { view: 'drill', params: {} };
+    }
     if (head === 'writing') {
       if (parts[1]) return { view: 'writingRunner', params: { id: parts[1] } };
       return { view: 'writing', params: {} };
@@ -120,6 +124,7 @@ window.App = window.App || {};
   }
 
   function navKeyOf(view) {
+    if (view === 'drill' || view === 'drillRunner') return 'vocab';
     if (view === 'readingRunner' || view === 'clozeRunner' || view === 'matchingRunner') return 'reading';
     if (view === 'listeningRunner') return 'listening';
     if (view === 'translationRunner') return 'translation';

@@ -466,6 +466,12 @@ window.App = window.App || {};
         '<span class="wb-entry-count">' + A.core.wordbookCount() + ' 词</span>' +
         icon('chevron') +
         '</a>' +
+        '<a class="card wb-entry" href="#/drill">' +
+        '<span class="wb-entry-ic">' + icon('layers') + '</span>' +
+        '<span class="wb-entry-main"><strong>词汇深练</strong><span>拼写 / 听写 / 词义 / 搭配 / 词根</span></span>' +
+        '<span class="wb-entry-count">5 种模式</span>' +
+        icon('chevron') +
+        '</a>' +
         '<div class="vocab-top">' +
         '<section class="card start-card">' +
         '<div class="start-top">' +
@@ -867,6 +873,495 @@ window.App = window.App || {};
     };
   };
 
+  /* ================= 词汇深练 ================= */
+  var DRILL_MODES = [
+    { key: 'spelling', name: '拼写', desc: '看中文释义，拼出单词', ic: 'pen' },
+    { key: 'dictation', name: '听写', desc: '听发音，写出单词', ic: 'headphones' },
+    { key: 'sense', name: '词义辨析', desc: '四选一，选出正确释义', ic: 'file' },
+    { key: 'collocation', name: '搭配', desc: '补全常用搭配', ic: 'layers' },
+    { key: 'root', name: '词根词缀', desc: '辨认同族词', ic: 'sparkles' }
+  ];
+
+  function drillExtras(id) {
+    return (window.CET4_WORD_EXTRAS || {})[id] || null;
+  }
+
+  function drillModeAvailable(mode) {
+    var extras = window.CET4_WORD_EXTRAS || {};
+    var keys = Object.keys(extras);
+    if (mode === 'collocation') {
+      return keys.some(function (k) { return (extras[k].collocations || []).length > 0; });
+    }
+    if (mode === 'root') {
+      return keys.some(function (k) { return (extras[k].family || []).length > 0; });
+    }
+    return true;
+  }
+
+  function drillShuffle(list) {
+    var a = list.slice();
+    for (var i = a.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var t = a[i]; a[i] = a[j]; a[j] = t;
+    }
+    return a;
+  }
+
+  function drillPos(w) {
+    return String((w && w.pos) || '').split('/')[0];
+  }
+
+  function firstSense(w) {
+    return String((w && w.zh) || '').split(/[；;]/)[0].trim();
+  }
+
+  function drillPoolFor(mode, onlyIds) {
+    var pool;
+    if (onlyIds && onlyIds.length) {
+      pool = onlyIds.map(function (id) { return { id: id, weight: 1 }; });
+    } else {
+      pool = A.core.drillPool();
+      if (!pool.length) {
+        pool = A.core.allWords().map(function (w) { return { id: w.id, weight: 1 }; });
+      }
+    }
+    if (mode === 'collocation' || mode === 'root') {
+      pool = pool.filter(function (x) {
+        var ex = drillExtras(x.id);
+        if (!ex) return false;
+        if (mode === 'collocation') return (ex.collocations || []).length > 0;
+        return (ex.family || []).length > 0;
+      });
+    }
+    if (!onlyIds && pool.length < 10) {
+      var have = {};
+      pool.forEach(function (x) { have[x.id] = 1; });
+      A.core.allWords().forEach(function (w) {
+        if (have[w.id]) return;
+        var ex = drillExtras(w.id);
+        if (!ex) return;
+        if (mode === 'collocation' && !(ex.collocations || []).length) return;
+        if (mode === 'root' && !(ex.family || []).length) return;
+        pool.push({ id: w.id, weight: 1 });
+      });
+    }
+    return pool;
+  }
+
+  function weightedIds(pool, n) {
+    var copy = pool.slice();
+    var out = [];
+    while (out.length < n && copy.length) {
+      var total = 0;
+      for (var i = 0; i < copy.length; i++) total += Math.max(1, copy[i].weight || 1);
+      var r = Math.random() * total;
+      var acc = 0;
+      var pick = 0;
+      for (var j = 0; j < copy.length; j++) {
+        acc += Math.max(1, copy[j].weight || 1);
+        if (r <= acc) { pick = j; break; }
+      }
+      out.push(copy[pick].id);
+      copy.splice(pick, 1);
+    }
+    return out;
+  }
+
+  views.drill = function () {
+    var stats = A.core.drillStats();
+    var cards = DRILL_MODES.map(function (m) {
+      var ready = drillModeAvailable(m.key);
+      var st = (stats.byMode || {})[m.key] || { n: 0, ok: 0 };
+      var acc = st.n ? Math.round((st.ok / st.n) * 100) + '%' : '暂无记录';
+      var inner = '<div class="set-top"><span class="chip chip-type">' + icon(m.ic) + m.name + '</span>' +
+        '<span class="chip">' + (ready ? '本轮 10 词' : '内容建设中') + '</span></div>' +
+        '<h3>' + m.name + '</h3>' +
+        '<p class="set-intro">' + m.desc + '</p>' +
+        '<div class="set-status"><span>正确率 ' + acc + '</span></div>';
+      if (!ready) {
+        return '<div class="set-card drill-card disabled">' + inner + '</div>';
+      }
+      return '<a class="set-card drill-card" href="#/drill/' + m.key + '">' + inner +
+        '<span class="btn btn-soft">开始' + m.name + icon('arrowRight') + '</span></a>';
+    }).join('');
+
+    return {
+      html: '<div class="page-back"><a class="back-link" href="#/vocab">' + icon('arrowLeft') + '单词抽查</a></div>' +
+        pageHead('词汇深练', '五种模式 · 每轮 10 词 · 记录自动保存') +
+        '<div class="set-grid drill-grid">' + cards + '</div>'
+    };
+  };
+
+  views.drillRunner = function (ctx) {
+    var mode = ctx.params.mode;
+    var modeInfo = null;
+    DRILL_MODES.forEach(function (m) { if (m.key === mode) modeInfo = m; });
+    if (!modeInfo || !drillModeAvailable(mode)) {
+      return { html: pageHead('模式不可用', '回到词汇深练重新选择') + '<a class="btn btn-primary" href="#/drill">返回深练</a>' };
+    }
+
+    var root = null;
+    var questions = [];
+    var idx = 0;
+    var answered = false;
+    var correctCount = 0;
+    var wrongIds = [];
+    var userAnswer = '';
+    var qStart = 0;
+    var roundStart = 0;
+    var replays = 0;
+    var keyHandler = null;
+
+    function makeQuestion(word) {
+      var ex = drillExtras(word.id);
+      var q = { id: word.id, w: word, mode: mode, options: [], answerIndex: 0, answerText: '' };
+      if (mode === 'spelling' || mode === 'dictation') {
+        q.answerText = word.w;
+        return q;
+      }
+      if (mode === 'sense') {
+        var correct = firstSense(word);
+        if (!correct) return null;
+        var same = A.core.allWords().filter(function (x) {
+          return x.id !== word.id && drillPos(x) === drillPos(word) && firstSense(x) && firstSense(x) !== correct;
+        });
+        var pool = drillShuffle(same).slice(0, 3);
+        if (pool.length < 3) {
+          pool = drillShuffle(A.core.allWords().filter(function (x) {
+            return x.id !== word.id && firstSense(x) && firstSense(x) !== correct;
+          })).slice(0, 3);
+        }
+        if (pool.length < 3) return null;
+        var opts = [correct].concat(pool.map(firstSense));
+        opts = drillShuffle(opts);
+        q.options = opts;
+        q.answerIndex = opts.indexOf(correct);
+        q.answerText = correct;
+        return q;
+      }
+      if (mode === 'collocation') {
+        if (!ex || !(ex.collocations || []).length) return null;
+        var phrase = null;
+        ex.collocations.forEach(function (c) {
+          if (!phrase && c.toLowerCase().indexOf(word.w.toLowerCase()) >= 0) phrase = c;
+        });
+        if (!phrase) return null;
+        q.prompt = phrase.replace(new RegExp(word.w, 'i'), '____');
+        var words = A.core.allWords().filter(function (x) {
+          return x.id !== word.id && drillPos(x) === drillPos(word);
+        });
+        var others = drillShuffle(words).slice(0, 3).map(function (x) { return x.w; });
+        if (others.length < 3) return null;
+        var cOpts = drillShuffle([word.w].concat(others));
+        q.options = cOpts;
+        q.answerIndex = cOpts.indexOf(word.w);
+        q.answerText = word.w;
+        q.fullPhrase = phrase;
+        return q;
+      }
+      if (mode === 'root') {
+        if (!ex || !(ex.family || []).length) return null;
+        var family = ex.family.slice();
+        var right = family[Math.floor(Math.random() * family.length)];
+        var distractors = [];
+        Object.keys(window.CET4_WORD_EXTRAS || {}).forEach(function (id) {
+          if (id === word.id) return;
+          var e = window.CET4_WORD_EXTRAS[id];
+          (e.family || []).forEach(function (f) {
+            if (f !== right && family.indexOf(f) < 0 && distractors.indexOf(f) < 0) distractors.push(f);
+          });
+        });
+        distractors = drillShuffle(distractors).slice(0, 3);
+        if (distractors.length < 3) return null;
+        var rOpts = drillShuffle([right].concat(distractors));
+        q.options = rOpts;
+        q.answerIndex = rOpts.indexOf(right);
+        q.answerText = right;
+        q.rootText = ex.root || '';
+        q.family = family;
+        return q;
+      }
+      return null;
+    }
+
+    function buildRound(onlyIds) {
+      var pool = drillPoolFor(mode, onlyIds);
+      var ids = weightedIds(pool, 10);
+      var out = [];
+      var seen = {};
+      ids.forEach(function (id) {
+        if (seen[id]) return;
+        var word = A.core.getWord(id);
+        if (!word) return;
+        var q = makeQuestion(word);
+        if (q) { out.push(q); seen[id] = 1; }
+      });
+      if (out.length < 10 && !onlyIds) {
+        var extraIds = weightedIds(pool.filter(function (x) { return !seen[x.id]; }), 10 - out.length);
+        extraIds.forEach(function (id) {
+          var word = A.core.getWord(id);
+          if (!word || seen[id]) return;
+          var q = makeQuestion(word);
+          if (q) { out.push(q); seen[id] = 1; }
+        });
+      }
+      return out;
+    }
+
+    function startRound(onlyIds) {
+      questions = buildRound(onlyIds);
+      if (!questions.length) {
+        ui.toast(onlyIds ? '错词里没有该模式可练的词' : '还没有可深练的单词，先加入单词本');
+        return false;
+      }
+      idx = 0;
+      answered = false;
+      correctCount = 0;
+      wrongIds = [];
+      userAnswer = '';
+      replays = 0;
+      roundStart = Date.now();
+      qStart = Date.now();
+      render();
+      return true;
+    }
+
+    function playWord(q) {
+      if (!q) return;
+      if (!ui.tts.supported) { ui.toast('当前浏览器不支持语音合成'); return; }
+      ui.tts.speak(q.w.w, { rate: 0.9 });
+    }
+
+    function replay() {
+      if (replays >= 2) return;
+      replays += 1;
+      playWord(questions[idx]);
+      var count = root.querySelector('#replay-count');
+      if (count) count.textContent = '还可重播 ' + (2 - replays) + ' 次';
+      var btn = root.querySelector('[data-play-word]');
+      if (btn && replays >= 2) btn.disabled = true;
+    }
+
+    function finish(correct) {
+      if (answered) return;
+      answered = true;
+      var q = questions[idx];
+      var secs = Math.max(1, Math.round((Date.now() - qStart) / 1000));
+      if (correct) correctCount += 1;
+      else wrongIds.push(q.id);
+      A.core.reviewWord(q.id, correct ? (secs <= 8 ? 4 : 3) : 1, { daily: false, seconds: secs });
+      A.core.recordDrill(mode, q.id, correct);
+      render();
+    }
+
+    function submitInput() {
+      if (answered) { next(); return; }
+      var q = questions[idx];
+      var input = root.querySelector('#drill-input');
+      if (!input) return;
+      userAnswer = input.value.trim();
+      var ok = userAnswer.toLowerCase() === q.answerText.toLowerCase();
+      finish(ok);
+    }
+
+    function next() {
+      idx += 1;
+      if (idx >= questions.length) { render(); return; }
+      answered = false;
+      userAnswer = '';
+      replays = 0;
+      qStart = Date.now();
+      render();
+      if (mode === 'dictation') setTimeout(function () { playWord(questions[idx]); }, 120);
+    }
+
+    function optionHtml(q, i) {
+      var cls = 'drill-option';
+      if (answered) {
+        if (i === q.answerIndex) cls += ' correct';
+        else if (i === q.selectedIndex) cls += ' wrong';
+      }
+      return '<button class="' + cls + '" data-opt="' + i + '"' + (answered ? ' disabled' : '') + '>' +
+        '<span class="do-key">' + (i + 1) + '</span><span>' + esc(q.options[i]) + '</span></button>';
+    }
+
+    function feedbackHtml(q) {
+      if (!answered) return '';
+      var ok = userAnswer && (q.options.length ? q.selectedIndex === q.answerIndex : userAnswer.toLowerCase() === q.answerText.toLowerCase());
+      if (q.mode === 'sense' || q.mode === 'collocation' || q.mode === 'root') {
+        ok = q.selectedIndex === q.answerIndex;
+      }
+      var head = ok ? '答对了' : '答错了';
+      var extra = '';
+      if (q.mode === 'spelling' && !ok) {
+        extra = '<div class="drill-diff">正确拼写：' + diffSpelling(userAnswer, q.answerText) + '</div>';
+      }
+      if (q.mode === 'collocation') {
+        extra = '<div class="drill-diff">完整搭配：' + esc(q.fullPhrase || '') + '</div>';
+      }
+      if (q.mode === 'root') {
+        extra = '<div class="drill-diff">同族词：' + esc((q.family || []).join(' / ')) + '</div>' +
+          (q.rootText ? '<div class="drill-diff">词根：' + esc(q.rootText) + '</div>' : '');
+      }
+      return '<div class="drill-feedback ' + (ok ? 'ok' : 'bad') + '">' +
+        '<h3>' + head + '</h3>' +
+        extra +
+        '<div class="drill-word">' + esc(q.w.w) + '</div>' +
+        '<div class="drill-ph">' + esc(q.w.ph) + ' · ' + esc(q.w.pos) + '</div>' +
+        '<button class="btn btn-ghost small" data-say-word>' + icon('volume') + '听发音</button>' +
+        '<div class="drill-zh">' + esc(q.w.zh) + '</div>' +
+        '<button class="btn btn-primary" data-next>下一题' + icon('arrowRight') + '</button>' +
+        '</div>';
+    }
+
+    function diffSpelling(input, answer) {
+      if (!input) return '<strong>' + esc(answer) + '</strong>';
+      var i = 0;
+      while (i < input.length && i < answer.length && input[i].toLowerCase() === answer[i].toLowerCase()) i += 1;
+      var j = answer.length - 1;
+      var k = input.length - 1;
+      while (j >= i && k >= i && input[k].toLowerCase() === answer[j].toLowerCase()) { j -= 1; k -= 1; }
+      return esc(answer.slice(0, i)) + '<mark>' + esc(answer.slice(i, j + 1)) + '</mark>' + esc(answer.slice(j + 1));
+    }
+
+    function questionHtml(q) {
+      if (answered) return feedbackHtml(q);
+      var body = '';
+      if (mode === 'spelling') {
+        body = '<div class="drill-label">根据释义拼写单词</div>' +
+          '<div class="drill-zh">' + esc(q.w.zh) + '</div>' +
+          '<div class="drill-pos">' + esc(q.w.pos) + '</div>' +
+          '<div class="drill-answer-bar"><input id="drill-input" class="input drill-input" type="text" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="输入单词">' +
+          '<button class="btn btn-primary" data-submit>提交</button></div>';
+      } else if (mode === 'dictation') {
+        body = '<div class="drill-label">听发音，写单词</div>' +
+          '<button class="btn btn-soft btn-lg" data-play-word>' + icon('volume') + '播放（空格）</button>' +
+          '<div class="drill-replay muted small" id="replay-count">还可重播 ' + (2 - replays) + ' 次</div>' +
+          '<div class="drill-answer-bar"><input id="drill-input" class="input drill-input" type="text" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="输入听到的单词">' +
+          '<button class="btn btn-primary" data-submit>提交</button></div>';
+      } else {
+        body = '<div class="drill-label">' + (mode === 'sense' ? '选择正确释义' : mode === 'collocation' ? '补全搭配' : '选出同族词') + '</div>' +
+          (q.prompt ? '<div class="drill-prompt">' + esc(q.prompt) + '</div>' : '<div class="drill-word">' + esc(q.w.w) + '</div>') +
+          '<div class="drill-options">' + q.options.map(function (o, i) { return optionHtml(q, i); }).join('') + '</div>';
+      }
+      return '<section class="card drill-question">' + body + '</section>';
+    }
+
+    function resultsHtml() {
+      var total = questions.length;
+      var acc = total ? Math.round((correctCount / total) * 100) : 0;
+      var wrongCards = questions.filter(function (q) { return wrongIds.indexOf(q.id) >= 0; }).map(function (q) {
+        return '<div class="drill-wrong-row"><strong>' + esc(q.w.w) + '</strong><span>' + esc(q.w.zh) + '</span></div>';
+      }).join('');
+      return '<div class="runner drill-runner"><div class="runner-top"><a class="back-link" href="#/drill">' + icon('arrowLeft') + '词汇深练</a>' +
+        '<h1 class="runner-title">' + esc(modeInfo.name) + ' · 本轮完成</h1></div>' +
+        '<section class="card drill-result">' +
+        '<div class="drill-score"><strong>' + acc + '%</strong><span>' + correctCount + ' / ' + total + '</span></div>' +
+        '<p class="muted">答对 ' + correctCount + ' 题 · 答错 ' + wrongIds.length + ' 题</p>' +
+        (wrongCards ? '<div class="drill-wrong-list"><h3>错词</h3>' + wrongCards + '</div>' : '<p class="muted">全对，状态很好。</p>') +
+        '<div class="drill-actions">' +
+        (wrongIds.length ? '<button class="btn btn-primary" data-wrong-round>只练错词</button>' : '') +
+        '<button class="btn btn-ghost" data-again>再来一轮</button>' +
+        '<a class="btn btn-ghost" href="#/drill">返回深练</a>' +
+        '</div></section></div>';
+    }
+
+    function render() {
+      if (!root) return;
+      if (idx >= questions.length) {
+        root.innerHTML = storageBanner() + resultsHtml();
+        bindResults();
+        return;
+      }
+      var q = questions[idx];
+      root.innerHTML = storageBanner() + '<div class="runner drill-runner">' +
+        '<div class="runner-top"><a class="back-link" href="#/drill">' + icon('arrowLeft') + '词汇深练</a>' +
+        '<h1 class="runner-title">' + esc(modeInfo.name) + '</h1>' +
+        '<span class="chip">第 ' + (idx + 1) + ' / ' + questions.length + ' 题</span>' +
+        '</div>' +
+        bar((idx) / questions.length) +
+        questionHtml(q) + '</div>';
+      bindQuestion();
+      if (mode !== 'dictation' && !answered) {
+        var input = root.querySelector('#drill-input');
+        if (input) input.focus();
+      }
+      if (mode === 'dictation' && !answered) {
+        setTimeout(function () { playWord(q); }, 120);
+      }
+    }
+
+    function bindQuestion() {
+      var input = root.querySelector('#drill-input');
+      if (input) {
+        input.addEventListener('keydown', function (e) {
+          if (e.key === 'Enter') { e.preventDefault(); submitInput(); }
+        });
+      }
+      var submit = root.querySelector('[data-submit]');
+      if (submit) submit.addEventListener('click', submitInput);
+      var play = root.querySelector('[data-play-word]');
+      if (play) play.addEventListener('click', replay);
+      var say = root.querySelector('[data-say-word]');
+      if (say) say.addEventListener('click', function () { playWord(questions[idx]); });
+      root.querySelectorAll('[data-opt]').forEach(function (b) {
+        b.addEventListener('click', function () {
+          if (answered) return;
+          var i = +b.getAttribute('data-opt');
+          userAnswer = '';
+          questions[idx].selectedIndex = i;
+          finish(i === questions[idx].answerIndex);
+        });
+      });
+      var nextBtn = root.querySelector('[data-next]');
+      if (nextBtn) nextBtn.addEventListener('click', next);
+    }
+
+    function bindResults() {
+      var wrong = root.querySelector('[data-wrong-round]');
+      if (wrong) wrong.addEventListener('click', function () { startRound(wrongIds.slice()); });
+      var again = root.querySelector('[data-again]');
+      if (again) again.addEventListener('click', function () { startRound(); });
+    }
+
+    keyHandler = function (e) {
+      if (!root) return;
+      if (e.target && /INPUT|TEXTAREA|SELECT/.test(e.target.tagName || '')) return;
+      if (idx >= questions.length) return;
+      if (e.key === ' ' && mode === 'dictation' && !answered) {
+        e.preventDefault();
+        replay();
+        return;
+      }
+      if (!answered && /^[1-4]$/.test(e.key) && questions[idx].options.length) {
+        e.preventDefault();
+        var i = +e.key - 1;
+        if (i < questions[idx].options.length) {
+          questions[idx].selectedIndex = i;
+          finish(i === questions[idx].answerIndex);
+        }
+        return;
+      }
+      if (answered && e.key === 'Enter') {
+        e.preventDefault();
+        next();
+      }
+    };
+    document.addEventListener('keydown', keyHandler);
+
+    return {
+      html: '',
+      mount: function (r) {
+        root = r;
+        if (!startRound()) { location.hash = '#/drill'; }
+      },
+      destroy: function () {
+        if (keyHandler) document.removeEventListener('keydown', keyHandler);
+        ui.tts.cancel();
+      }
+    };
+  };
+
   /* ================= 单词本 ================= */
   views.wordbook = function () {
     var root = null;
@@ -896,6 +1391,7 @@ window.App = window.App || {};
         '<div class="lookup-bar"><input id="wb-lookup" class="input" type="search" autocomplete="off" aria-label="查词，输入英文单词后回车" placeholder="查词：输入英文单词，回车查询"></div>' +
         '<div class="wb-toolbar">' +
         '<button class="btn btn-primary" data-wb-start' + (list.length ? '' : ' disabled') + '>' + icon('play') + '开始复习</button>' +
+        '<a class="btn btn-ghost" href="#/drill">' + icon('layers') + '深练</a>' +
         '<a class="btn btn-ghost" href="#/vocab">去抽查</a>' +
         (list.length ? '<button class="btn btn-danger-ghost" data-wb-clear>' + icon('trash') + '清空</button>' : '') +
         '</div>' +
