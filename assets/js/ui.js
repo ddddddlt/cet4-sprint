@@ -78,10 +78,12 @@ window.App = window.App || {};
     var root = document.getElementById('modal-root');
     if (!root) return;
     var o = opts || {};
+    var titleId = 'modal-title-' + Date.now();
+    var opener = document.activeElement;
     root.innerHTML =
       '<div class="modal-mask">' +
-      '<div class="modal" role="dialog" aria-modal="true">' +
-      '<div class="modal-head"><h3>' + esc(o.title || '') + '</h3>' +
+      '<div class="modal" role="dialog" aria-modal="true" aria-labelledby="' + titleId + '" tabindex="-1">' +
+      '<div class="modal-head"><h3 id="' + titleId + '">' + esc(o.title || '') + '</h3>' +
       '<button class="icon-btn" data-close aria-label="关闭">' + icon('x') + '</button></div>' +
       '<div class="modal-body">' + (o.body || '') + '</div>' +
       '<div class="modal-foot">' +
@@ -89,7 +91,54 @@ window.App = window.App || {};
       '<button class="btn ' + (o.danger ? 'btn-danger' : 'btn-primary') + '" data-ok>' + esc(o.okText || '确定') + '</button>' +
       '</div></div></div>';
     root.classList.add('open');
-    function close() { root.classList.remove('open'); root.innerHTML = ''; }
+    var modalEl = root.querySelector('.modal');
+    var closed = false;
+
+    function focusables() {
+      var list = root.querySelectorAll('a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])');
+      return Array.prototype.slice.call(list).filter(function (el) {
+        return el.offsetWidth > 0 || el.offsetHeight > 0 || el === document.activeElement;
+      });
+    }
+
+    function onKey(e) {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        e.stopPropagation();
+        close();
+        return;
+      }
+      if (e.key !== 'Tab') return;
+      var list = focusables();
+      if (!list.length) {
+        e.preventDefault();
+        modalEl.focus();
+        return;
+      }
+      var first = list[0];
+      var last = list[list.length - 1];
+      if (!root.contains(document.activeElement)) {
+        e.preventDefault();
+        (e.shiftKey ? last : first).focus();
+      } else if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    }
+
+    function close() {
+      if (closed) return;
+      closed = true;
+      document.removeEventListener('keydown', onKey, true);
+      root.classList.remove('open');
+      root.innerHTML = '';
+      if (opener && opener.focus && document.contains(opener)) opener.focus();
+    }
+
+    document.addEventListener('keydown', onKey, true);
     root.querySelectorAll('[data-close]').forEach(function (b) { b.addEventListener('click', close); });
     var ok = root.querySelector('[data-ok]');
     if (ok) ok.addEventListener('click', function () {
@@ -99,6 +148,13 @@ window.App = window.App || {};
     root.querySelector('.modal-mask').addEventListener('click', function (e) {
       if (e.target === e.currentTarget) close();
     });
+
+    setTimeout(function () {
+      if (closed) return;
+      var list = focusables();
+      (list[0] || modalEl).focus();
+    }, 0);
+
     return { close: close, root: root };
   }
 

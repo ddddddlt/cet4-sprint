@@ -189,6 +189,17 @@ window.App = window.App || {};
     });
   }
 
+  function bindLookup(input) {
+    if (!input) return;
+    input.addEventListener('keydown', function (e) {
+      if (e.key !== 'Enter') return;
+      var q = input.value.trim();
+      if (!q) return;
+      e.preventDefault();
+      openDictCard(q);
+    });
+  }
+
   /* ================= 首页 ================= */
   views.dashboard = function () {
     var s = S();
@@ -760,6 +771,7 @@ window.App = window.App || {};
       }).join('');
 
       root.innerHTML = pageHead('单词本', '收藏不熟的词 · 费曼式单独复习') +
+        '<div class="lookup-bar"><input id="wb-lookup" class="input" type="search" autocomplete="off" aria-label="查词，输入英文单词后回车" placeholder="查词：输入英文单词，回车查询"></div>' +
         '<div class="wb-toolbar">' +
         '<button class="btn btn-primary" data-wb-start' + (list.length ? '' : ' disabled') + '>' + icon('play') + '开始复习</button>' +
         '<a class="btn btn-ghost" href="#/vocab">去抽查</a>' +
@@ -770,6 +782,8 @@ window.App = window.App || {};
           : '<div class="card">' + emptyState('bookmark', '单词本还是空的',
             '抽查时遇到不熟的词点「加入单词本」；答错的词会自动收进来',
             '<a class="btn btn-primary" href="#/vocab">去抽查</a>') + '</div>');
+
+      bindLookup(root.querySelector('#wb-lookup'));
 
       var start = root.querySelector('[data-wb-start]');
       if (start) start.addEventListener('click', function () {
@@ -981,7 +995,7 @@ window.App = window.App || {};
       if (!submitted) return '';
       return '<section class="card writing-sample" id="wsample">' +
         '<div class="ws-head"><h2>参考范文</h2><span class="chip">' + set.words + ' 词</span></div>' +
-        '<p class="ws-en">' + esc(set.sample) + '</p>' +
+        '<p class="ws-en" lang="en">' + esc(set.sample) + '</p>' +
         (set.sampleZh ? '<details><summary>查看中文译文</summary><p class="ws-zh">' + esc(set.sampleZh) + '</p></details>' : '') +
         '<div class="ws-actions"><button class="btn btn-ghost" data-rewrite>' + icon('rotate') + '重写本篇</button>' +
         '<a class="btn btn-primary" href="#/writing">返回写作列表</a></div>' +
@@ -1001,7 +1015,7 @@ window.App = window.App || {};
         '<div class="writing-grid">' +
         '<section class="card writing-prompt">' +
         '<div class="q-type">WRITING TASK</div>' +
-        '<p class="wp-text">' + esc(set.prompt) + '</p>' +
+        '<p class="wp-text" lang="en">' + esc(set.prompt) + '</p>' +
         '<div class="wp-meta">' + icon('clock') + ' 30 分钟 · ' + set.minWords + '–' + set.maxWords + ' 词</div>' +
         '</section>' +
         '<section class="card writing-editor">' +
@@ -1140,9 +1154,14 @@ window.App = window.App || {};
         '<span>' + icon('clock') + '约 ' + set.minutes + ' 分钟</span>';
     });
 
+    var lookup = '<div class="lookup-bar"><input id="reading-lookup" class="input" type="search" autocomplete="off" aria-label="查词，输入英文单词后回车" placeholder="查词：输入英文单词，回车查询"></div>';
+
     return {
-      html: pageHead('阅读', '仔细阅读 · 长篇匹配 · 选词填空') + tip +
-        (all ? body : emptyState('file', '还没有阅读题', '在 assets/js/data/ 中添加题目即可'))
+      html: pageHead('阅读', '仔细阅读 · 长篇匹配 · 选词填空') + lookup + tip +
+        (all ? body : emptyState('file', '还没有阅读题', '在 assets/js/data/ 中添加题目即可')),
+      mount: function (root) {
+        bindLookup(root.querySelector('#reading-lookup'));
+      }
     };
   };
 
@@ -1268,7 +1287,7 @@ window.App = window.App || {};
       } else if (answers[q.id] === i) {
         cls += ' sel';
       }
-      return '<button class="' + cls + '" data-q="' + q.id + '" data-i="' + i + '"' + (showAnswer() ? ' disabled' : '') + '>' +
+      return '<button class="' + cls + '" lang="en" data-q="' + q.id + '" data-i="' + i + '"' + (showAnswer() ? ' disabled' : '') + '>' +
         '<span class="opt-key">' + letter + '</span><span>' + esc(q.options[i]) + '</span></button>';
     }
 
@@ -1281,7 +1300,7 @@ window.App = window.App || {};
           '<div class="ex-evidence">' + icon('target') + '<span>定位句已在左侧高亮</span></div></div>'
           : '';
         return '<div class="qcard' + (isWrong ? ' wrong' : '') + '" data-qid="' + q.id + '">' +
-          '<div class="q-head"><span class="q-no' + (isWrong ? ' bad' : '') + '" data-jump="' + q.id + '" title="跳到原文对应句">' + (idx + 1) + '</span><p class="q-stem">' + esc(q.stem) + '</p></div>' +
+          '<div class="q-head"><span class="q-no' + (isWrong ? ' bad' : '') + '" data-jump="' + q.id + '" title="跳到原文对应句">' + (idx + 1) + '</span><p class="q-stem" lang="en">' + esc(q.stem) + '</p></div>' +
           '<div class="opts">' + q.options.map(function (o, i) { return optionHtml(q, i); }).join('') + '</div>' +
           explain + '</div>';
       }).join('');
@@ -1322,7 +1341,7 @@ window.App = window.App || {};
         reviewBanner() +
         resultBanner() +
         '<div class="reading-grid">' +
-        '<article class="passage card" id="passage">' + passageHtml() + '</article>' +
+        '<article class="passage card" id="passage" lang="en">' + passageHtml() + '</article>' +
         '<div class="questions">' + questionHtml() + '</div>' +
         '</div></div>';
     }
@@ -1505,7 +1524,7 @@ window.App = window.App || {};
         var cls = 'bank-word';
         if (used) cls += ' used';
         if (submitted) cls += ' locked';
-        return '<button class="' + cls + '" data-word="' + item.k + '"' + (submitted ? ' disabled' : '') + '>' +
+        return '<button class="' + cls + '" lang="en" data-word="' + item.k + '"' + (submitted ? ' disabled' : '') + '>' +
           '<span class="bw-key">' + item.k + '</span>' +
           '<span class="bw-main"><strong>' + esc(item.w) + '</strong><span>' + esc(item.pos) + '</span></span>' +
           '</button>';
@@ -1526,7 +1545,7 @@ window.App = window.App || {};
     function answerShell() {
       return '<div class="runner">' + topBar() +
         '<div class="reading-grid cloze-grid">' +
-        '<article class="card passage cloze-passage" id="passage">' + passageHtml() + '</article>' +
+        '<article class="card passage cloze-passage" id="passage" lang="en">' + passageHtml() + '</article>' +
         '<div class="cloze-side">' +
         '<section class="card bank-card">' +
         '<div class="section-head"><div><h2>备选词</h2><p>先点空格，再点下面的单词</p></div>' +
@@ -1707,7 +1726,7 @@ window.App = window.App || {};
       return set.paragraphs.map(function (p) {
         return '<div class="para" id="para-' + p.k + '">' +
           '<span class="para-key">' + p.k + '</span>' +
-          '<p>' + ui.linkWords(p.text) + '</p></div>';
+          '<p lang="en">' + ui.linkWords(p.text) + '</p></div>';
       }).join('');
     }
 
@@ -1726,7 +1745,7 @@ window.App = window.App || {};
         return '<div class="stmt" data-stmt="' + st.id + '">' +
           '<span class="stmt-no">' + (i + 1) + '</span>' +
           '<div class="stmt-body">' +
-          '<p class="stmt-text">' + esc(st.text) + '</p>' + result +
+          '<p class="stmt-text" lang="en">' + esc(st.text) + '</p>' + result +
           '</div>' +
           '<select class="stmt-select" data-select="' + st.id + '"' + (submitted ? ' disabled' : '') + '>' + opts + '</select>' +
           '</div>';
@@ -1929,7 +1948,7 @@ window.App = window.App || {};
         if (i === q.answer) cls += ' correct';
         if (answers[q.id] === i && i !== q.answer) cls += ' wrong';
       } else if (answers[q.id] === i) cls += ' sel';
-      return '<button class="' + cls + '" data-q="' + q.id + '" data-i="' + i + '"' + (submitted ? ' disabled' : '') + '>' +
+      return '<button class="' + cls + '" lang="en" data-q="' + q.id + '" data-i="' + i + '"' + (submitted ? ' disabled' : '') + '>' +
         '<span class="opt-key">' + ['A', 'B', 'C', 'D'][i] + '</span><span>' + esc(q.options[i]) + '</span></button>';
     }
 
@@ -1941,7 +1960,7 @@ window.App = window.App || {};
           '<div class="ex-evidence">' + icon('volume') + '<span>原文：' + esc(q.evidence) + '</span></div></div>'
           : '';
         return '<div class="qcard" data-qid="' + q.id + '">' +
-          '<div class="q-head"><span class="q-no">' + (idx + 1) + '</span><p class="q-stem">' + esc(q.stem) + '</p></div>' +
+          '<div class="q-head"><span class="q-no">' + (idx + 1) + '</span><p class="q-stem" lang="en">' + esc(q.stem) + '</p></div>' +
           '<div class="opts">' + q.options.map(function (o, i) { return optionHtml(q, i); }).join('') + '</div>' +
           explain + '</div>';
       }).join('');
@@ -1981,7 +2000,7 @@ window.App = window.App || {};
         '</div>' +
         '<button class="btn btn-ghost small" id="toggle-text">' + (showText ? '隐藏原文' : '显示原文') + '</button>' +
         '</div>' +
-        '<div class="transcript card" id="transcript"' + (showText ? '' : ' hidden') + '>' +
+        '<div class="transcript card" id="transcript" lang="en"' + (showText ? '' : ' hidden') + '>' +
         '<div class="tr-head">' + icon('file') + '<span>原文精听 · 点击句子逐句播放</span></div>' +
         transcriptHtml() + '</div>' +
         '</aside>' +

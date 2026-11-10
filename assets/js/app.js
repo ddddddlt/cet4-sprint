@@ -63,7 +63,8 @@ window.App = window.App || {};
       '<a class="icon-btn" href="#/settings" aria-label="设置">' + icon('settings') + '</a>' +
       '</div>' +
       '</header>' +
-      '<div class="view" id="view"></div>' +
+      '<div class="view" id="view" tabindex="-1"></div>' +
+      '<div class="sr-only" id="a11y-live" aria-live="polite" aria-atomic="true"></div>' +
       '</main>' +
       '<nav class="tabbar">' + tabs + '</nav>' +
       '</div>';
@@ -127,7 +128,10 @@ window.App = window.App || {};
   function setActive(view) {
     var key = navKeyOf(view);
     document.querySelectorAll('[data-nav]').forEach(function (a) {
-      a.classList.toggle('on', a.getAttribute('data-nav') === key);
+      var on = a.getAttribute('data-nav') === key;
+      a.classList.toggle('on', on);
+      if (on) a.setAttribute('aria-current', 'page');
+      else a.removeAttribute('aria-current');
     });
   }
 
@@ -173,6 +177,17 @@ window.App = window.App || {};
     window.scrollTo(0, 0);
     var mainEl = document.querySelector('.main');
     if (mainEl) mainEl.scrollTop = 0;
+
+    var pageName = TITLES[route.view] || '页面';
+    if (viewEl) {
+      viewEl.setAttribute('tabindex', '-1');
+      try { viewEl.focus({ preventScroll: true }); } catch (e) { viewEl.focus(); }
+    }
+    var live = document.getElementById('a11y-live');
+    if (live) {
+      live.textContent = '';
+      setTimeout(function () { live.textContent = '已进入 ' + pageName; }, 50);
+    }
   }
 
   function refreshThemeButtons() {
