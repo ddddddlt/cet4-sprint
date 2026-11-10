@@ -1,6 +1,8 @@
 import { hashState } from './cloud'
+import { activeProfile } from './profiles'
 
 const KEY = 'cet4-sprint/supabase/v1'
+const PROFILE_META = 'cet4-sprint/supabase/profile/v1/'
 
 function read() {
   try {
@@ -10,14 +12,50 @@ function read() {
   }
 }
 
+function profileId() {
+  const profile = activeProfile()
+  return profile ? profile.id : 'default'
+}
+
+function readProfileMeta() {
+  try {
+    return JSON.parse(localStorage.getItem(PROFILE_META + profileId()) || '{}') || {}
+  } catch (e) {
+    return {}
+  }
+}
+
+function saveProfileMeta(patch) {
+  const next = { ...readProfileMeta(), ...(patch || {}) }
+  localStorage.setItem(PROFILE_META + profileId(), JSON.stringify(next))
+  return next
+}
+
 export function getSupabaseConfig() {
-  return { url: '', anonKey: '', auto: false, autoPull: true, session: null, lastPush: 0, lastPull: 0, lastHash: '', lastRemoteAt: '', lastError: '', ...read() }
+  const meta = readProfileMeta()
+  return {
+    url: '', anonKey: '', auto: false, autoPull: true, session: null,
+    lastPush: 0, lastPull: 0, lastHash: '', lastRemoteAt: '', lastError: '',
+    ...read(),
+    lastPush: meta.lastPush || 0,
+    lastPull: meta.lastPull || 0,
+    lastHash: meta.lastHash || '',
+    lastRemoteAt: meta.lastRemoteAt || '',
+  }
 }
 
 export function saveSupabaseConfig(patch) {
-  const cfg = { ...getSupabaseConfig(), ...(patch || {}) }
-  localStorage.setItem(KEY, JSON.stringify(cfg))
-  return cfg
+  const body = { ...(patch || {}) }
+  const meta = {}
+  ;['lastPush', 'lastPull', 'lastHash', 'lastRemoteAt'].forEach((key) => {
+    if (Object.prototype.hasOwnProperty.call(body, key)) {
+      meta[key] = body[key]
+      delete body[key]
+    }
+  })
+  if (Object.keys(meta).length) saveProfileMeta(meta)
+  if (Object.keys(body).length) localStorage.setItem(KEY, JSON.stringify({ ...read(), ...body }))
+  return getSupabaseConfig()
 }
 
 export function canonicalHash(value) {
@@ -84,6 +122,7 @@ export async function signIn(email, password) {
     body: JSON.stringify({ email: String(email).trim(), password }),
   })
   saveSession(cfg, data)
+  saveSupabaseConfig({ lastPush: 0, lastPull: 0, lastHash: '', lastRemoteAt: '' })
   return data
 }
 
@@ -96,10 +135,12 @@ export async function signUp(email, password) {
   })
   if (data && data.access_token) {
     saveSession(cfg, data)
+    saveSupabaseConfig({ lastPush: 0, lastPull: 0, lastHash: '', lastRemoteAt: '' })
     return { needsConfirm: false }
   }
   if (data && data.session && data.session.access_token) {
     saveSession(cfg, data.session)
+    saveSupabaseConfig({ lastPush: 0, lastPull: 0, lastHash: '', lastRemoteAt: '' })
     return { needsConfirm: false }
   }
   return { needsConfirm: true }
@@ -139,6 +180,7 @@ export async function signOut() {
     }
   } catch (e) { /* ignore */ }
   saveSupabaseConfig({ session: null, lastError: '' })
+  saveSupabaseConfig({ lastPush: 0, lastPull: 0, lastHash: '', lastRemoteAt: '' })
 }
 
 export function currentEmail() {
