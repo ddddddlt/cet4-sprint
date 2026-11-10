@@ -290,7 +290,7 @@ function Shell({ route, children }) {
           </div>
         </header>
 
-        <main key={route} className={cn('page-enter mx-auto w-full max-w-[720px] px-4 pb-[calc(108px+env(safe-area-inset-bottom))] pt-6 md:max-w-[640px] md:px-6 lg:max-w-[700px] lg:px-8 lg:pb-12 xl:max-w-[720px]', tabKey === 'home' && 'xl:max-w-shell')}>
+        <main key={route} className={cn('page-enter mx-auto w-full max-w-[720px] px-4 pb-[calc(108px+env(safe-area-inset-bottom))] pt-6 md:max-w-[688px] md:px-6 lg:max-w-[764px] lg:px-8 lg:pb-12 xl:max-w-[764px]', tabKey === 'home' && 'xl:max-w-[1108px]')}>
           {children}
         </main>
       </div>
