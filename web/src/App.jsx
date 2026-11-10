@@ -38,6 +38,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './com
 import { Progress } from './components/ui/progress'
 import { cn } from './lib/utils'
 import { getCloudConfig, hashState, pushCloud, setCloudConfig } from './lib/cloud'
+import { getSupabaseConfig, pushSupabase, saveSupabaseConfig } from './lib/supabase'
 import { loadPapers } from './lib/papers'
 
 const NAV = [
@@ -198,6 +199,30 @@ function Shell({ route, children }) {
     const onHide = () => { if (document.visibilityState === 'hidden') tick() }
     document.addEventListener('visibilitychange', onHide)
     return () => { clearInterval(timer); document.removeEventListener('visibilitychange', onHide) }
+  }, [])
+
+  useEffect(() => {
+    const core = window.App?.core
+    if (!core) return undefined
+    let busy = false
+    async function tick() {
+      const cfg = getSupabaseConfig()
+      if (!cfg.auto || !cfg.session || !cfg.url || !cfg.anonKey || busy) return
+      const raw = core.exportJSON()
+      const hash = hashState(raw)
+      if (cfg.lastHash === hash) return
+      busy = true
+      try {
+        await pushSupabase(core)
+        saveSupabaseConfig({ lastHash: hash })
+      } catch (err) {
+        saveSupabaseConfig({ lastError: err.message })
+      } finally {
+        busy = false
+      }
+    }
+    const timer = setInterval(tick, 15000)
+    return () => clearInterval(timer)
   }, [])
 
   useEffect(() => {

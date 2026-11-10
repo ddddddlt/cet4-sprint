@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { AlertTriangle, ArrowUpRight, Check, Save } from 'lucide-react'
 import { createProfile, listProfiles, removeProfile, renameProfile, switchProfile } from '../lib/profiles'
 import { getCloudConfig, setCloudConfig, resetCloudConfig, pushCloud, pullCloud, testCloud } from '../lib/cloud'
+import { getSupabaseConfig, saveSupabaseConfig, signIn, signUp, signOut, testSupabase, pushSupabase, pullSupabase } from '../lib/supabase'
 import { Badge } from '../components/ui/badge'
 import { Button } from '../components/ui/button'
 import { Card, CardContent } from '../components/ui/card'
@@ -104,6 +105,13 @@ export function Settings() {
   const [cloudBusy, setCloudBusy] = useState(false)
   const [motionOff, setMotionOff] = useState(() => { try { return localStorage.getItem('cet4-sprint/motion') === 'reduce' } catch (e) { return false } })
   const [cloudMsg, setCloudMsg] = useState('')
+  const [supa, setSupa] = useState(() => getSupabaseConfig())
+  const [supaEmail, setSupaEmail] = useState('')
+  const [supaPassword, setSupaPassword] = useState('')
+  const [supaMode, setSupaMode] = useState('login')
+  const [supaBusy, setSupaBusy] = useState(false)
+  const [supaMsg, setSupaMsg] = useState('')
+  const [confirmPull, setConfirmPull] = useState(false)
   const importRef = useRef(null)
 
   useEffect(() => {
@@ -112,6 +120,61 @@ export function Settings() {
     setName(st.settings.name || '')
     setTarget(core.checkTarget())
   }, [st])
+
+  function saveSupa(patch) {
+    const cfg = saveSupabaseConfig({ ...supa, ...(patch || {}) })
+    setSupa(cfg)
+    return cfg
+  }
+
+  function refreshSupa() {
+    setSupa(getSupabaseConfig())
+  }
+
+  async function runSupa(label, fn) {
+    setSupaBusy(true)
+    setSupaMsg(label + '…')
+    try {
+      const result = await fn()
+      setSupaMsg(result || (label + '成功'))
+      refreshSupa()
+    } catch (err) {
+      saveSupabaseConfig({ lastError: err.message })
+      setSupaMsg('失败：' + err.message)
+      refreshSupa()
+    } finally {
+      setSupaBusy(false)
+    }
+  }
+
+  async function authSupa(mode) {
+    saveSupa()
+    setSupaBusy(true)
+    setSupaMsg(mode === 'signup' ? '正在注册…' : '正在登录…')
+    try {
+      const result = mode === 'signup'
+        ? await signUp(supaEmail, supaPassword)
+        : await signIn(supaEmail, supaPassword)
+      if (result && result.needsConfirm) {
+        setSupaMsg('注册成功，请先去邮箱点击确认邮件，再回来登录')
+      } else {
+        setSupaMsg(mode === 'signup' ? '注册并登录成功' : '登录成功')
+      }
+      setSupaPassword('')
+      refreshSupa()
+    } catch (err) {
+      saveSupabaseConfig({ lastError: err.message })
+      setSupaMsg('失败：' + err.message)
+      refreshSupa()
+    } finally {
+      setSupaBusy(false)
+    }
+  }
+
+  async function logoutSupa() {
+    setSupaBusy(true)
+    try { await signOut(); setSupaMsg('已退出 Supabase'); refreshSupa() } catch (err) { setSupaMsg('退出失败：' + err.message) } finally { setSupaBusy(false) }
+  }
 
   function saveCloud(patch) {
     const cfg = setCloudConfig({ ...cloud, ...(patch || {}) })
@@ -244,7 +307,94 @@ export function Settings() {
         <CardContent className="p-6">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div>
-              <h2 className="font-display text-lg font-semibold">云同步 · 当前档案独立</h2>
+              <h2 className="font-display text-lg font-semibold">Supabase 账号同步</h2>
+              <p className="mt-1 text-xs text-muted-foreground">真实邮箱账号，每个人只读写自己的进度；不需要 GitHub Token。</p>
+            </div>
+            <Badge variant="default" className="font-normal">推荐</Badge>
+          </div>
+
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            <label className="block sm:col-span-2">
+              <span className="mb-1 block text-xs text-muted-foreground">Project URL</span>
+              <input value={supa.url} onChange={(e) => setSupa({ ...supa, url: e.target.value.trim() })} placeholder="https://xxxx.supabase.co" className="h-10 w-full rounded-md border bg-card px-3 text-sm" />
+            </label>
+            <label className="block sm:col-span-2">
+              <span className="mb-1 block text-xs text-muted-foreground">anon public key</span>
+              <input value={supa.anonKey} onChange={(e) => setSupa({ ...supa, anonKey: e.target.value.trim() })} placeholder="eyJhbGciOi..." autoComplete="off" className="h-10 w-full rounded-md border bg-card px-3 text-sm" />
+            </label>
+          </div>
+          <div className="mt-3 flex flex-wrap items-center gap-3">
+            <Button variant="outline" disabled={supaBusy} onClick={() => { saveSupa(); setSupaMsg('Supabase 配置已保存') }}>保存 URL / Key</Button>
+            <a href="./supabase-schema.sql" target="_blank" rel="noreferrer" className="text-xs text-primary hover:underline">查看建表 SQL</a>
+            <span className="text-[11px] text-[var(--faint)]">SQL 文件也会随站点部署</span>
+          </div>
+
+          {!supa.session ? (
+            <div className="mt-4 rounded-xl border border-white/10 bg-white/[.03] p-4">
+              <div className="t-eyebrow">ACCOUNT</div>
+              <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                <input value={supaEmail} onChange={(e) => setSupaEmail(e.target.value.trim())} placeholder="邮箱" autoComplete="email" className="h-10 w-full rounded-md border bg-card px-3 text-sm" />
+                <input type="password" value={supaPassword} onChange={(e) => setSupaPassword(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') authSupa(supaMode) }} placeholder="密码（至少 6 位）" autoComplete="current-password" className="h-10 w-full rounded-md border bg-card px-3 text-sm" />
+              </div>
+              <div className="mt-3 flex flex-wrap items-center gap-3">
+                <Button variant="outline" disabled={supaBusy} onClick={() => authSupa('login')}>登录</Button>
+                <Button variant="ghost" disabled={supaBusy} onClick={() => authSupa('signup')}>注册新账号</Button>
+                <button type="button" className="text-[11px] text-muted-foreground underline-offset-4 hover:underline" onClick={() => setSupaMode(supaMode === 'login' ? 'signup' : 'login')}>
+                  当前模式：{supaMode === 'login' ? '登录' : '注册'}
+                </button>
+              </div>
+              <p className="mt-2 text-[11px] text-[var(--faint)]">如果注册后收不到邮件，去 Supabase Authentication → Providers → Email 关闭 Confirm email，或先点确认邮件再登录。</p>
+            </div>
+          ) : (
+            <div className="mt-4 rounded-xl border border-white/10 bg-white/[.03] p-4">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div>
+                  <div className="text-xs text-[var(--faint)]">当前登录</div>
+                  <div className="mt-1 text-sm">{supa.session.user?.email || '已登录'}</div>
+                </div>
+                <Button variant="ghost" size="sm" disabled={supaBusy} onClick={logoutSupa}>退出登录</Button>
+              </div>
+              <div className="mt-4 flex flex-wrap gap-2">
+                <Button variant="outline" disabled={supaBusy} onClick={() => { saveSupa(); runSupa('测试连接', async () => { const r = await testSupabase(); return '连接成功：' + (r.email || '已登录') }) }}>测试连接</Button>
+                <Button disabled={supaBusy} onClick={() => runSupa('上传', async () => { saveSupa(); await pushSupabase(core); return '已上传到 Supabase' })}>上传到 Supabase</Button>
+                <Button variant="outline" disabled={supaBusy} onClick={() => {
+                  if (!confirmPull) { setConfirmPull(true); setSupaMsg('再点一次确认：会覆盖本机当前档案的进度'); return }
+                  setConfirmPull(false)
+                  runSupa('恢复', async () => { await pullSupabase(core); setTimeout(() => window.location.reload(), 400); return '已恢复，正在刷新…' })
+                }}>{confirmPull ? '确认覆盖并恢复' : '从 Supabase 恢复'}</Button>
+              </div>
+              <label className="mt-3 flex items-center gap-2 text-sm">
+                <input type="checkbox" checked={!!supa.auto} onChange={(e) => saveSupa({ auto: e.target.checked })} />
+                自动上传（每 15 秒检查变更）
+              </label>
+              <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-[var(--faint)]">
+                {supa.lastPush ? <span>上次上传 {new Date(supa.lastPush).toLocaleString()}</span> : null}
+                {supa.lastPull ? <span>上次恢复 {new Date(supa.lastPull).toLocaleString()}</span> : null}
+              </div>
+            </div>
+          )}
+
+          <div className="mt-3 text-[11px] text-muted-foreground" aria-live="polite">{supaMsg || '首次使用：填 Project URL + anon key，保存，登录或注册，再测试连接。'}</div>
+          {supa.lastError ? <p className="mt-2 rounded-lg bg-danger-soft p-2 text-xs text-danger">{supa.lastError}</p> : null}
+
+          <details className="mt-3 text-xs text-muted-foreground">
+            <summary className="cursor-pointer text-primary">Supabase 初始化步骤</summary>
+            <ol className="mt-2 list-decimal space-y-1 pl-4 leading-relaxed">
+              <li>在 supabase.com 新建免费项目。</li>
+              <li>Project Settings → API 复制 Project URL 和 anon public key，填到上面并保存。</li>
+              <li>SQL Editor 执行仓库里的 supabase/schema.sql（或点上方「查看建表 SQL」）。</li>
+              <li>Authentication → Providers → Email 开启；两个人分别注册账号。</li>
+              <li>回到这里登录，先「上传到 Supabase」建立自己的进度行。</li>
+            </ol>
+          </details>
+        </CardContent>
+      </Card>
+
+      <Card className="mb-4">
+        <CardContent className="p-6">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <h2 className="font-display text-lg font-semibold">GitHub 同步（备用）</h2>
               <p className="mt-1 text-xs text-muted-foreground">每个档案绑定自己的仓库和 Token；两人互不覆盖。仓库需为私有仓库，Token 只需 Contents 读写权限。</p>
             </div>
             <Badge variant="outline" className="font-normal">GitHub</Badge>
