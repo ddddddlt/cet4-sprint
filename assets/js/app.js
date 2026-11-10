@@ -199,6 +199,8 @@ window.App = window.App || {};
     }
     if (lastView && RUNNER_VIEWS[lastView] && LIST_VIEWS[route.view]) {
       backToSet = lastParams && lastParams.id;
+    }
+    if (LIST_VIEWS[route.view]) {
       restoreScroll = storageGet('scroll:' + p.path);
     }
 
