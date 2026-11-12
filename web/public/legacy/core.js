@@ -410,7 +410,7 @@ window.App = window.App || {};
    * 下次间隔 ≈ S，答对时间越快评级越高
    */
   function newCard() {
-    return { S: 0, D: 5, due: todayStart(), reps: 0, lapses: 0, last: null, lastGrade: 0, wrong: 0 };
+    return { S: 0, D: 5, due: todayStart(), reps: 0, lapses: 0, last: null, lastGrade: 0, wrong: 0, lastVerifiedAt: 0, lastVerifyMode: '', lastVerifyOk: false, guessCount: 0 };
   }
 
   function gradeCard(card, g, now) {
@@ -561,6 +561,12 @@ window.App = window.App || {};
     var wasNew = !card;
     if (!card) card = state.cards[id] = newCard();
     var days = gradeCard(card, grade, t);
+    if (opts.verifyMode) {
+      card.lastVerifiedAt = t;
+      card.lastVerifyMode = opts.verifyMode;
+      card.lastVerifyOk = !!opts.verifyOk;
+      if (opts.guessed) card.guessCount = (card.guessCount || 0) + 1;
+    }
     var rec = dayRecord(undefined, true);
     rec.reviews += 1;
     if (opts.daily !== false) rec.checkDone = (rec.checkDone || 0) + 1;

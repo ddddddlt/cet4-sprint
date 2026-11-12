@@ -85,6 +85,10 @@ function mergeCards(baseCards, incomingCards, tombstones) {
       entry.reps = Math.max(stamp(a.reps), stamp(b.reps))
       entry.lapses = Math.max(stamp(a.lapses), stamp(b.lapses))
       entry.wrong = Math.max(stamp(a.wrong), stamp(b.wrong))
+      entry.guessCount = Math.max(stamp(a.guessCount), stamp(b.guessCount))
+      entry.lastVerifiedAt = Math.max(stamp(a.lastVerifiedAt), stamp(b.lastVerifiedAt))
+      if (!entry.lastVerifyMode) entry.lastVerifyMode = a.lastVerifyMode || b.lastVerifyMode || ''
+      if (entry.lastVerifyOk == null) entry.lastVerifyOk = !!(a.lastVerifyOk || b.lastVerifyOk)
     }
     out[key] = entry
   })

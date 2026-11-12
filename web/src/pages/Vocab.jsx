@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { ArrowLeft, ArrowRight, Bookmark, Check, Eye, Layers, Plus, RotateCcw, Sparkles, Volume2, X } from 'lucide-react'
 import { Badge } from '../components/ui/badge'
 import { Button } from '../components/ui/button'
@@ -15,11 +15,58 @@ function speak(text) {
   window.speechSynthesis.speak(u)
 }
 
+function shuffle(items) {
+  const out = items.slice()
+  for (let i = out.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1))
+    ;[out[i], out[j]] = [out[j], out[i]]
+  }
+  return out
+}
+
+function normalize(value) {
+  return String(value || '').trim().toLowerCase().replace(/\s+/g, ' ')
+}
+
+function buildMeaningCheck(core, word, senses) {
+  const correct = senses[0] || word.zh || ''
+  const options = [correct]
+  const pool = core.allWords ? core.allWords() : []
+  let guard = 0
+  while (options.length < 4 && guard < 160 && pool.length) {
+    guard += 1
+    const candidate = pool[Math.floor(Math.random() * pool.length)]
+    if (!candidate || candidate.id === word.id) continue
+    const sense = (core.sensesOf(candidate) || [])[0]
+    if (sense && sense !== correct && !options.includes(sense)) options.push(sense)
+  }
+  ;['以上都不正确', '以上都有可能', '无法确定'].forEach((fallback) => {
+    if (options.length < 4 && !options.includes(fallback)) options.push(fallback)
+  })
+  const mixed = shuffle(options)
+  return { mode: 'meaning', options: mixed, answer: mixed.indexOf(correct), value: null }
+}
+
+function buildVerify(core, word, senses, g) {
+  if (g === 4) {
+    return {
+      g,
+      mode: 'spelling',
+      prompt: senses.join('；') || word.zh || '',
+      value: '',
+      guess: false,
+      submitted: false,
+    }
+  }
+  return { g, ...buildMeaningCheck(core, word, senses), guess: false, submitted: false }
+}
+
 export default function Vocab() {
   const core = window.App?.core
   const [ready, setReady] = useState(false)
   const [tick, setTick] = useState(0)
   const [session, setSession] = useState(null)
+  const lockRef = useRef(false)
 
   useEffect(() => {
     if (core) {
@@ -46,16 +93,21 @@ export default function Vocab() {
       setTick((x) => x + 1)
       return
     }
-    setSession({ ids, idx: 0, stats: { 1: 0, 2: 0, 3: 0, 4: 0 }, flipped: false, undo: null })
+    lockRef.current = false
+    setSession({ ids, idx: 0, stats: { 1: 0, 2: 0, 3: 0, 4: 0 }, flipped: false, verify: null, undo: null })
   }
 
-  function grade(g) {
-    if (!session || !session.flipped) return
+  function commitGrade(g, info = {}) {
+    if (!session || lockRef.current) return
+    lockRef.current = true
     const id = session.ids[session.idx]
     const snap = core.checkSnapshot(id)
     const wbBefore = core.wordbookHas(id) ? JSON.parse(JSON.stringify(core.getState().wordbook[id])) : null
-    core.reviewWord(id, g)
-    core.wordbookAdd(id, g <= 2 ? 'check-fail' : 'check-known')
+    const reviewOpts = info.verifyMode
+      ? { verifyMode: info.verifyMode, verifyOk: !!info.verifyOk, guessed: !!info.guessed }
+      : undefined
+    core.reviewWord(id, g, reviewOpts)
+    core.wordbookAdd(id, g <= 2 ? 'check-fail' : info.verifyMode ? 'check-verified' : 'check-known')
     const entry = core.getState().wordbook[id]
     if (entry) {
       entry.category = g <= 2 ? 'learning' : 'known'
@@ -66,10 +118,49 @@ export default function Vocab() {
       ...session,
       idx: session.idx + 1,
       flipped: false,
+      verify: null,
       stats,
       undo: { id, snap, idx: session.idx, stats: { ...session.stats }, wbBefore },
     })
     setTick((x) => x + 1)
+  }
+
+  function chooseGrade(g) {
+    if (!session || !session.flipped || session.verify || lockRef.current) return
+    if (g <= 2) {
+      commitGrade(g)
+      return
+    }
+    setSession({ ...session, verify: buildVerify(core, word, senses, g) })
+  }
+
+  function submitVerify() {
+    if (!session || !session.verify || session.verify.submitted) return
+    const v = session.verify
+    const hasValue = v.mode === 'meaning' ? v.value != null : String(v.value || '').trim().length > 0
+    if (!hasValue) return
+    const correct = v.mode === 'meaning'
+      ? Number(v.value) === v.answer
+      : normalize(v.value) === normalize(word.w)
+    const guessed = !!v.guess
+    const effective = guessed ? 2 : correct ? v.g : v.g === 4 ? 2 : 1
+    setSession({ ...session, verify: { ...v, submitted: true, correct, guessed, effective } })
+  }
+
+  function finishVerify() {
+    if (!session || !session.verify || !session.verify.submitted) return
+    const v = session.verify
+    commitGrade(v.effective, { verifyMode: v.mode, verifyOk: v.correct && !v.guessed, guessed: v.guessed })
+  }
+
+  function cancelVerify() {
+    if (!session) return
+    setSession({ ...session, verify: null })
+  }
+
+  function setVerifyValue(value) {
+    if (!session || !session.verify || session.verify.submitted) return
+    setSession({ ...session, verify: { ...session.verify, value } })
   }
 
   function undo() {
@@ -82,9 +173,14 @@ export default function Vocab() {
     } else {
       core.wordbookRemove(u.id)
     }
-    setSession({ ...session, idx: u.idx, flipped: true, stats: u.stats, undo: null })
+    lockRef.current = false
+    setSession({ ...session, idx: u.idx, flipped: true, verify: null, stats: u.stats, undo: null })
     setTick((x) => x + 1)
   }
+
+  useEffect(() => {
+    lockRef.current = false
+  }, [session?.idx])
 
   useEffect(() => {
     function onKey(e) {
@@ -95,6 +191,21 @@ export default function Vocab() {
         return
       }
       if (mod || e.altKey) return
+      if (session.verify) {
+        const v = session.verify
+        if (e.key === 'Escape') { e.preventDefault(); cancelVerify(); return }
+        if (e.key === 'Enter') {
+          e.preventDefault()
+          if (v.submitted) finishVerify()
+          else submitVerify()
+          return
+        }
+        if (!v.submitted && v.mode === 'meaning' && /^[1-4]$/.test(e.key)) {
+          e.preventDefault()
+          setVerifyValue(+e.key - 1)
+        }
+        return
+      }
       if (e.key === ' ' || e.code === 'Space') {
         e.preventDefault()
         if (word) speak(word.w)
@@ -103,7 +214,7 @@ export default function Vocab() {
       if (!session.flipped) return
       if (/^[1-4]$/.test(e.key)) {
         e.preventDefault()
-        grade(+e.key)
+        chooseGrade(+e.key)
       }
     }
     document.addEventListener('keydown', onKey)
@@ -136,6 +247,8 @@ export default function Vocab() {
 
   if (session) {
     const group = Math.floor(session.idx / 10) + 1
+    const v = session.verify
+    const correctText = v ? (v.mode === 'meaning' ? v.options[v.answer] : word.w) : ''
     return (
       <div className="mx-auto max-w-2xl">
         <div className="mb-5 flex items-center gap-3">
@@ -145,7 +258,7 @@ export default function Vocab() {
           <div className="min-w-0 flex-1">
             <div className="mb-1.5 flex items-center justify-between text-xs text-muted-foreground">
               <span>第 {group} 组 · {done} / {target}</span>
-              <span>{session.flipped ? '自评' : '先回忆'}</span>
+              <span>{v ? '验证' : session.flipped ? '自评' : '先回忆'}</span>
             </div>
             <Progress value={target ? (done / target) * 100 : 0} className="h-1.5" />
           </div>
@@ -187,6 +300,90 @@ export default function Vocab() {
                   </div>
                 ) : null}
               </div>
+            ) : v ? (
+              <div>
+                <Badge variant="secondary" className="font-normal">{v.mode === 'meaning' ? '选择正确释义' : '根据中文写单词'}</Badge>
+                {v.mode === 'meaning' ? (
+                  <>
+                    <div className="mt-4 flex flex-wrap items-baseline gap-3">
+                      <h1 className="font-display text-3xl font-semibold tracking-tight">{word.w}</h1>
+                      <button type="button" onClick={() => speak(word.w)} className="rounded-full p-1.5 hover:bg-secondary" aria-label="朗读">
+                        <Volume2 className="h-4 w-4" />
+                      </button>
+                      <span className="text-sm text-muted-foreground">{word.ph}</span>
+                    </div>
+                    <p className="mt-2 text-xs text-muted-foreground">不能看释义，选一个最接近的。</p>
+                    <div className="mt-5 grid gap-2">
+                      {v.options.map((option, i) => {
+                        const selected = v.value === i
+                        const isAnswer = v.submitted && i === v.answer
+                        const isWrong = v.submitted && selected && i !== v.answer
+                        return (
+                          <button
+                            key={i}
+                            type="button"
+                            disabled={v.submitted}
+                            onClick={() => setVerifyValue(i)}
+                            className={cn(
+                              'flex items-start gap-3 rounded-lg border px-3 py-3 text-left text-sm transition-colors',
+                              selected ? 'border-primary/50 bg-[var(--accent-soft)]' : 'hover:bg-secondary/50',
+                              isAnswer && 'border-success-soft bg-success-soft',
+                              isWrong && 'border-danger-soft bg-danger-soft'
+                            )}
+                          >
+                            <span className="font-mono-ui mt-0.5 text-xs opacity-60">{String.fromCharCode(65 + i)}</span>
+                            <span className="flex-1">{option}</span>
+                            {isAnswer ? <Check className="h-4 w-4 shrink-0 text-success" /> : null}
+                            {isWrong ? <X className="h-4 w-4 shrink-0 text-danger" /> : null}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <p className="mt-5 font-display text-lg leading-relaxed">{v.prompt}</p>
+                    <p className="mt-2 text-xs text-muted-foreground">写出英文单词，注意拼写。</p>
+                    <input
+                      autoFocus
+                      value={v.value}
+                      disabled={v.submitted}
+                      onChange={(e) => setVerifyValue(e.target.value)}
+                      placeholder="输入英文单词…"
+                      autoCapitalize="none"
+                      autoCorrect="off"
+                      spellCheck={false}
+                      className="mt-5 h-12 w-full rounded-lg border bg-card px-4 font-display text-lg outline-none focus:ring-2 focus:ring-ring"
+                    />
+                  </>
+                )}
+
+                {!v.submitted ? (
+                  <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
+                    <label className="inline-flex items-center gap-2 text-xs text-muted-foreground">
+                      <input type="checkbox" checked={v.guess} onChange={(e) => setSession({ ...session, verify: { ...v, guess: e.target.checked } })} />
+                      我是猜的
+                    </label>
+                    <div className="flex gap-2">
+                      <Button variant="ghost" size="sm" onClick={cancelVerify}>返回自评</Button>
+                      <Button size="sm" onClick={submitVerify} disabled={v.mode === 'meaning' ? v.value == null : !String(v.value || '').trim()}>提交验证</Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className={`mt-5 rounded-lg border p-4 ${v.correct && !v.guessed ? 'border-success-soft bg-success-soft' : 'border-danger-soft bg-danger-soft'}`}>
+                    <div className={`flex items-center gap-2 text-sm font-medium ${v.correct && !v.guessed ? 'text-success' : 'text-danger'}`}>
+                      {v.correct && !v.guessed ? <Check className="h-4 w-4" /> : <X className="h-4 w-4" />}
+                      {v.correct && !v.guessed ? '验证通过' : v.guessed ? '标记为猜的' : '验证未通过'}
+                    </div>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      正确答案：{correctText} · 本次按「{v.effective === 4 ? '简单' : v.effective === 3 ? '认识' : v.effective === 2 ? '模糊' : '忘记'}」记录
+                    </p>
+                    <div className="mt-3 flex gap-2">
+                      <Button size="sm" onClick={finishVerify}>继续</Button>
+                    </div>
+                  </div>
+                )}
+              </div>
             ) : (
               <div>
                 <div className="flex flex-wrap items-baseline gap-3">
@@ -221,16 +418,16 @@ export default function Vocab() {
                     <button
                       key={b.g}
                       type="button"
-                      onClick={() => grade(b.g)}
+                      onClick={() => chooseGrade(b.g)}
                       className={cn('rounded-lg border px-3 py-3 text-left transition-colors', b.cls)}
                     >
                       <span className="block font-display text-base font-semibold">{b.label}</span>
-                      <span className="mt-0.5 block text-[11px] opacity-70">按 {b.hint}</span>
+                      <span className="mt-0.5 block text-[11px] opacity-70">按 {b.hint}{b.g >= 3 ? ' · 需验证' : ''}</span>
                     </button>
                   ))}
                 </div>
                 <div className="mt-4 flex items-center justify-between">
-                  <p className="text-[11px] text-muted-foreground">按 1–4 评分 · 空格朗读 · Ctrl/Cmd+Z 撤销</p>
+                  <p className="text-[11px] text-muted-foreground">按 1–4 评分 · 认识/简单需通过验证 · Ctrl/Cmd+Z 撤销</p>
                   <Button variant="ghost" size="sm" disabled={!session.undo} onClick={undo}>
                     <RotateCcw className="h-3.5 w-3.5" /> 撤销上一题
                   </Button>
@@ -283,7 +480,7 @@ export default function Vocab() {
                 <Sparkles className="mr-1.5 h-3.5 w-3.5" /> 今日抽查
               </Badge>
               <h2 className="font-display text-2xl font-semibold">{done >= target ? '今天的抽查完成了' : `还有 ${target - done} 个单词等你`}</h2>
-              <p className="mt-2 max-w-xl text-sm leading-relaxed text-muted-foreground">先自己说出释义，再翻面自评。忘记/模糊会自动进入单词本「不熟」，认识/简单进入「熟记」，本轮不再重复出现。</p>
+              <p className="mt-2 max-w-xl text-sm leading-relaxed text-muted-foreground">先自己说出释义，再翻面自评。忘记/模糊自动进入「不熟」，认识/简单会先做一道验证，通过才进入「熟记」。</p>
             </div>
             <div className="font-display text-4xl font-semibold text-primary">{done}<span className="text-base font-normal text-muted-foreground"> / {target}</span></div>
           </div>
@@ -301,4 +498,3 @@ export default function Vocab() {
     </>
   )
 }
-
